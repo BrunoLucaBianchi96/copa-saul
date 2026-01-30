@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { GAMES, calculatePickBanState, type PickBanAction } from '@/lib/games'
 
 interface Match {
@@ -20,39 +21,49 @@ interface MatchListProps {
   tournamentId: number
 }
 
-function getMatchStatus(match: Match): string {
-  // If match is complete, don't show status (winner is highlighted instead)
-  if (match.result !== 'pending') {
-    return ''
-  }
+function useMatchStatus() {
+  const t = useTranslations('match')
 
-  // Parse pick-ban history
-  const actions: PickBanAction[] = match.pickBanHistory
-    ? JSON.parse(match.pickBanHistory)
-    : []
+  return function getMatchStatus(match: Match): string {
+    // If match is complete, don't show status (winner is highlighted instead)
+    if (match.result !== 'pending') {
+      return ''
+    }
 
-  const state = calculatePickBanState(actions, match.selectedGame ?? undefined)
-  const currentPlayerName = state.currentPlayer === 1 ? match.player1Name : match.player2Name
+    // Parse pick-ban history
+    const actions: PickBanAction[] = match.pickBanHistory
+      ? JSON.parse(match.pickBanHistory)
+      : []
 
-  switch (state.currentPhase) {
-    case 'ban1':
-      return `${currentPlayerName} banning`
-    case 'pick':
-      return `${currentPlayerName} protecting`
-    case 'ban2':
-      return `${currentPlayerName} banning`
-    case 'selecting':
-      return 'Selecting game...'
-    case 'complete':
-      return 'Playing'
-    default:
-      return 'Pending'
+    const state = calculatePickBanState(actions, match.selectedGame ?? undefined)
+    const currentPlayerName = state.currentPlayer === 1 ? match.player1Name : match.player2Name
+
+    switch (state.currentPhase) {
+      case 'ban1':
+        return `${currentPlayerName} ${t('banning')}`
+      case 'pick':
+        return `${currentPlayerName} ${t('protecting')}`
+      case 'ban2':
+        return `${currentPlayerName} ${t('banning')}`
+      case 'selecting':
+        return t('selectingGame')
+      case 'complete': {
+        const game = GAMES.find((g) => g.id === match.selectedGame)
+        return game ? `${t('playing')} ${game.name}` : t('playing')
+      }
+      default:
+        return t('pending')
+    }
   }
 }
 
 export function MatchList({ matches, tournamentId }: MatchListProps) {
+  const t = useTranslations('match')
+  const tCommon = useTranslations('common')
+  const getMatchStatus = useMatchStatus()
+
   if (matches.length === 0) {
-    return <p className="text-darcula-text-muted">No matches yet.</p>
+    return <p className="text-darcula-text-muted">{t('pending')}</p>
   }
 
   return (
@@ -65,7 +76,7 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
               key={match.id}
               className="border border-darcula-border rounded p-4 bg-darcula-elevated text-center text-darcula-text-muted"
             >
-              <span className="font-medium text-darcula-text">{match.player1Name}</span> - BYE
+              <span className="font-medium text-darcula-text">{match.player1Name}</span> - {t('bye')}
             </div>
           )
         }
@@ -85,7 +96,7 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
               >
                 {match.player1Name}
               </span>
-              <span className="text-darcula-text-muted text-sm">vs</span>
+              <span className="text-darcula-text-muted text-sm">{tCommon('vs')}</span>
               <span
                 className={`font-medium ${match.result === 'player2' ? 'text-darcula-green' : 'text-darcula-text'}`}
               >
@@ -103,10 +114,10 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
                   )}
                   <span>
                     {match.result === 'draw'
-                      ? 'Draw'
+                      ? t('draw')
                       : match.result === 'player1'
-                        ? `${match.player1Name} wins`
-                        : `${match.player2Name} wins`}
+                        ? `${match.player1Name} ${t('wins')}`
+                        : `${match.player2Name} ${t('wins')}`}
                   </span>
                 </>
               ) : (

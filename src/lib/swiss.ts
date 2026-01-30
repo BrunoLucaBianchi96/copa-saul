@@ -32,6 +32,9 @@ async function getPlayerOpponents(tournamentId: number, playerId: number): Promi
   return opponents
 }
 
+// Export PlayerStanding type for use in other modules
+export type { PlayerStanding }
+
 // Get current standings
 export async function getStandings(tournamentId: number): Promise<PlayerStanding[]> {
   const tPlayers = await db
@@ -133,6 +136,102 @@ export async function generatePairings(
       // Bye for the last unpaired player
       pairings.push({ player1Id: remaining[i].playerId, player2Id: null })
     }
+  }
+
+  return pairings
+}
+
+// Check if there's a tie for first place
+export async function checkFirstPlaceTie(tournamentId: number): Promise<{
+  hasTie: boolean
+  tiedPlayers: PlayerStanding[]
+  topPoints: number
+}> {
+  const standings = await getStandings(tournamentId)
+  if (standings.length === 0) {
+    return { hasTie: false, tiedPlayers: [], topPoints: 0 }
+  }
+
+  const topPoints = standings[0].points
+  const tiedPlayers = standings.filter((p) => p.points === topPoints)
+
+  return {
+    hasTie: tiedPlayers.length > 1,
+    tiedPlayers,
+    topPoints,
+  }
+}
+
+// Get players who should participate in overtime
+export async function getOvertimeParticipants(tournamentId: number): Promise<PlayerStanding[]> {
+  const standings = await getStandings(tournamentId)
+  if (standings.length === 0) return []
+
+  const topPoints = standings[0].points
+  const tiedPlayers = standings.filter((p) => p.points === topPoints)
+
+  // If odd number of tied players, add the next highest scorer
+  if (tiedPlayers.length % 2 !== 0) {
+    const nextPlayer = standings.find((p) => p.points < topPoints)
+    if (nextPlayer) {
+      tiedPlayers.push(nextPlayer)
+    }
+  }
+
+  return tiedPlayers
+}
+
+// Generate pairings for overtime (only among specified players, allows rematches)
+export async function generateOvertimePairings(
+  tournamentId: number,
+  overtimePlayerIds: number[]
+): Promise<{ player1Id: number; player2Id: number | null }[]> {
+  const allStandings = await getStandings(tournamentId)
+  const standings = allStandings.filter((p) => overtimePlayerIds.includes(p.playerId))
+
+  const pairings: { player1Id: number; player2Id: number | null }[] = []
+  const paired = new Set<number>()
+
+  // Shuffle for variety, then sort by points
+  const shuffled = shuffle(standings)
+  shuffled.sort((a, b) => b.points - a.points)
+
+  for (let i = 0; i < shuffled.length; i++) {
+    const player = shuffled[i]
+    if (paired.has(player.playerId)) continue
+
+    // Find best opponent (prefer non-rematch, but allow if necessary)
+    let opponent: PlayerStanding | null = null
+    let rematchOpponent: PlayerStanding | null = null
+
+    for (let j = i + 1; j < shuffled.length; j++) {
+      const candidate = shuffled[j]
+      if (paired.has(candidate.playerId)) continue
+
+      if (!player.opponents.includes(candidate.playerId)) {
+        opponent = candidate
+        break
+      } else if (!rematchOpponent) {
+        rematchOpponent = candidate
+      }
+    }
+
+    // In overtime, allow rematches if no fresh opponent available
+    if (!opponent && rematchOpponent) {
+      opponent = rematchOpponent
+    }
+
+    if (opponent) {
+      pairings.push({ player1Id: player.playerId, player2Id: opponent.playerId })
+      paired.add(player.playerId)
+      paired.add(opponent.playerId)
+    }
+  }
+
+  // Handle remaining unpaired player (bye)
+  const remaining = shuffled.filter((p) => !paired.has(p.playerId))
+  for (const player of remaining) {
+    pairings.push({ player1Id: player.playerId, player2Id: null })
   }
 
   return pairings

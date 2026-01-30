@@ -12,7 +12,9 @@ export const tournaments = sqliteTable('tournaments', {
   name: text('name').notNull(),
   rounds: integer('rounds').notNull().default(4),
   currentRound: integer('current_round').notNull().default(0),
-  status: text('status', { enum: ['pending', 'active', 'completed'] }).notNull().default('pending'),
+  status: text('status', { enum: ['pending', 'active', 'overtime', 'completed'] }).notNull().default('pending'),
+  overtimeRound: integer('overtime_round').default(0),
+  overtimePlayers: text('overtime_players'), // JSON array of player IDs
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 })
 

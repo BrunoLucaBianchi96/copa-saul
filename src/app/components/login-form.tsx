@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 type LoginMode = 'select' | 'host'
 
 export function LoginForm() {
   const router = useRouter()
+  const t = useTranslations('auth')
   const [mode, setMode] = useState<LoginMode>('select')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -34,7 +36,7 @@ export function LoginForm() {
   if (mode === 'host') {
     return (
       <div className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-8 max-w-md mx-auto">
-        <h2 className="text-2xl font-bold text-darcula-text-bright mb-6 text-center">Host Login</h2>
+        <h2 className="text-2xl font-bold text-darcula-text-bright mb-6 text-center">{t('hostLogin')}</h2>
         <form
           onSubmit={(e) => {
             e.preventDefault()
@@ -44,7 +46,7 @@ export function LoginForm() {
         >
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-darcula-text mb-1">
-              Password
+              {t('password')}
             </label>
             <input
               id="password"
@@ -52,7 +54,7 @@ export function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-darcula-elevated border border-darcula-border rounded px-3 py-2 focus:ring-2 focus:ring-darcula-blue focus:border-darcula-blue text-darcula-text placeholder-darcula-text-muted"
-              placeholder="Enter host password"
+              placeholder={t('enterHostPassword')}
               autoFocus
             />
           </div>
@@ -69,14 +71,14 @@ export function LoginForm() {
               }}
               className="flex-1 px-4 py-2 border border-darcula-border rounded hover:bg-darcula-elevated transition text-darcula-text"
             >
-              Back
+              {t('back')}
             </button>
             <button
               type="submit"
               disabled={loading || !password}
               className="flex-1 bg-darcula-blue text-darcula-bg px-4 py-2 rounded hover:bg-darcula-blue/80 transition disabled:opacity-50 font-medium"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? t('loggingIn') : t('login')}
             </button>
           </div>
         </form>
@@ -86,8 +88,8 @@ export function LoginForm() {
 
   return (
     <div className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-8 max-w-md mx-auto">
-      <h2 className="text-2xl font-bold text-darcula-text-bright mb-6 text-center">Welcome to Copa Saul</h2>
-      <p className="text-darcula-text-muted mb-6 text-center">Choose how you want to join:</p>
+      <h2 className="text-2xl font-bold text-darcula-text-bright mb-6 text-center">{t('welcomeTitle')}</h2>
+      <p className="text-darcula-text-muted mb-6 text-center">{t('chooseHowToJoin')}</p>
 
       <div className="space-y-3">
         <button
@@ -95,19 +97,19 @@ export function LoginForm() {
           disabled={loading}
           className="w-full bg-darcula-blue text-darcula-bg px-4 py-3 rounded hover:bg-darcula-blue/80 transition disabled:opacity-50 font-medium"
         >
-          Login as Host
+          {t('loginAsHost')}
         </button>
         <button
           onClick={() => login('player')}
           disabled={loading}
           className="w-full bg-darcula-elevated text-darcula-text px-4 py-3 rounded hover:bg-darcula-border transition disabled:opacity-50 border border-darcula-border"
         >
-          {loading ? 'Joining...' : 'Join as Player'}
+          {loading ? t('joining') : t('joinAsPlayer')}
         </button>
       </div>
 
       <p className="text-sm text-darcula-text-muted mt-4 text-center">
-        Hosts can manage tournaments. Players can view standings and matches.
+        {t('hostDescription')}
       </p>
     </div>
   )

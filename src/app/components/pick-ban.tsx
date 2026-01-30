@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   GAMES,
   type PickBanAction,
@@ -44,6 +45,10 @@ export function PickBan({
   nextMatchId,
 }: PickBanProps) {
   const router = useRouter()
+  const t = useTranslations('pickBan')
+  const tCommon = useTranslations('common')
+  const tMatch = useTranslations('match')
+  const tErrors = useTranslations('errors')
   const [actions, setActions] = useState<PickBanAction[]>(initialActions)
   const [selectedGame, setSelectedGame] = useState<string | undefined>(initialSelectedGame)
   const [animatingGame, setAnimatingGame] = useState<string | null>(null)
@@ -57,6 +62,12 @@ export function PickBan({
   const currentAnimatingGameRef = useRef<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [wheelScale, setWheelScale] = useState(1)
+
+  // Reset animation ref when matchId changes (e.g., navigating away and back)
+  useEffect(() => {
+    animationStartedRef.current = false
+    currentAnimatingGameRef.current = null
+  }, [matchId])
 
   // Check for mobile device and show fullscreen prompt
   useEffect(() => {
@@ -240,20 +251,20 @@ export function PickBan({
 
   function getPhaseInstruction(): { phase: string; detail: string } {
     if (localMatchResult !== 'pending') {
-      return { phase: 'Complete', detail: GAMES.find((g) => g.id === selectedGame)?.name || 'Unknown' }
+      return { phase: t('complete'), detail: GAMES.find((g) => g.id === selectedGame)?.name || 'Unknown' }
     }
 
     switch (state.currentPhase) {
       case 'ban1':
-        return { phase: 'Ban 1/1', detail: `${currentPlayerName}'s turn` }
+        return { phase: `${t('ban')} 1/1`, detail: t('turn', { name: currentPlayerName }) }
       case 'pick':
-        return { phase: 'Protect 1/1', detail: `${currentPlayerName}'s turn` }
+        return { phase: `${t('protect')} 1/1`, detail: t('turn', { name: currentPlayerName }) }
       case 'ban2':
-        return { phase: `Ban ${state.ban2Remaining}/1`, detail: `${currentPlayerName}'s turn` }
+        return { phase: `${t('ban')} ${state.ban2Remaining}/1`, detail: t('turn', { name: currentPlayerName }) }
       case 'selecting':
-        return { phase: 'Selecting...', detail: 'Random game' }
+        return { phase: t('selectingEllipsis'), detail: t('randomGame') }
       case 'complete':
-        return { phase: 'Selected', detail: GAMES.find((g) => g.id === state.selectedGame)?.name || '' }
+        return { phase: t('selected'), detail: GAMES.find((g) => g.id === state.selectedGame)?.name || '' }
     }
   }
 
@@ -271,15 +282,14 @@ export function PickBan({
       if (!res.ok) {
         // Roll back on failure
         setActions((prev) => prev.filter((a) => a !== newAction))
-        const data = await res.json()
-        alert(data.error || 'Failed to save action')
+        alert(tErrors('failedToSaveAction'))
       }
     } catch {
       // Roll back on network error
       setActions((prev) => prev.filter((a) => a !== newAction))
-      alert('Network error - action rolled back')
+      alert(tErrors('networkError'))
     }
-  }, [tournamentId, matchId])
+  }, [tournamentId, matchId, tErrors])
 
   function triggerBackgroundFlash(type: 'ban' | 'pick' | 'select') {
     setBackgroundFlash(type)
@@ -321,13 +331,21 @@ export function PickBan({
 
   // Handle random selection animation
   useEffect(() => {
-    if (state.currentPhase !== 'selecting' || !isHost || animationStartedRef.current) {
+    // Don't run if not in selecting phase, not host, or game already selected
+    if (state.currentPhase !== 'selecting' || !isHost || selectedGame) {
+      return
+    }
+
+    // Prevent running multiple times for the same selection
+    if (animationStartedRef.current) {
       return
     }
 
     animationStartedRef.current = true
     fadeOutMusic(3000) // Fade music over the selection animation duration
-    const gamesToSelect = selectableGames.slice()
+    // Calculate selectable games fresh to avoid closure issues
+    const currentGameStates = getGameStates(actions)
+    const gamesToSelect = GAMES.filter((g) => currentGameStates.get(g.id)?.status !== 'banned')
 
     if (gamesToSelect.length === 0) {
       const randomGame = GAMES[Math.floor(Math.random() * GAMES.length)]
@@ -383,7 +401,7 @@ export function PickBan({
       cancelled = true
       if (timeoutId) clearTimeout(timeoutId)
     }
-  }, [state.currentPhase, isHost, fadeOutMusic, playClickSound])
+  }, [state.currentPhase, isHost, selectedGame, actions, fadeOutMusic, playClickSound])
 
   async function selectFinalGame(gameId: string) {
     // Flash the game and background together
@@ -415,8 +433,7 @@ export function PickBan({
         setSelectedGame(gameId)
         setFlashingGame(null)
       } else {
-        const data = await res.json()
-        alert(data.error || 'Failed to select game')
+        alert(tErrors('failedToSelectGame'))
         setFlashingGame(null)
       }
     } finally {
@@ -444,18 +461,17 @@ export function PickBan({
       if (!res.ok) {
         // Roll back on failure
         setLocalMatchResult(previousResult)
-        const data = await res.json()
-        alert(data.error || 'Failed to record result')
+        alert(tErrors('failedToRecordResult'))
       }
     } catch {
       // Roll back on network error
       setLocalMatchResult(previousResult)
-      alert('Network error - result rolled back')
+      alert(tErrors('networkError'))
     }
   }
 
   async function handleResetRound() {
-    if (!confirm('Are you sure you want to reset this match? All picks and bans will be cleared.')) {
+    if (!confirm(t('confirmResetMatch'))) {
       return
     }
     setResetting(true)
@@ -476,8 +492,7 @@ export function PickBan({
         currentAnimatingGameRef.current = null
         router.refresh()
       } else {
-        const data = await res.json()
-        alert(data.error || 'Failed to reset match')
+        alert(tErrors('failedToResetMatch'))
       }
     } finally {
       setResetting(false)
@@ -518,8 +533,8 @@ export function PickBan({
           <svg className="w-24 h-24 text-darcula-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
           </svg>
-          <span className="text-2xl text-darcula-text-bright font-bold">Tap to Enter Fullscreen</span>
-          <span className="text-darcula-text-muted">For the best experience</span>
+          <span className="text-2xl text-darcula-text-bright font-bold">{t('tapToEnterFullscreen')}</span>
+          <span className="text-darcula-text-muted">{t('forBestExperience')}</span>
         </button>
       </div>
     )
@@ -565,13 +580,12 @@ export function PickBan({
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Back
+            {tCommon('back')}
           </a>
           {prevMatchId !== null ? (
             <a
               href={`/tournaments/${tournamentId}/matches/${prevMatchId}`}
               className="p-2 rounded border border-darcula-border text-darcula-text hover:bg-darcula-elevated transition"
-              title="Previous match"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -591,7 +605,6 @@ export function PickBan({
             <a
               href={`/tournaments/${tournamentId}/matches/${nextMatchId}`}
               className="p-2 rounded border border-darcula-border text-darcula-text hover:bg-darcula-elevated transition"
-              title="Next match"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -613,7 +626,7 @@ export function PickBan({
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              {resetting ? 'Resetting...' : 'Reset Match'}
+              {resetting ? t('resetting') : t('resetMatch')}
             </button>
           )}
         </div>
@@ -778,7 +791,7 @@ export function PickBan({
                 <span className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 text-xs rounded ${
                   state.currentPhase === 'pick' ? 'bg-darcula-blue text-white' : 'bg-darcula-red text-white'
                 }`}>
-                  {state.currentPhase === 'pick' ? 'Protect' : 'Ban'}
+                  {state.currentPhase === 'pick' ? t('protect') : t('ban')}
                 </span>
               )}
             </button>
@@ -827,7 +840,7 @@ export function PickBan({
             </div>
             {canSelectWinner && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
-                <span className="text-darcula-green text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold">Winner</span>
+                <span className="text-darcula-green text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold">{t('winner')}</span>
               </div>
             )}
           </button>
@@ -835,19 +848,19 @@ export function PickBan({
 
         {/* Match info - center (hidden on small screens) */}
         <div className="hidden sm:block text-center pb-4 lg:pb-8 flex-shrink-0">
-          <div className="text-darcula-text-muted text-xs sm:text-sm uppercase tracking-widest">Round {roundNumber}</div>
+          <div className="text-darcula-text-muted text-xs sm:text-sm uppercase tracking-widest">{tCommon('round')} {roundNumber}</div>
           <div className="text-darcula-text-bright text-lg sm:text-xl lg:text-2xl font-bold mt-1">
-            {player1Name} <span className="text-darcula-text-muted mx-2">vs</span> {player2Name}
+            {player1Name} <span className="text-darcula-text-muted mx-2">{tCommon('vs')}</span> {player2Name}
           </div>
 
           {/* Show result if match is complete */}
           {localMatchResult !== 'pending' && (
             <div className="mt-2 sm:mt-4 px-4 sm:px-6 py-2 sm:py-3 bg-darcula-green/20 text-darcula-green rounded-lg inline-block font-bold text-sm sm:text-base">
               {localMatchResult === 'draw'
-                ? 'Draw'
+                ? tMatch('draw')
                 : localMatchResult === 'player1'
-                  ? `${player1Name} wins!`
-                  : `${player2Name} wins!`}
+                  ? `${player1Name} ${tMatch('wins')}!`
+                  : `${player2Name} ${tMatch('wins')}!`}
             </div>
           )}
         </div>
@@ -889,7 +902,7 @@ export function PickBan({
             </div>
             {canSelectWinner && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
-                <span className="text-darcula-green text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold">Winner</span>
+                <span className="text-darcula-green text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold">{t('winner')}</span>
               </div>
             )}
           </button>

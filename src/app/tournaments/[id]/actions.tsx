@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import type { Tournament } from '@/db/schema'
 import { Avatar } from '@/app/components/avatar'
 
@@ -20,6 +21,9 @@ interface TournamentActionsProps {
 
 export function TournamentActions({ tournament, isHost, players }: TournamentActionsProps) {
   const router = useRouter()
+  const t = useTranslations('tournament')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
   const [loading, setLoading] = useState(false)
   const [showPlayerSelect, setShowPlayerSelect] = useState(false)
   const [selectedPlayers, setSelectedPlayers] = useState<Set<number>>(
@@ -52,8 +56,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     if (res.ok) {
       router.refresh()
     } else {
-      const data = await res.json()
-      alert(data.error || 'Failed to start tournament')
+      alert(tErrors('failedToStart'))
     }
     setLoading(false)
     setShowPlayerSelect(false)
@@ -63,17 +66,27 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     setLoading(true)
     const res = await fetch(`/api/tournaments/${tournament.id}/next-round`, { method: 'POST' })
     if (res.ok) {
-      router.refresh()
-    } else {
       const data = await res.json()
-      alert(data.error || 'Failed to advance to next round')
+      if (data.completed) {
+        // Tournament finished - redirect to result page
+        router.push(`/tournaments/${tournament.id}/result`)
+      } else {
+        router.refresh()
+      }
+    } else {
+      alert(tErrors('failedToAdvance'))
     }
     setLoading(false)
   }
 
   if (tournament.status === 'completed') {
     return (
-      <span className="px-4 py-2 bg-darcula-elevated text-darcula-text-muted rounded border border-darcula-border">Tournament Completed</span>
+      <a
+        href={`/tournaments/${tournament.id}/result`}
+        className="px-4 py-2 bg-darcula-green/20 text-darcula-green rounded border border-darcula-green/50 hover:bg-darcula-green/30 transition-colors"
+      >
+        {t('viewWinner')}
+      </a>
     )
   }
 
@@ -85,8 +98,8 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     if (showPlayerSelect) {
       return (
         <div className="bg-darcula-surface border border-darcula-border rounded-lg shadow-lg p-4 min-w-[250px]">
-          <h3 className="font-semibold text-darcula-text mb-3">Select Players</h3>
-          <p className="text-sm text-darcula-text-muted mb-3">Uncheck players who didn&apos;t show up</p>
+          <h3 className="font-semibold text-darcula-text mb-3">{t('selectPlayers')}</h3>
+          <p className="text-sm text-darcula-text-muted mb-3">{t('uncheckAbsentPlayers')}</p>
           <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
             {players.map((player) => (
               <label
@@ -109,18 +122,18 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
               onClick={() => setShowPlayerSelect(false)}
               className="flex-1 px-3 py-2 border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition"
             >
-              Cancel
+              {tCommon('cancel')}
             </button>
             <button
               onClick={startTournament}
               disabled={loading || selectedPlayers.size < 2}
               className="flex-1 bg-darcula-green text-darcula-bg px-3 py-2 rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
             >
-              {loading ? 'Starting...' : `Start (${selectedPlayers.size})`}
+              {loading ? tCommon('starting') : `${t('start')} (${selectedPlayers.size})`}
             </button>
           </div>
           {selectedPlayers.size < 2 && (
-            <p className="text-darcula-red text-sm mt-2">Need at least 2 players</p>
+            <p className="text-darcula-red text-sm mt-2">{t('needAtLeast2Players')}</p>
           )}
         </div>
       )
@@ -132,24 +145,33 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
         disabled={loading}
         className="bg-darcula-green text-darcula-bg px-4 py-2 rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
       >
-        Start Tournament
+        {t('startTournament')}
       </button>
     )
   }
 
+  // Overtime mode - show next overtime round button
+  if (tournament.status === 'overtime') {
+    return (
+      <button
+        onClick={nextRound}
+        disabled={loading}
+        className="bg-darcula-orange text-darcula-bg px-4 py-2 rounded hover:bg-darcula-orange/80 transition disabled:opacity-50 font-medium"
+      >
+        {loading ? tCommon('processing') : t('nextOvertimeRound')}
+      </button>
+    )
+  }
+
+  // At final regular round - next-round API will check for tie and either complete or start overtime
   if (tournament.currentRound >= tournament.rounds) {
     return (
       <button
-        onClick={async () => {
-          setLoading(true)
-          await fetch(`/api/tournaments/${tournament.id}/complete`, { method: 'POST' })
-          router.refresh()
-          setLoading(false)
-        }}
+        onClick={nextRound}
         disabled={loading}
         className="bg-darcula-elevated text-darcula-text px-4 py-2 rounded hover:bg-darcula-border transition disabled:opacity-50 border border-darcula-border"
       >
-        {loading ? 'Completing...' : 'Complete Tournament'}
+        {loading ? tCommon('processing') : t('finishRegularRounds')}
       </button>
     )
   }
@@ -160,7 +182,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
       disabled={loading}
       className="bg-darcula-blue text-darcula-bg px-4 py-2 rounded hover:bg-darcula-blue/80 transition disabled:opacity-50 font-medium"
     >
-      {loading ? 'Processing...' : 'Next Round'}
+      {loading ? tCommon('processing') : t('nextRound')}
     </button>
   )
 }

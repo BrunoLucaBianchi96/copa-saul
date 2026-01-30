@@ -2,9 +2,11 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 export function LogoutButton() {
   const router = useRouter()
+  const t = useTranslations('auth')
   const [loading, setLoading] = useState(false)
 
   async function handleLogout() {
@@ -19,7 +21,7 @@ export function LogoutButton() {
       disabled={loading}
       className="text-sm text-darcula-text-muted hover:text-darcula-text underline disabled:opacity-50"
     >
-      {loading ? 'Logging out...' : 'Logout'}
+      {loading ? t('loggingOut') : t('logout')}
     </button>
   )
 }

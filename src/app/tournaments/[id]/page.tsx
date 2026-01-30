@@ -8,7 +8,7 @@ import { MatchList } from './match-list'
 import { RoundNavigation } from './round-navigation'
 import { Leaderboard } from './leaderboard'
 import { getSession, isHost as checkIsHost } from '@/lib/session'
-import { Avatar } from '@/app/components/avatar'
+import { getTranslations } from 'next-intl/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -87,6 +87,9 @@ export default async function TournamentPage({
   const standings = await getStandings(id)
   const isHost = checkIsHost(role)
 
+  const t = await getTranslations('tournament')
+  const tStatus = await getTranslations('status')
+
   // Determine which round to view
   const viewingRound = searchParams.round
     ? Math.min(Math.max(1, parseInt(searchParams.round)), tournament.currentRound)
@@ -105,21 +108,26 @@ export default async function TournamentPage({
       <div className="flex justify-between items-start mb-6">
         <div>
           <Link href="/" className="text-darcula-blue hover:underline text-sm">
-            &larr; Back to Home
+            &larr; {t('backToHome')}
           </Link>
           <h1 className="text-3xl font-bold text-darcula-text-bright mt-2">{tournament.name}</h1>
           <p className="text-darcula-text-muted">
-            Round {tournament.currentRound} of {tournament.rounds} &bull;{' '}
+            {tournament.status === 'overtime'
+              ? t('overtimeRound', { number: tournament.overtimeRound ?? 1 })
+              : t('roundOf', { current: tournament.currentRound, total: tournament.rounds })}
+            {' '}&bull;{' '}
             <span
               className={`${
                 tournament.status === 'active'
                   ? 'text-darcula-green'
-                  : tournament.status === 'completed'
-                    ? 'text-darcula-text-muted'
-                    : 'text-darcula-orange'
+                  : tournament.status === 'overtime'
+                    ? 'text-darcula-orange font-semibold'
+                    : tournament.status === 'completed'
+                      ? 'text-darcula-text-muted'
+                      : 'text-darcula-orange'
               }`}
             >
-              {tournament.status}
+              {tStatus(tournament.status)}
             </span>
           </p>
         </div>
@@ -132,7 +140,9 @@ export default async function TournamentPage({
         <section className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-darcula-text">
-              Round {viewingRound} Matches
+              {tournament.status === 'overtime' && viewingRound > tournament.rounds
+                ? t('overtimeMatches', { number: viewingRound - tournament.rounds })
+                : t('roundMatches', { number: viewingRound })}
             </h2>
             {tournament.currentRound > 0 && (
               <RoundNavigation
@@ -142,11 +152,13 @@ export default async function TournamentPage({
                 totalRounds={tournament.rounds}
                 isHost={isHost}
                 allMatchesComplete={allMatchesComplete}
+                isOvertime={tournament.status === 'overtime'}
+                overtimeRound={tournament.overtimeRound ?? undefined}
               />
             )}
           </div>
           {tournament.currentRound === 0 ? (
-            <p className="text-darcula-text-muted">Tournament hasn&apos;t started yet.</p>
+            <p className="text-darcula-text-muted">{t('tournamentNotStarted')}</p>
           ) : (
             <MatchList matches={roundMatches} tournamentId={id} />
           )}

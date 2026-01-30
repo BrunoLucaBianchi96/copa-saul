@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Avatar } from '@/app/components/avatar'
 
 interface Player {
@@ -15,13 +16,15 @@ interface LeaderboardProps {
 }
 
 export function Leaderboard({ standings }: LeaderboardProps) {
+  const t = useTranslations('home')
+  const tCommon = useTranslations('common')
   const [isOpen, setIsOpen] = useState(false)
 
   if (standings.length === 0) {
     return (
       <section className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-6">
-        <h2 className="text-xl font-semibold text-darcula-text mb-4">Leaderboard</h2>
-        <p className="text-darcula-text-muted">No players registered yet.</p>
+        <h2 className="text-xl font-semibold text-darcula-text mb-4">{t('leaderboard')}</h2>
+        <p className="text-darcula-text-muted">{t('noPlayersRegistered')}</p>
       </section>
     )
   }
@@ -33,7 +36,7 @@ export function Leaderboard({ standings }: LeaderboardProps) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex justify-between items-center md:cursor-default"
       >
-        <h2 className="text-xl font-semibold text-darcula-text">Leaderboard</h2>
+        <h2 className="text-xl font-semibold text-darcula-text">{t('leaderboard')}</h2>
         {/* Chevron - only visible on mobile */}
         <svg
           className={`w-5 h-5 text-darcula-text-muted transition-transform md:hidden ${isOpen ? 'rotate-180' : ''}`}
@@ -51,8 +54,8 @@ export function Leaderboard({ standings }: LeaderboardProps) {
           <thead>
             <tr className="text-left text-sm text-darcula-text-muted border-b border-darcula-border">
               <th className="pb-2">#</th>
-              <th className="pb-2">Player</th>
-              <th className="pb-2 text-right">Points</th>
+              <th className="pb-2">{tCommon('player')}</th>
+              <th className="pb-2 text-right">{tCommon('points')}</th>
             </tr>
           </thead>
           <tbody>
