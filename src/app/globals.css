@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*@keyframes myAnim {*/
+/*  0% {*/
+/*    transform: scale3d(1, 1, 1);*/
+/*  }*/
+
+/*  30% {*/
+/*    transform: scale3d(0.75, 1.25, 1);*/
+/*  }*/
+
+/*  40% {*/
+/*    transform: scale3d(1.25, 0.75, 1);*/
+/*  }*/
+
+/*  50% {*/
+/*    transform: scale3d(0.85, 1.15, 1);*/
+/*  }*/
+
+/*  65% {*/
+/*    transform: scale3d(1.05, 0.95, 1);*/
+/*  }*/
+
+/*  75% {*/
+/*    transform: scale3d(0.95, 1.05, 1);*/
+/*  }*/
+
+/*  100% {*/
+/*    transform: scale3d(1, 1, 1);*/
+/*  }*/
+/*}*/
+
+/*.portrait-pulse {*/
+/*  animation: myAnim 2s ease 0s 1 normal none;*/
+/*  transform-origin: bottom center;*/
+/*}*/
+
+/* Outer wrapper - horizontal sway */
+.idle-sway {
+  transform-origin: center bottom;
+  animation: sway var(--sway-duration, 1s) linear infinite;
+}
+
+@keyframes sway {
+  0%, 50%, 100% { transform: skew(0deg); }
+  25% { transform: skew(-4deg, 1deg); }
+  75% { transform: skew(4deg, -1deg); }
+}
+
+/* Inner wrapper - vertical bounce */
+.idle-bounce {
+  transform-origin: center bottom;
+  animation: bounce var(--bounce-duration, 0.5s) linear infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(0.95, 1.05); }
+}
+
+
+@keyframes borderFlash {
+  0%, 100% {
+    border-color: #FFC66D;
+    box-shadow: 0 0 20px #FFC66D;
+  }
+  50% {
+    border-color: #FFFFFF;
+    box-shadow: 0 0 40px #FFFFFF;
+  }
+}
+
+.game-selected-flash {
+  animation: borderFlash 0.15s ease 0s 3 normal none;
+}
+
+@keyframes backgroundFlashFade {
+  0% {
+    opacity: 0.15;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.background-flash {
+  animation: backgroundFlashFade 0.8s ease-out forwards;
+}
+
+@keyframes backgroundFlash3x {
+  0%, 100% { opacity: 0; }
+  10%, 30%, 50% { opacity: 0.2; }
+  20%, 40%, 60% { opacity: 0; }
+}
+
+.background-flash-3x {
+  animation: backgroundFlash3x 0.9s ease-out forwards;
+}
