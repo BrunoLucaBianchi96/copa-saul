@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import { matches, players, tournaments } from '@/db/schema'
-import { eq, and, asc } from 'drizzle-orm'
+import { eq, and, asc, isNotNull } from 'drizzle-orm'
 import { notFound, redirect } from 'next/navigation'
 import { getSession, isHost as checkIsHost } from '@/lib/session'
 import { PickBan } from '@/app/components/pick-ban'
@@ -22,6 +22,26 @@ async function getTournament(tournamentId: number) {
 async function getPlayer(playerId: number) {
   const result = await db.select().from(players).where(eq(players.id, playerId))
   return result[0] || null
+}
+
+async function getGamePlayCounts(tournamentId: number) {
+  const matchesWithGames = await db
+    .select({ selectedGame: matches.selectedGame })
+    .from(matches)
+    .where(
+      and(
+        eq(matches.tournamentId, tournamentId),
+        isNotNull(matches.selectedGame)
+      )
+    )
+
+  const counts: Record<string, number> = {}
+  for (const match of matchesWithGames) {
+    if (match.selectedGame) {
+      counts[match.selectedGame] = (counts[match.selectedGame] || 0) + 1
+    }
+  }
+  return counts
 }
 
 async function getAdjacentMatches(tournamentId: number, round: number, currentMatchId: number) {
@@ -101,6 +121,9 @@ export default async function MatchPage({
   // Get adjacent matches for navigation
   const { prevMatchId, nextMatchId } = await getAdjacentMatches(tournamentId, match.round, matchId)
 
+  // Get game play counts for radar chart
+  const gamePlayCounts = await getGamePlayCounts(tournamentId)
+
   return (
     <PickBan
       player1Name={player1.name}
@@ -117,6 +140,7 @@ export default async function MatchPage({
       theme={theme}
       prevMatchId={prevMatchId}
       nextMatchId={nextMatchId}
+      gamePlayCounts={gamePlayCounts}
     />
   )
 }

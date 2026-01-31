@@ -26,6 +26,7 @@ interface PickBanProps {
   theme: Theme
   prevMatchId: number | null
   nextMatchId: number | null
+  gamePlayCounts: Record<string, number>
 }
 
 export function PickBan({
@@ -43,6 +44,7 @@ export function PickBan({
   theme,
   prevMatchId,
   nextMatchId,
+  gamePlayCounts,
 }: PickBanProps) {
   const router = useRouter()
   const t = useTranslations('pickBan')
@@ -97,6 +99,10 @@ export function PickBan({
     const audio = new Audio(theme.audioFile)
     audio.volume = 0.1 * (theme.normalizeVolume ?? 1)
     audio.loop = true
+    // Set starting position if offset is specified (convert ms to seconds)
+    if (theme.audioOffset) {
+      audio.currentTime = theme.audioOffset / 1000
+    }
     audioRef.current = audio
 
     let isActive = true
@@ -136,7 +142,7 @@ export function PickBan({
       audio.pause()
       audio.src = ''
     }
-  }, [theme.audioFile])
+  }, [theme.audioFile, theme.audioOffset])
 
   // Calculate wheel scale based on available width
   useEffect(() => {
@@ -642,16 +648,12 @@ export function PickBan({
       </div>
 
       {/* Phase indicator */}
-      <div className="relative z-10 w-full text-center py-4">
+      <div className="relative z-10 w-full text-center py-4 mb-12">
         <div className="text-2xl sm:text-4xl font-bold">
-          <span className={state.currentPhase === 'pick' ? 'text-darcula-blue' : 'text-darcula-red'}>
-            {phaseInfo.phase.split(' ')[0]}
+          <span className={state.currentPhase.includes('ban') ? 'text-darcula-red': 'text-darcula-blue'}>
+            {phaseInfo.phase}: <span> {phaseInfo.detail} </span>
           </span>
-          {phaseInfo.phase.includes(' ') && (
-            <span className="text-darcula-text-bright"> {phaseInfo.phase.split(' ').slice(1).join(' ')}</span>
-          )}
         </div>
-        <div className="text-lg sm:text-xl text-darcula-text-muted mt-1">{phaseInfo.detail}</div>
       </div>
 
       {/* Pick-ban wheel container - full width, centers the wheel */}
@@ -699,18 +701,25 @@ export function PickBan({
               strokeWidth="1"
             />
           ))}
-          {/* Highlight polygon for available games */}
+          {/* Radar chart polygon for game play frequency */}
           <polygon
-            points={GAMES.map((game, idx) => {
-              const gameState = gameStates.get(game.id)
-              const status = gameState?.status
-              if (status === 'banned') return `${centerX},${centerY}`
-              const angle = (idx * 2 * Math.PI) / numGames - Math.PI / 2
-              const r = status === 'protected' ? radius * 0.5 : radius * 0.4
-              const x = centerX + r * Math.cos(angle)
-              const y = centerY + r * Math.sin(angle)
-              return `${x},${y}`
-            }).join(' ')}
+            points={(() => {
+              const minRadius = radius * 0.15  // Base offset for zero-play games
+              const maxRadius = radius * 0.5   // Maximum extension
+              const maxPlays = Math.max(...Object.values(gamePlayCounts), 1)
+
+              return GAMES.map((game, idx) => {
+                const playCount = gamePlayCounts[game.id] || 0
+                const angle = (idx * 2 * Math.PI) / numGames - Math.PI / 2
+
+                // Scale: minRadius when 0 plays, up to maxRadius at max plays
+                const r = minRadius + (playCount / maxPlays) * (maxRadius - minRadius)
+
+                const x = centerX + r * Math.cos(angle)
+                const y = centerY + r * Math.sin(angle)
+                return `${x},${y}`
+              }).join(' ')
+            })()}
             fill="rgba(104, 151, 187, 0.15)"
             stroke="rgba(104, 151, 187, 0.3)"
             strokeWidth="2"

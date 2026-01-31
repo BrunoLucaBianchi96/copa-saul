@@ -17,6 +17,7 @@ export interface Theme {
   bpm: number
   division: number // 2 = binary, 3 = ternary, 4 = quaternary (bounces per sway)
   audioFile?: string // path to audio file in public folder
+  audioOffset?: number // offset in milliseconds to start audio from
   normalizeVolume?: number // multiplier to normalize volume across themes (default 1)
   soundbites?: Soundbites // optional soundbites that play at different stages
   backgroundImage?: string // URL or path to background image
@@ -86,8 +87,9 @@ export const THEMES: Theme[] = [
     bpm: 100,
     division: 1,
     audioFile: '/songs/perfect-cell-theme.mp3',
+    audioOffset: 9000,
     normalizeVolume: 1,
-    backgroundImage: 'https://static.wikia.nocookie.net/ultimate_anime_arena/images/c/ce/0bdf0d852e544410a9937d8065e4d850_%281%29.jpg/revision/latest?cb=20200510152832',
+    backgroundImage: 'https://i.redd.it/i66bdvdl1h561.jpg',
   },
   {
     id: 'guiles-theme',
