@@ -3,8 +3,10 @@ import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 export const players = sqliteTable('players', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
+  nickname: text('nickname'),
   avatarUrl: text('avatar_url'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 })
 
 export const tournaments = sqliteTable('tournaments', {

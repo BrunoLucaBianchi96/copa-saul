@@ -1,6 +1,6 @@
 {
   "common": {
-    "host": "Anfitrión",
+    "host": "Host",
     "player": "Jugador",
     "players": "Jugadores",
     "points": "puntos",
@@ -14,7 +14,8 @@
     "deleting": "Eliminando...",
     "processing": "Procesando...",
     "starting": "Iniciando...",
-    "completing": "Completando..."
+    "completing": "Completando...",
+    "close": "Cerrar"
   },
   "status": {
     "pending": "pendiente",
@@ -56,8 +57,8 @@
     "bye": "LIBRE",
     "draw": "Empate",
     "wins": "gana",
-    "banning": "prohibiendo",
-    "protecting": "protegiendo",
+    "banning": "baneando",
+    "protecting": "pickeando",
     "selectingGame": "Seleccionando juego...",
     "playing": "Jugando",
     "pending": "Pendiente"
@@ -102,8 +103,42 @@
     "loggingOut": "Saliendo...",
     "logout": "Salir"
   },
+  "rules": {
+    "tournamentRules": "Reglas del Torneo",
+    "formatTitle": "Formato del Torneo",
+    "formatDescription": "Torneo sistema suizo donde los jugadores se emparejan según puntuaciones similares. ¡Todos juegan todas las rondas, sin eliminaciones!",
+    "pickBanTitle": "Fase de Pick-Ban",
+    "pickBanStep1": "Jugador 1 banea un juego",
+    "pickBanStep2": "Jugador 2 protege un juego",
+    "pickBanStep3": "Jugador 2 banea un juego",
+    "pickBanStep4": "Se selecciona un juego aleatorio de los restantes",
+    "scoringTitle": "Puntuación",
+    "scoringWin": "Victoria: 1 punto",
+    "scoringLoss": "Derrota: 0 puntos",
+    "tiebreakerTitle": "Desempate",
+    "tiebreakerDescription": "Si hay empate en puntos, se juega una ronda de tiempo extra solo con esos jugadores (más uno si es necesario para emparejar). Esto se repite hasta que haya un único ganador."
+  },
+  "player": {
+    "addPlayer": "Agregar Jugador",
+    "editPlayer": "Editar Jugador",
+    "uploadPhoto": "Subir foto",
+    "changePhoto": "Cambiar foto",
+    "playerName": "Nombre",
+    "enterPlayerName": "Ingresa el nombre del jugador",
+    "nickname": "Apodo",
+    "enterNickname": "Ingresa el apodo",
+    "nicknameHint": "Se muestra como: Nombre 'Apodo' Apellido",
+    "optional": "opcional",
+    "saveChanges": "Guardar Cambios",
+    "deletePlayer": "Eliminar jugador",
+    "confirmDeletePlayer": "¿Estás seguro de que quieres eliminar a \"{name}\"? Esta acción no se puede deshacer.",
+    "cannotDeletePlayerInMatches": "No se puede eliminar este jugador porque ha participado en partidos."
+  },
   "errors": {
     "failedToDelete": "Error al eliminar el torneo",
+    "failedToDeletePlayer": "Error al eliminar el jugador",
+    "failedToCreatePlayer": "Error al crear el jugador",
+    "failedToUpdatePlayer": "Error al actualizar el jugador",
     "failedToStart": "Error al iniciar el torneo",
     "failedToAdvance": "Error al avanzar a la siguiente ronda",
     "failedToSaveAction": "Error al guardar la acción",

@@ -124,10 +124,22 @@ export default async function MatchPage({
   // Get game play counts for radar chart
   const gamePlayCounts = await getGamePlayCounts(tournamentId)
 
+  // Format name with nickname: "FirstName 'Nickname' LastName"
+  function formatDisplayName(name: string, nickname: string | null): string {
+    if (!nickname) return name
+    const parts = name.split(' ')
+    if (parts.length === 1) {
+      return `${name} '${nickname}'`
+    }
+    const firstName = parts[0]
+    const lastName = parts.slice(1).join(' ')
+    return `${firstName} '${nickname}' ${lastName}`
+  }
+
   return (
     <PickBan
-      player1Name={player1.name}
-      player2Name={player2.name}
+      player1Name={formatDisplayName(player1.name, player1.nickname)}
+      player2Name={formatDisplayName(player2.name, player2.nickname)}
       player1Avatar={player1.avatarUrl}
       player2Avatar={player2.avatarUrl}
       matchId={matchId}

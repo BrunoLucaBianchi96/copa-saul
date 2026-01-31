@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { tournaments, tournamentPlayers, players } from '@/db/schema'
+import { isNull } from 'drizzle-orm'
 import { requireHost } from '@/lib/session'
 
 export async function POST(request: Request) {
@@ -19,8 +20,8 @@ export async function POST(request: Request) {
 
   const tournamentId = result[0].id
 
-  // Add all players to the tournament
-  const allPlayers = await db.select().from(players)
+  // Add all active players to the tournament (exclude soft-deleted)
+  const allPlayers = await db.select().from(players).where(isNull(players.deletedAt))
   for (const player of allPlayers) {
     await db.insert(tournamentPlayers).values({
       tournamentId,

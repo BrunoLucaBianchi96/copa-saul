@@ -251,6 +251,8 @@ export function PickBan({
 
   const isInteractive = isHost && localMatchResult === 'pending' && state.currentPhase !== 'complete' && state.currentPhase !== 'selecting'
   const canSelectWinner = isHost && localMatchResult === 'pending' && state.currentPhase === 'complete'
+  // Show active player animation for everyone (not just host)
+  const isActivePhase = localMatchResult === 'pending' && state.currentPhase !== 'complete' && state.currentPhase !== 'selecting'
   const player1IsWinner = localMatchResult === 'player1'
   const player2IsWinner = localMatchResult === 'player2'
   const matchComplete = localMatchResult !== 'pending'
@@ -814,15 +816,15 @@ export function PickBan({
       <div className="relative z-10 w-full flex items-end justify-center gap-4 px-4 py-4">
         {/* Player 1 portrait - left */}
         <div
-          key={isInteractive && state.currentPlayer === 1 ? `p1-active-${actions.length}` : player1IsWinner ? 'p1-winner' : 'p1-inactive'}
-          className={(isInteractive && state.currentPlayer === 1) || player1IsWinner ? 'idle-sway' : ''}
-          style={(isInteractive && state.currentPlayer === 1) || player1IsWinner ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } as React.CSSProperties : undefined}
+          key={isActivePhase && state.currentPlayer === 1 ? `p1-active-${actions.length}` : player1IsWinner ? 'p1-winner' : 'p1-inactive'}
+          className={(isActivePhase && state.currentPlayer === 1) || player1IsWinner ? 'idle-sway' : ''}
+          style={(isActivePhase && state.currentPlayer === 1) || player1IsWinner ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } as React.CSSProperties : undefined}
         >
           <button
             onClick={() => canSelectWinner && handleRecordResult('player1')}
             disabled={!canSelectWinner || saving}
             className={`relative transition-all duration-300 rounded-t-lg overflow-hidden flex-shrink-0 w-32 h-44 sm:w-28 sm:h-36 md:w-36 md:h-48 lg:w-48 lg:h-64 xl:w-64 xl:h-80 ${
-              (isInteractive && state.currentPlayer === 1) || player1IsWinner
+              (isActivePhase && state.currentPlayer === 1) || player1IsWinner
                 ? 'ring-2 lg:ring-4 ring-darcula-blue ring-offset-2 lg:ring-offset-4 ring-offset-darcula-bg idle-bounce'
                 : canSelectWinner
                   ? 'hover:ring-2 lg:hover:ring-4 hover:ring-darcula-green hover:ring-offset-2 lg:hover:ring-offset-4 hover:ring-offset-darcula-bg cursor-pointer'
@@ -876,15 +878,15 @@ export function PickBan({
 
         {/* Player 2 portrait - right */}
         <div
-          key={isInteractive && state.currentPlayer === 2 ? `p2-active-${actions.length}` : player2IsWinner ? 'p2-winner' : 'p2-inactive'}
-          className={(isInteractive && state.currentPlayer === 2) || player2IsWinner ? 'idle-sway' : ''}
-          style={(isInteractive && state.currentPlayer === 2) || player2IsWinner ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } as React.CSSProperties : undefined}
+          key={isActivePhase && state.currentPlayer === 2 ? `p2-active-${actions.length}` : player2IsWinner ? 'p2-winner' : 'p2-inactive'}
+          className={(isActivePhase && state.currentPlayer === 2) || player2IsWinner ? 'idle-sway' : ''}
+          style={(isActivePhase && state.currentPlayer === 2) || player2IsWinner ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } as React.CSSProperties : undefined}
         >
           <button
             onClick={() => canSelectWinner && handleRecordResult('player2')}
             disabled={!canSelectWinner || saving}
             className={`relative transition-all duration-300 rounded-t-lg overflow-hidden flex-shrink-0 w-32 h-44 sm:w-28 sm:h-36 md:w-36 md:h-48 lg:w-48 lg:h-64 xl:w-64 xl:h-80 ${
-              (isInteractive && state.currentPlayer === 2) || player2IsWinner
+              (isActivePhase && state.currentPlayer === 2) || player2IsWinner
                 ? 'ring-2 lg:ring-4 ring-darcula-blue ring-offset-2 lg:ring-offset-4 ring-offset-darcula-bg idle-bounce'
                 : canSelectWinner
                   ? 'hover:ring-2 lg:hover:ring-4 hover:ring-darcula-green hover:ring-offset-2 lg:hover:ring-offset-4 hover:ring-offset-darcula-bg cursor-pointer'

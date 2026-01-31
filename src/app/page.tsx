@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { db } from '@/db'
 import { tournaments, players } from '@/db/schema'
-import { desc } from 'drizzle-orm'
+import { desc, isNull } from 'drizzle-orm'
 import { getSession, isHost } from '@/lib/session'
 import { getTranslations } from 'next-intl/server'
 import { LoginForm } from './components/login-form'
 import { LogoutButton } from './components/logout-button'
-import { Avatar } from './components/avatar'
 import { TournamentItem } from './components/tournament-item'
+import { PlayersSection } from './components/players-section'
+import { RulesInfoButton } from './components/rules-info-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,7 @@ async function getTournaments() {
 }
 
 async function getPlayers() {
-  return db.select().from(players)
+  return db.select().from(players).where(isNull(players.deletedAt))
 }
 
 export default async function Home() {
@@ -40,6 +41,7 @@ export default async function Home() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold text-darcula-text-bright">{t('appTitle')}</h1>
         <div className="flex items-center gap-4">
+          {!isHost(role) && <RulesInfoButton />}
           <span className={`text-sm px-3 py-1 rounded ${isHost(role) ? 'bg-darcula-blue/20 text-darcula-blue' : 'bg-darcula-elevated text-darcula-text'}`}>
             {isHost(role) ? tCommon('host') : tCommon('player')}
           </span>
@@ -77,17 +79,7 @@ export default async function Home() {
           )}
         </section>
 
-        <section className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-6">
-          <h2 className="text-2xl font-semibold text-darcula-text mb-4">{tCommon('players')} ({allPlayers.length})</h2>
-          <ul className="space-y-2">
-            {allPlayers.map((p) => (
-              <li key={p.id} className="p-2 bg-darcula-elevated rounded text-darcula-text flex items-center gap-3 border border-darcula-border">
-                <Avatar src={p.avatarUrl} name={p.name} size="sm" />
-                <span>{p.name}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <PlayersSection players={allPlayers} isHost={isHost(role)} />
       </div>
     </main>
   )

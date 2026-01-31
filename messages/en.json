@@ -14,7 +14,8 @@
     "deleting": "Deleting...",
     "processing": "Processing...",
     "starting": "Starting...",
-    "completing": "Completing..."
+    "completing": "Completing...",
+    "close": "Close"
   },
   "status": {
     "pending": "pending",
@@ -102,8 +103,42 @@
     "loggingOut": "Logging out...",
     "logout": "Logout"
   },
+  "rules": {
+    "tournamentRules": "Tournament Rules",
+    "formatTitle": "Tournament Format",
+    "formatDescription": "Swiss-system tournament where players are paired based on similar scores. Everyone plays every round, no eliminations!",
+    "pickBanTitle": "Pick-Ban Phase",
+    "pickBanStep1": "Player 1 bans one game",
+    "pickBanStep2": "Player 2 protects one game",
+    "pickBanStep3": "Player 2 bans one game",
+    "pickBanStep4": "A random game is selected from the remaining games",
+    "scoringTitle": "Scoring",
+    "scoringWin": "Win: 1 point",
+    "scoringLoss": "Loss: 0 points",
+    "tiebreakerTitle": "Tiebreaker",
+    "tiebreakerDescription": "If players are tied on points, an overtime round is played with just those players (plus one if needed for even matchups). This repeats until there's a single winner."
+  },
+  "player": {
+    "addPlayer": "Add Player",
+    "editPlayer": "Edit Player",
+    "uploadPhoto": "Upload photo",
+    "changePhoto": "Change photo",
+    "playerName": "Name",
+    "enterPlayerName": "Enter player name",
+    "nickname": "Nickname",
+    "enterNickname": "Enter nickname",
+    "nicknameHint": "Shown as: FirstName 'Nickname' LastName",
+    "optional": "optional",
+    "saveChanges": "Save Changes",
+    "deletePlayer": "Delete player",
+    "confirmDeletePlayer": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+    "cannotDeletePlayerInMatches": "Cannot delete this player because they have participated in matches."
+  },
   "errors": {
     "failedToDelete": "Failed to delete tournament",
+    "failedToDeletePlayer": "Failed to delete player",
+    "failedToCreatePlayer": "Failed to create player",
+    "failedToUpdatePlayer": "Failed to update player",
     "failedToStart": "Failed to start tournament",
     "failedToAdvance": "Failed to advance to next round",
     "failedToSaveAction": "Failed to save action",
