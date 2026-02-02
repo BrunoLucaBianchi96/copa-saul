@@ -37,6 +37,37 @@
 /*  transform-origin: bottom center;*/
 /*}*/
 
+/* Portrait entrance - drop from top with bounce */
+.portrait-enter {
+  animation: portraitDrop var(--drop-duration, 1s) ease-in both;
+}
+
+@keyframes portraitDrop {
+  0% {
+    transform: translateY(-100vh);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(0);
+  }
+  65% {
+    transform: translateY(-8%);
+  }
+  80% {
+    transform: translateY(0);
+  }
+  90% {
+    transform: translateY(-3%);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 /* Outer wrapper - horizontal sway */
 .idle-sway {
   transform-origin: center bottom;

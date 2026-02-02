@@ -3,23 +3,38 @@ import { db } from '@/db'
 import { players } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { requireHost } from '@/lib/session'
-import { writeFile } from 'fs/promises'
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import path from 'path'
+import { put } from '@vercel/blob'
 
-const execAsync = promisify(exec)
+async function removeBackgroundWithAPI(imageBuffer: Buffer): Promise<Buffer | null> {
+  const apiKey = process.env.REMOVE_BG_API_KEY
+  if (!apiKey) {
+    console.log('REMOVE_BG_API_KEY not set, skipping background removal')
+    return null
+  }
 
-async function removeBackground(inputPath: string, outputPath: string): Promise<boolean> {
   try {
-    const scriptPath = path.join(process.cwd(), 'scripts', 'remove-bg.py')
-    const venvPython = path.join(process.cwd(), '.venv', 'bin', 'python3')
+    const formData = new FormData()
+    formData.append('image_file', new Blob([new Uint8Array(imageBuffer)]), 'image.png')
+    formData.append('size', 'auto')
 
-    await execAsync(`${venvPython} ${scriptPath} "${inputPath}" "${outputPath}"`)
-    return true
+    const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+      method: 'POST',
+      headers: {
+        'X-Api-Key': apiKey,
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      console.error('remove.bg API error:', response.status, await response.text())
+      return null
+    }
+
+    const resultBuffer = await response.arrayBuffer()
+    return Buffer.from(resultBuffer)
   } catch (error) {
     console.error('Background removal failed:', error)
-    return false
+    return null
   }
 }
 
@@ -61,27 +76,27 @@ export async function PATCH(
   }
 
   if (avatar && avatar.size > 0) {
-    // Generate unique filename
     const timestamp = Date.now()
     const random = Math.random().toString(36).substring(7)
-    const ext = avatar.name.split('.').pop() || 'png'
-    const originalFilename = `${timestamp}-${random}.${ext}`
-    const originalPath = path.join(process.cwd(), 'public', 'avatars', originalFilename)
-
-    // Write original file
     const bytes = await avatar.arrayBuffer()
-    await writeFile(originalPath, Buffer.from(bytes))
+    const imageBuffer = Buffer.from(bytes)
 
     // Try to remove background
-    const noBgFilename = `${timestamp}-${random}_nobg.png`
-    const noBgPath = path.join(process.cwd(), 'public', 'avatars', noBgFilename)
+    const noBgBuffer = await removeBackgroundWithAPI(imageBuffer)
 
-    const bgRemoved = await removeBackground(originalPath, noBgPath)
-
-    if (bgRemoved) {
-      updates.avatarUrl = `/avatars/${noBgFilename}`
+    if (noBgBuffer) {
+      const blob = await put(`avatars/${timestamp}-${random}_nobg.png`, noBgBuffer, {
+        access: 'public',
+        contentType: 'image/png',
+      })
+      updates.avatarUrl = blob.url
     } else {
-      updates.avatarUrl = `/avatars/${originalFilename}`
+      const ext = avatar.name.split('.').pop() || 'png'
+      const blob = await put(`avatars/${timestamp}-${random}.${ext}`, imageBuffer, {
+        access: 'public',
+        contentType: avatar.type || 'image/png',
+      })
+      updates.avatarUrl = blob.url
     }
   }
 

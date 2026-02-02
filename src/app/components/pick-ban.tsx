@@ -59,7 +59,12 @@ export function PickBan({
   const [resetting, setResetting] = useState(false)
   const [backgroundFlash, setBackgroundFlash] = useState<'ban' | 'pick' | 'select' | null>(null)
   const [localMatchResult, setLocalMatchResult] = useState(matchResult)
-  const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showEntranceAnimation, setShowEntranceAnimation] = useState(
+    initialActions.length === 0 && matchResult === 'pending'
+  )
+  const [showExplosion1, setShowExplosion1] = useState(false)
+  const [showExplosion2, setShowExplosion2] = useState(false)
   const animationStartedRef = useRef(false)
   const currentAnimatingGameRef = useRef<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -69,27 +74,73 @@ export function PickBan({
   useEffect(() => {
     animationStartedRef.current = false
     currentAnimatingGameRef.current = null
-  }, [matchId])
+    // Reset entrance animation for new match
+    setShowEntranceAnimation(initialActions.length === 0 && matchResult === 'pending')
+  }, [matchId, initialActions.length, matchResult])
 
-  // Check for mobile device and show fullscreen prompt
+  // Turn off entrance animation after it completes
   useEffect(() => {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    )
-    const isFullscreen = document.fullscreenElement !== null
-
-    if (isMobile && !isFullscreen) {
-      setShowFullscreenPrompt(true)
+    if (showEntranceAnimation) {
+      const timer = setTimeout(() => {
+        setShowEntranceAnimation(false)
+      }, 1200) // Animation duration (1s) + buffer
+      return () => clearTimeout(timer)
     }
+  }, [showEntranceAnimation])
+
+  // Play explosion sound effect
+  const playExplosionSound = useCallback(() => {
+    const audio = new Audio('/Minecraft-Explosion.mp3')
+    audio.currentTime = 6.95 // Start at 7 seconds
+    audio.volume = 0.3
+    audio.play().catch(() => {
+      // Autoplay may be blocked
+    })
   }, [])
 
-  const handleFullscreenRequest = async () => {
+  // Show explosions when portraits hit the ground
+  useEffect(() => {
+    if (showEntranceAnimation) {
+      // Player 1 hits ground at ~300ms
+      const timer1 = setTimeout(() => {
+        setShowExplosion1(true)
+        playExplosionSound()
+        setTimeout(() => setShowExplosion1(false), 500) // Hide after 500ms
+      }, 300)
+      // Player 2 hits ground at 300ms + 150ms delay = 450ms
+      const timer2 = setTimeout(() => {
+        setShowExplosion2(true)
+        playExplosionSound()
+        setTimeout(() => setShowExplosion2(false), 500) // Hide after 500ms
+      }, 450)
+      return () => {
+        clearTimeout(timer1)
+        clearTimeout(timer2)
+      }
+    }
+  }, [showEntranceAnimation, playExplosionSound])
+
+  // Track fullscreen state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement !== null)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    // Set initial state
+    setIsFullscreen(document.fullscreenElement !== null)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  const handleFullscreenToggle = async () => {
     try {
-      await document.documentElement.requestFullscreen()
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+      } else {
+        await document.documentElement.requestFullscreen()
+      }
     } catch {
       // Fullscreen not supported or denied - that's ok
     }
-    setShowFullscreenPrompt(false)
   }
 
   // Play background music on mount, with retry on user interaction if blocked
@@ -530,24 +581,6 @@ export function PickBan({
 
   const phaseInfo = getPhaseInstruction()
 
-  // Show fullscreen prompt on mobile
-  if (showFullscreenPrompt) {
-    return (
-      <div className="fixed inset-0 bg-darcula-bg flex items-center justify-center z-50">
-        <button
-          onClick={handleFullscreenRequest}
-          className="flex flex-col items-center gap-6 p-8 text-center"
-        >
-          <svg className="w-24 h-24 text-darcula-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-          </svg>
-          <span className="text-2xl text-darcula-text-bright font-bold">{t('tapToEnterFullscreen')}</span>
-          <span className="text-darcula-text-muted">{t('forBestExperience')}</span>
-        </button>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-darcula-bg flex flex-col relative overflow-x-hidden">
       {/* Theme background image with gradient */}
@@ -625,6 +658,21 @@ export function PickBan({
               </svg>
             </span>
           )}
+          <button
+            onClick={handleFullscreenToggle}
+            className="p-2 rounded border border-darcula-border text-darcula-text hover:bg-darcula-elevated transition"
+            title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          >
+            {isFullscreen ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+              </svg>
+            )}
+          </button>
           {isHost && (
             <button
               onClick={handleResetRound}
@@ -817,14 +865,17 @@ export function PickBan({
         {/* Player 1 portrait - left */}
         <div
           key={isActivePhase && state.currentPlayer === 1 ? `p1-active-${actions.length}` : player1IsWinner ? 'p1-winner' : 'p1-inactive'}
-          className={(isActivePhase && state.currentPlayer === 1) || player1IsWinner ? 'idle-sway' : ''}
-          style={(isActivePhase && state.currentPlayer === 1) || player1IsWinner ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } as React.CSSProperties : undefined}
+          className={`relative ${showEntranceAnimation ? 'portrait-enter' : ''} ${!showEntranceAnimation && ((isActivePhase && state.currentPlayer === 1) || player1IsWinner) ? 'idle-sway' : ''}`}
+          style={{
+            '--drop-duration': '1s',
+            ...(!showEntranceAnimation && ((isActivePhase && state.currentPlayer === 1) || player1IsWinner) ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } : {})
+          } as React.CSSProperties}
         >
           <button
             onClick={() => canSelectWinner && handleRecordResult('player1')}
             disabled={!canSelectWinner || saving}
             className={`relative transition-all duration-300 rounded-t-lg overflow-hidden flex-shrink-0 w-32 h-44 sm:w-28 sm:h-36 md:w-36 md:h-48 lg:w-48 lg:h-64 xl:w-64 xl:h-80 ${
-              (isActivePhase && state.currentPlayer === 1) || player1IsWinner
+              !showEntranceAnimation && ((isActivePhase && state.currentPlayer === 1) || player1IsWinner)
                 ? 'ring-2 lg:ring-4 ring-darcula-blue ring-offset-2 lg:ring-offset-4 ring-offset-darcula-bg idle-bounce'
                 : canSelectWinner
                   ? 'hover:ring-2 lg:hover:ring-4 hover:ring-darcula-green hover:ring-offset-2 lg:hover:ring-offset-4 hover:ring-offset-darcula-bg cursor-pointer'
@@ -855,6 +906,14 @@ export function PickBan({
               </div>
             )}
           </button>
+          {/* Explosion on landing */}
+          {showExplosion1 && (
+            <img
+              src="/explosion.gif"
+              alt=""
+              className="absolute bottom-10 left-1/2 -translate-x-1/2 translate-y-1/3 w-48 h-48 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 xl:w-80 xl:h-80 pointer-events-none z-10"
+            />
+          )}
         </div>
 
         {/* Match info - center (hidden on small screens) */}
@@ -879,14 +938,18 @@ export function PickBan({
         {/* Player 2 portrait - right */}
         <div
           key={isActivePhase && state.currentPlayer === 2 ? `p2-active-${actions.length}` : player2IsWinner ? 'p2-winner' : 'p2-inactive'}
-          className={(isActivePhase && state.currentPlayer === 2) || player2IsWinner ? 'idle-sway' : ''}
-          style={(isActivePhase && state.currentPlayer === 2) || player2IsWinner ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } as React.CSSProperties : undefined}
+          className={`relative ${showEntranceAnimation ? 'portrait-enter' : ''} ${!showEntranceAnimation && ((isActivePhase && state.currentPlayer === 2) || player2IsWinner) ? 'idle-sway' : ''}`}
+          style={{
+            '--drop-duration': '1s',
+            animationDelay: showEntranceAnimation ? '0.15s' : undefined,
+            ...(!showEntranceAnimation && ((isActivePhase && state.currentPlayer === 2) || player2IsWinner) ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } : {})
+          } as React.CSSProperties}
         >
           <button
             onClick={() => canSelectWinner && handleRecordResult('player2')}
             disabled={!canSelectWinner || saving}
             className={`relative transition-all duration-300 rounded-t-lg overflow-hidden flex-shrink-0 w-32 h-44 sm:w-28 sm:h-36 md:w-36 md:h-48 lg:w-48 lg:h-64 xl:w-64 xl:h-80 ${
-              (isActivePhase && state.currentPlayer === 2) || player2IsWinner
+              !showEntranceAnimation && ((isActivePhase && state.currentPlayer === 2) || player2IsWinner)
                 ? 'ring-2 lg:ring-4 ring-darcula-blue ring-offset-2 lg:ring-offset-4 ring-offset-darcula-bg idle-bounce'
                 : canSelectWinner
                   ? 'hover:ring-2 lg:hover:ring-4 hover:ring-darcula-green hover:ring-offset-2 lg:hover:ring-offset-4 hover:ring-offset-darcula-bg cursor-pointer'
@@ -917,6 +980,14 @@ export function PickBan({
               </div>
             )}
           </button>
+          {/* Explosion on landing */}
+          {showExplosion2 && (
+            <img
+              src="/explosion.gif"
+              alt=""
+              className="absolute bottom-10 left-1/2 -translate-x-1/2 translate-y-1/3 w-48 h-48 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 xl:w-80 xl:h-80 pointer-events-none z-10"
+            />
+          )}
         </div>
       </div>
 
