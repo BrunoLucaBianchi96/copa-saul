@@ -4,13 +4,13 @@ export interface Game {
 }
 
 export const GAMES: Game[] = [
-  { id: 'nidhogg', name: 'Nidhogg' },
-  { id: 'tetris', name: 'Tetris' },
-  { id: 'windjammers', name: 'Windjammers' },
-  { id: 'mario-war', name: 'Mario War' },
-  { id: 'darts', name: 'Darts' },
-  { id: 'db-tenkaichi', name: 'DB Tenkaichi' },
+  { id: 'sparking-zero', name: 'Sparking Zero' },
+  { id: 'taiko-no-tatsujin', name: 'Taiko no Tatsujin' },
+  { id: 'trackmania', name: 'Trackmania' },
+  { id: 'wii-sports-ping-pong', name: 'Wii Sports Ping Pong' },
+  { id: 'tricky-towers', name: 'Tricky Towers' },
   { id: 'duck-game', name: 'Duck Game' },
+  { id: 'boomerang-fu', name: 'Boomerang Fu' },
 ]
 
 export type PickBanActionType = 'ban' | 'pick' | 'skip'

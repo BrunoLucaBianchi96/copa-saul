@@ -126,6 +126,42 @@ export const THEMES: Theme[] = [
     normalizeVolume: 1,
     backgroundImage: 'https://wallpapercave.com/wp/wp11199297.png',
   },
+  {
+    id: 'red-sun',
+    name: 'Red Sun (MGRR)',
+    bpm: 150,
+    division: 1,
+    audioFile: '/songs/mgrr-red-sun.mp3',
+    normalizeVolume: 1,
+    backgroundImage: 'https://images6.alphacoders.com/388/thumb-1920-388347.jpg',
+  },
+  {
+    id: 'elden-ring',
+    name: 'Elden Ring Main Theme',
+    bpm: 75,
+    division: 1,
+    audioFile: '/songs/elden-ring-main-menu.mp3',
+    audioOffset: 23000,
+    normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/uwp/uwp4431208.png',
+  },
+  {
+    id: 'megalovania',
+    name: 'Megalovania (Undertale)',
+    bpm: 120,
+    division: 1,
+    audioFile: '/songs/megalovania.mp3',
+    normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp15821690.png',
+  },
+  {
+    id: 'gta-4',
+    name: 'Soviet Connection (GTA IV)',
+    bpm: 72,
+    division: 1,
+    audioFile: '/songs/gta-4.mp3',
+    normalizeVolume: 1,
+  },
 ]
 
 export function getThemeById(id: string): Theme | undefined {

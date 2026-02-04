@@ -29,6 +29,129 @@ interface PickBanProps {
   gamePlayCounts: Record<string, number>
 }
 
+// Helper to format player name with alias on separate lines
+function formatPlayerName(name: string): React.ReactNode {
+  // Match pattern: FirstName "Alias" LastName
+  const match = name.match(/^([^"]+)"([^"]+)"(.*)$/)
+  if (match) {
+    const [, firstName, alias, lastName] = match
+    return (
+      <>
+        <span>{firstName.trim()}</span>
+        <span className="block text-[0.7em] opacity-80">&quot;{alias.trim()}&quot;</span>
+        <span>{lastName.trim()}</span>
+      </>
+    )
+  }
+  return name
+}
+
+// Helper to get initials from a name (ignoring quoted alias)
+function getInitials(name: string): string {
+  // Remove quoted alias for initials
+  const nameWithoutAlias = name.replace(/"[^"]+"/g, '').trim()
+  return nameWithoutAlias.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().slice(0, 2)
+}
+
+interface PlayerPortraitProps {
+  playerNumber: 1 | 2
+  name: string
+  avatar?: string | null
+  isActive: boolean
+  isWinner: boolean
+  opponentIsWinner: boolean
+  canSelectWinner: boolean
+  saving: boolean
+  showEntranceAnimation: boolean
+  showExplosion: boolean
+  animationDurations: { sway: number; bounce: number }
+  actionsLength: number
+  onSelectWinner: () => void
+  winnerLabel: string
+  gradientColors: string
+  entranceDelay?: string
+}
+
+function PlayerPortrait({
+  playerNumber,
+  name,
+  avatar,
+  isActive,
+  isWinner,
+  opponentIsWinner,
+  canSelectWinner,
+  saving,
+  showEntranceAnimation,
+  showExplosion,
+  animationDurations,
+  actionsLength,
+  onSelectWinner,
+  winnerLabel,
+  gradientColors,
+  entranceDelay,
+}: PlayerPortraitProps) {
+  const keyPrefix = `p${playerNumber}`
+  const key = isActive ? `${keyPrefix}-active-${actionsLength}` : isWinner ? `${keyPrefix}-winner` : `${keyPrefix}-inactive`
+  const shouldAnimate = !showEntranceAnimation && (isActive || isWinner)
+
+  return (
+    <div
+      key={key}
+      className={`relative ${showEntranceAnimation ? 'portrait-enter' : ''} ${shouldAnimate ? 'idle-sway' : ''}`}
+      style={{
+        '--drop-duration': '1s',
+        animationDelay: entranceDelay,
+        ...(shouldAnimate ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } : {})
+      } as React.CSSProperties}
+    >
+      <button
+        onClick={() => canSelectWinner && onSelectWinner()}
+        disabled={!canSelectWinner || saving}
+        className={`relative transition-all duration-300 rounded-t-lg overflow-hidden flex-shrink-0 w-32 h-44 sm:w-28 sm:h-36 md:w-36 md:h-48 lg:w-48 lg:h-64 xl:w-64 xl:h-80 ${
+          shouldAnimate
+            ? 'ring-2 lg:ring-4 ring-darcula-blue ring-offset-2 lg:ring-offset-4 ring-offset-darcula-bg idle-bounce'
+            : canSelectWinner
+              ? 'hover:ring-2 lg:hover:ring-4 hover:ring-darcula-green hover:ring-offset-2 lg:hover:ring-offset-4 hover:ring-offset-darcula-bg cursor-pointer'
+              : opponentIsWinner
+                ? 'grayscale opacity-60'
+                : 'opacity-60'
+        }`}
+      >
+        {avatar ? (
+          <img
+            src={avatar}
+            alt={name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className={`w-full h-full bg-gradient-to-br ${gradientColors} flex items-center justify-center`}>
+            <span className="text-darcula-text-bright text-3xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold">
+              {getInitials(name)}
+            </span>
+          </div>
+        )}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 sm:p-2 lg:p-4">
+          <div className="text-darcula-text-bright text-sm sm:text-sm lg:text-base xl:text-lg font-bold text-center leading-tight">
+            {formatPlayerName(name)}
+          </div>
+        </div>
+        {canSelectWinner && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
+            <span className="text-darcula-green text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold">{winnerLabel}</span>
+          </div>
+        )}
+      </button>
+      {showExplosion && (
+        <img
+          src="/explosion.gif"
+          alt=""
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 translate-y-1/3 w-48 h-48 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 xl:w-80 xl:h-80 pointer-events-none z-10"
+        />
+      )}
+    </div>
+  )
+}
+
 export function PickBan({
   player1Name,
   player2Name,
@@ -66,6 +189,7 @@ export function PickBan({
   const [showExplosion1, setShowExplosion1] = useState(false)
   const [showExplosion2, setShowExplosion2] = useState(false)
   const animationStartedRef = useRef(false)
+  const entranceAnimationShownRef = useRef(initialActions.length === 0 && matchResult === 'pending')
   const currentAnimatingGameRef = useRef<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [wheelScale, setWheelScale] = useState(1)
@@ -74,9 +198,11 @@ export function PickBan({
   useEffect(() => {
     animationStartedRef.current = false
     currentAnimatingGameRef.current = null
-    // Reset entrance animation for new match
-    setShowEntranceAnimation(initialActions.length === 0 && matchResult === 'pending')
-  }, [matchId, initialActions.length, matchResult])
+    // Reset entrance animation for new match (only if not already shown)
+    const shouldShowEntrance = initialActions.length === 0 && matchResult === 'pending'
+    entranceAnimationShownRef.current = shouldShowEntrance
+    setShowEntranceAnimation(shouldShowEntrance)
+  }, [matchId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Turn off entrance animation after it completes
   useEffect(() => {
@@ -486,6 +612,7 @@ export function PickBan({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ selectGame: gameId }),
+        keepalive: true,
       })
 
       if (res.ok) {
@@ -862,59 +989,23 @@ export function PickBan({
 
       {/* Footer with portraits and match info */}
       <div className="relative z-10 w-full flex items-end justify-center gap-4 px-4 py-4">
-        {/* Player 1 portrait - left */}
-        <div
-          key={isActivePhase && state.currentPlayer === 1 ? `p1-active-${actions.length}` : player1IsWinner ? 'p1-winner' : 'p1-inactive'}
-          className={`relative ${showEntranceAnimation ? 'portrait-enter' : ''} ${!showEntranceAnimation && ((isActivePhase && state.currentPlayer === 1) || player1IsWinner) ? 'idle-sway' : ''}`}
-          style={{
-            '--drop-duration': '1s',
-            ...(!showEntranceAnimation && ((isActivePhase && state.currentPlayer === 1) || player1IsWinner) ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } : {})
-          } as React.CSSProperties}
-        >
-          <button
-            onClick={() => canSelectWinner && handleRecordResult('player1')}
-            disabled={!canSelectWinner || saving}
-            className={`relative transition-all duration-300 rounded-t-lg overflow-hidden flex-shrink-0 w-32 h-44 sm:w-28 sm:h-36 md:w-36 md:h-48 lg:w-48 lg:h-64 xl:w-64 xl:h-80 ${
-              !showEntranceAnimation && ((isActivePhase && state.currentPlayer === 1) || player1IsWinner)
-                ? 'ring-2 lg:ring-4 ring-darcula-blue ring-offset-2 lg:ring-offset-4 ring-offset-darcula-bg idle-bounce'
-                : canSelectWinner
-                  ? 'hover:ring-2 lg:hover:ring-4 hover:ring-darcula-green hover:ring-offset-2 lg:hover:ring-offset-4 hover:ring-offset-darcula-bg cursor-pointer'
-                  : player2IsWinner
-                    ? 'grayscale opacity-60'
-                    : 'opacity-60'
-            }`}
-          >
-            {player1Avatar ? (
-              <img
-                src={player1Avatar}
-                alt={player1Name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-darcula-blue to-darcula-purple flex items-center justify-center">
-                <span className="text-darcula-text-bright text-3xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold">
-                  {player1Name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                </span>
-              </div>
-            )}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 sm:p-2 lg:p-4">
-              <div className="text-darcula-text-bright text-sm sm:text-sm lg:text-base xl:text-lg font-bold truncate">{player1Name}</div>
-            </div>
-            {canSelectWinner && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
-                <span className="text-darcula-green text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold">{t('winner')}</span>
-              </div>
-            )}
-          </button>
-          {/* Explosion on landing */}
-          {showExplosion1 && (
-            <img
-              src="/explosion.gif"
-              alt=""
-              className="absolute bottom-10 left-1/2 -translate-x-1/2 translate-y-1/3 w-48 h-48 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 xl:w-80 xl:h-80 pointer-events-none z-10"
-            />
-          )}
-        </div>
+        <PlayerPortrait
+          playerNumber={1}
+          name={player1Name}
+          avatar={player1Avatar}
+          isActive={isActivePhase && state.currentPlayer === 1}
+          isWinner={player1IsWinner}
+          opponentIsWinner={player2IsWinner}
+          canSelectWinner={canSelectWinner}
+          saving={saving}
+          showEntranceAnimation={showEntranceAnimation}
+          showExplosion={showExplosion1}
+          animationDurations={animationDurations}
+          actionsLength={actions.length}
+          onSelectWinner={() => handleRecordResult('player1')}
+          winnerLabel={t('winner')}
+          gradientColors="from-darcula-blue to-darcula-purple"
+        />
 
         {/* Match info - center (hidden on small screens) */}
         <div className="hidden sm:block text-center pb-4 lg:pb-8 flex-shrink-0">
@@ -935,60 +1026,24 @@ export function PickBan({
           )}
         </div>
 
-        {/* Player 2 portrait - right */}
-        <div
-          key={isActivePhase && state.currentPlayer === 2 ? `p2-active-${actions.length}` : player2IsWinner ? 'p2-winner' : 'p2-inactive'}
-          className={`relative ${showEntranceAnimation ? 'portrait-enter' : ''} ${!showEntranceAnimation && ((isActivePhase && state.currentPlayer === 2) || player2IsWinner) ? 'idle-sway' : ''}`}
-          style={{
-            '--drop-duration': '1s',
-            animationDelay: showEntranceAnimation ? '0.15s' : undefined,
-            ...(!showEntranceAnimation && ((isActivePhase && state.currentPlayer === 2) || player2IsWinner) ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } : {})
-          } as React.CSSProperties}
-        >
-          <button
-            onClick={() => canSelectWinner && handleRecordResult('player2')}
-            disabled={!canSelectWinner || saving}
-            className={`relative transition-all duration-300 rounded-t-lg overflow-hidden flex-shrink-0 w-32 h-44 sm:w-28 sm:h-36 md:w-36 md:h-48 lg:w-48 lg:h-64 xl:w-64 xl:h-80 ${
-              !showEntranceAnimation && ((isActivePhase && state.currentPlayer === 2) || player2IsWinner)
-                ? 'ring-2 lg:ring-4 ring-darcula-blue ring-offset-2 lg:ring-offset-4 ring-offset-darcula-bg idle-bounce'
-                : canSelectWinner
-                  ? 'hover:ring-2 lg:hover:ring-4 hover:ring-darcula-green hover:ring-offset-2 lg:hover:ring-offset-4 hover:ring-offset-darcula-bg cursor-pointer'
-                  : player1IsWinner
-                    ? 'grayscale opacity-60'
-                    : 'opacity-60'
-            }`}
-          >
-            {player2Avatar ? (
-              <img
-                src={player2Avatar}
-                alt={player2Name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-darcula-orange to-darcula-red flex items-center justify-center">
-                <span className="text-darcula-text-bright text-3xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold">
-                  {player2Name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                </span>
-              </div>
-            )}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 sm:p-2 lg:p-4">
-              <div className="text-darcula-text-bright text-sm sm:text-sm lg:text-base xl:text-lg font-bold text-right truncate">{player2Name}</div>
-            </div>
-            {canSelectWinner && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
-                <span className="text-darcula-green text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold">{t('winner')}</span>
-              </div>
-            )}
-          </button>
-          {/* Explosion on landing */}
-          {showExplosion2 && (
-            <img
-              src="/explosion.gif"
-              alt=""
-              className="absolute bottom-10 left-1/2 -translate-x-1/2 translate-y-1/3 w-48 h-48 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 xl:w-80 xl:h-80 pointer-events-none z-10"
-            />
-          )}
-        </div>
+        <PlayerPortrait
+          playerNumber={2}
+          name={player2Name}
+          avatar={player2Avatar}
+          isActive={isActivePhase && state.currentPlayer === 2}
+          isWinner={player2IsWinner}
+          opponentIsWinner={player1IsWinner}
+          canSelectWinner={canSelectWinner}
+          saving={saving}
+          showEntranceAnimation={showEntranceAnimation}
+          showExplosion={showExplosion2}
+          animationDurations={animationDurations}
+          actionsLength={actions.length}
+          onSelectWinner={() => handleRecordResult('player2')}
+          winnerLabel={t('winner')}
+          gradientColors="from-darcula-orange to-darcula-red"
+          entranceDelay={showEntranceAnimation ? '0.15s' : undefined}
+        />
       </div>
 
     </div>
