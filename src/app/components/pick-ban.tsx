@@ -634,7 +634,7 @@ export function PickBan({
       const res = await fetch(`/api/tournaments/${tournamentId}/matches/${matchId}/pick-ban`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selectGame: gameId }),
+        body: JSON.stringify({ selectGame: gameId, actions }),
         keepalive: true,
       })
 

@@ -53,6 +53,7 @@ export async function POST(
       .set({
         selectedGame: body.selectGame,
         pickBanComplete: true,
+        pickBanHistory: body.actions ? JSON.stringify(body.actions) : undefined,
       })
       .where(eq(matches.id, matchId))
 
