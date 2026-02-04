@@ -10,6 +10,7 @@ import {
   calculatePickBanState,
 } from '@/lib/games'
 import { type Theme, getAnimationDurations } from '@/lib/themes'
+import { GTA4LoadingBackground } from './gta4-loading-background'
 
 interface PickBanProps {
   player1Name: string
@@ -232,13 +233,13 @@ export function PickBan({
         setShowExplosion1(true)
         playExplosionSound()
         setTimeout(() => setShowExplosion1(false), 500) // Hide after 500ms
-      }, 300)
+      }, 350)
       // Player 2 hits ground at 300ms + 150ms delay = 450ms
       const timer2 = setTimeout(() => {
         setShowExplosion2(true)
         playExplosionSound()
         setTimeout(() => setShowExplosion2(false), 500) // Hide after 500ms
-      }, 450)
+      }, 500)
       return () => {
         clearTimeout(timer1)
         clearTimeout(timer2)
@@ -320,6 +321,28 @@ export function PickBan({
       audio.src = ''
     }
   }, [theme.audioFile, theme.audioOffset])
+
+  // Auto-mute when tab loses focus
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    let volumeBeforeMute = audio.volume
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab is hidden - store current volume and mute
+        volumeBeforeMute = audio.volume
+        audio.volume = 0
+      } else {
+        // Tab is visible - restore volume
+        audio.volume = volumeBeforeMute
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
 
   // Calculate wheel scale based on available width
   useEffect(() => {
@@ -710,8 +733,19 @@ export function PickBan({
 
   return (
     <div className="min-h-screen bg-darcula-bg flex flex-col relative overflow-x-hidden">
-      {/* Theme background image with gradient */}
-      {theme.backgroundImage && (
+      {/* Theme background - GTA4 animated or static image */}
+      {theme.id === 'gta-4' ? (
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <GTA4LoadingBackground />
+          {/* Gradient overlay for readability - lower opacity to show more of the animated background */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(30, 31, 34, 0.3) 0%, rgba(30, 31, 34, 0.6) 100%)',
+            }}
+          />
+        </div>
+      ) : theme.backgroundImage && (
         <div
           className="fixed inset-0 z-0 pointer-events-none"
           style={{

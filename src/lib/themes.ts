@@ -78,6 +78,7 @@ export const THEMES: Theme[] = [
     division: 1,
     audioFile: '/songs/ultimate-battle.mp3',
     normalizeVolume: 1,
+    audioOffset: 2000,
     backgroundImage: 'https://pbs.twimg.com/media/FgVivkzVQAEkuTK.jpg',
     backgroundSize: 'repeat',
   },
@@ -161,6 +162,15 @@ export const THEMES: Theme[] = [
     division: 1,
     audioFile: '/songs/gta-4.mp3',
     normalizeVolume: 1,
+  },
+  {
+    id: 'wii-sports',
+    name: 'Wii Sports Theme',
+    bpm: 120,
+    division: 1,
+    audioFile: '/songs/wii-sports.mp3',
+    normalizeVolume: 1,
+    backgroundImage: 'https://s1.thcdn.com/design-assets/products/Large/10456603/pic1.jpg',
   },
 ]
 

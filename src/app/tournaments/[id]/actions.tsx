@@ -177,12 +177,6 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
   }
 
   return (
-    <button
-      onClick={nextRound}
-      disabled={loading}
-      className="bg-darcula-blue text-darcula-bg px-4 py-2 rounded hover:bg-darcula-blue/80 transition disabled:opacity-50 font-medium"
-    >
-      {loading ? tCommon('processing') : t('nextRound')}
-    </button>
+    <></>
   )
 }

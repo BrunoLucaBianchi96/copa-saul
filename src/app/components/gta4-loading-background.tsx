@@ -2,19 +2,47 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
-interface GTA4LoadingBackgroundProps {
-  images: string[]
-  backgrounds: string[]
-}
+const GTA4_BACKGROUNDS = [
+  '/bgs/gta-4-bgs/1_1.png',
+  '/bgs/gta-4-bgs/2_1.png',
+  '/bgs/gta-4-bgs/3_1.png',
+  '/bgs/gta-4-bgs/4_1.png',
+  '/bgs/gta-4-bgs/5_1.png',
+  '/bgs/gta-4-bgs/6_1.png',
+  '/bgs/gta-4-bgs/7_1.png',
+  '/bgs/gta-4-bgs/8_1.png',
+  '/bgs/gta-4-bgs/9_1.png',
+  '/bgs/gta-4-bgs/10_1.png',
+  '/bgs/gta-4-bgs/11_1.png',
+  '/bgs/gta-4-bgs/12_1.png',
+  '/bgs/gta-4-bgs/13_1.png',
+]
 
-export function GTA4LoadingBackground({ images, backgrounds }: GTA4LoadingBackgroundProps) {
+export function GTA4LoadingBackground() {
+  const [images, setImages] = useState<string[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFading, setIsFading] = useState(false)
   const [animationKey, setAnimationKey] = useState(0)
   const [randomOffset, setRandomOffset] = useState({ x: 0, y: 0 })
 
+  // Fetch player avatars on mount
+  useEffect(() => {
+    async function fetchAvatars() {
+      try {
+        const res = await fetch('/api/players/avatars')
+        if (res.ok) {
+          const data = await res.json()
+          setImages(data.avatars || [])
+        }
+      } catch {
+        // Silently fail - component will just not render
+      }
+    }
+    fetchAvatars()
+  }, [])
+
   const side = currentIndex % 2 === 0 ? 'left' : 'right'
-  const currentBackground = backgrounds.length > 0 ? backgrounds[currentIndex % backgrounds.length] : null
+  const currentBackground = GTA4_BACKGROUNDS[currentIndex % GTA4_BACKGROUNDS.length]
 
   const generateRandomOffset = useCallback(() => {
     const angle = Math.random() * 2 * Math.PI
@@ -49,23 +77,34 @@ export function GTA4LoadingBackground({ images, backgrounds }: GTA4LoadingBackgr
     return () => clearInterval(interval)
   }, [images.length])
 
-  if (images.length === 0) return null
-
-  return (
-    <div className="fixed inset-0 overflow-hidden bg-black">
-      {/* Background image */}
-      {currentBackground && (
-        <div
-          key={`bg-${animationKey}`}
-          className="absolute inset-0 gta4-bg-zoom"
-        >
+  if (images.length === 0) {
+    // Show just the background while loading or if no avatars
+    return (
+      <div className="fixed inset-0 overflow-hidden bg-black">
+        <div className="absolute inset-0">
           <img
-            src={currentBackground}
+            src={GTA4_BACKGROUNDS[0]}
             alt=""
             className="w-full h-full object-cover"
           />
         </div>
-      )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 overflow-hidden bg-black">
+      {/* Background image */}
+      <div
+        key={`bg-${animationKey}`}
+        className="absolute inset-0 gta4-bg-zoom"
+      >
+        <img
+          src={currentBackground}
+          alt=""
+          className="w-full h-full object-cover"
+        />
+      </div>
 
       {/* Player image with animation */}
       <div
