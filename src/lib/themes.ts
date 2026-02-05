@@ -172,6 +172,24 @@ export const THEMES: Theme[] = [
     normalizeVolume: 1,
     backgroundImage: 'https://s1.thcdn.com/design-assets/products/Large/10456603/pic1.jpg',
   },
+  {
+    id: 'matrix-spybreak',
+    name: 'Spybreak! (The Matrix)',
+    bpm: 128,
+    division: 1,
+    audioFile: '/songs/matrix-spybreak.mp3',
+    normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp1917057.jpg',
+  },
+  {
+    id: 'scarface-push-it-to-the-limit',
+    name: 'Push It to the Limit (Scarface)',
+    bpm: 122,
+    division: 1,
+    audioFile: '/songs/Scarface-push-it-to-the-limit.mp3',
+    normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp2073053.jpg',
+  },
 ]
 
 export function getThemeById(id: string): Theme | undefined {

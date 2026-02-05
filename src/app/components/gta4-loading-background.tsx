@@ -11,6 +11,78 @@ function preloadImage(src: string): Promise<void> {
   })
 }
 
+interface BrightnessStats {
+  slope: number
+  intercept: number
+}
+
+function analyzeImageBrightness(src: string): Promise<BrightnessStats> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        resolve({ slope: 1, intercept: 0 })
+        return
+      }
+
+      // Sample at smaller size for performance
+      const sampleSize = 100
+      canvas.width = sampleSize
+      canvas.height = sampleSize
+      ctx.drawImage(img, 0, 0, sampleSize, sampleSize)
+
+      const imageData = ctx.getImageData(0, 0, sampleSize, sampleSize)
+      const data = imageData.data
+
+      const brightnesses: number[] = []
+      for (let i = 0; i < data.length; i += 4) {
+        // Skip fully transparent pixels
+        if (data[i + 3] < 128) continue
+        // Calculate perceived brightness (luminance)
+        const r = data[i] / 255
+        const g = data[i + 1] / 255
+        const b = data[i + 2] / 255
+        const brightness = 0.299 * r + 0.587 * g + 0.114 * b
+        brightnesses.push(brightness)
+      }
+
+      if (brightnesses.length === 0) {
+        resolve({ slope: 1, intercept: 0 })
+        return
+      }
+
+      // Sort and get percentiles to avoid outliers
+      // Using 20th/80th percentiles for aggressive normalization
+      brightnesses.sort((a, b) => a - b)
+      const pLow = brightnesses[Math.floor(brightnesses.length * 0.20)]
+      const pHigh = brightnesses[Math.floor(brightnesses.length * 0.80)]
+
+      // Calculate normalization: output = slope * input + intercept
+      // Maps [pLow, pHigh] to [0, 1]
+      const range = pHigh - pLow
+      if (range < 0.01) {
+        // Image has very little contrast, don't normalize
+        resolve({ slope: 1, intercept: 0 })
+        return
+      }
+
+      const slope = 1 / range
+      const intercept = -pLow * slope
+
+      resolve({ slope, intercept })
+    }
+    img.onerror = () => resolve({ slope: 1, intercept: 0 })
+    img.src = src
+  })
+}
+
+interface GTA4LoadingBackgroundProps {
+  cartoonFilter?: boolean
+}
+
 const GTA4_BACKGROUNDS = [
   '/bgs/gta-4-bgs/1_1.png',
   '/bgs/gta-4-bgs/2_1.png',
@@ -27,8 +99,9 @@ const GTA4_BACKGROUNDS = [
   '/bgs/gta-4-bgs/13_1.png',
 ]
 
-export function GTA4LoadingBackground() {
+export function GTA4LoadingBackground({ cartoonFilter = false }: GTA4LoadingBackgroundProps) {
   const [images, setImages] = useState<string[]>([])
+  const [brightnessStats, setBrightnessStats] = useState<BrightnessStats[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFading, setIsFading] = useState(false)
   const [animationKey, setAnimationKey] = useState(0)
@@ -49,8 +122,16 @@ export function GTA4LoadingBackground() {
         if (res.ok) {
           const data = await res.json()
           const avatars = data.avatars || []
-          // Preload all avatar images before setting state
-          await Promise.all(avatars.map(preloadImage))
+          // Preload all avatar images (and analyze brightness if filter enabled)
+          if (cartoonFilter) {
+            const [, stats] = await Promise.all([
+              Promise.all(avatars.map(preloadImage)),
+              Promise.all(avatars.map(analyzeImageBrightness))
+            ])
+            setBrightnessStats(stats)
+          } else {
+            await Promise.all(avatars.map(preloadImage))
+          }
           setImages(avatars)
         }
       } catch {
@@ -58,10 +139,11 @@ export function GTA4LoadingBackground() {
       }
     }
     fetchAvatars()
-  }, [])
+  }, [cartoonFilter])
 
   const side = currentIndex % 2 === 0 ? 'left' : 'right'
   const currentBackground = GTA4_BACKGROUNDS[currentIndex % GTA4_BACKGROUNDS.length]
+  const currentStats = brightnessStats[currentIndex] || { slope: 1, intercept: 0 }
 
   const generateRandomOffset = useCallback(() => {
     const angle = Math.random() * 2 * Math.PI
@@ -118,6 +200,30 @@ export function GTA4LoadingBackground() {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
+      {/* SVG filter for GTA4 cartoon effect */}
+      {cartoonFilter && (
+        <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+          <defs>
+            <filter id="gta4-cartoon">
+              {/* Normalize brightness based on image analysis */}
+              <feComponentTransfer>
+                <feFuncR type="linear" slope={currentStats.slope} intercept={currentStats.intercept} />
+                <feFuncG type="linear" slope={currentStats.slope} intercept={currentStats.intercept} />
+                <feFuncB type="linear" slope={currentStats.slope} intercept={currentStats.intercept} />
+              </feComponentTransfer>
+              {/* Posterize: more bands in dark range to preserve shadow detail */}
+              <feComponentTransfer>
+                <feFuncR type="discrete" tableValues="0 .06 .14 .25 .42 .65 1" />
+                <feFuncG type="discrete" tableValues="0 .06 .14 .25 .42 .65 1" />
+                <feFuncB type="discrete" tableValues="0 .06 .14 .25 .42 .65 1" />
+              </feComponentTransfer>
+              {/* Boost saturation */}
+              <feColorMatrix type="saturate" values="1.1" />
+            </filter>
+          </defs>
+        </svg>
+      )}
+
       {/* Background image */}
       <div
         key={`bg-${animationKey}`}
@@ -145,6 +251,7 @@ export function GTA4LoadingBackground() {
           src={images[currentIndex]}
           alt="Player"
           className="h-[100vh] w-auto object-contain"
+          style={cartoonFilter ? { filter: 'url(#gta4-cartoon)' } : undefined}
         />
       </div>
 
