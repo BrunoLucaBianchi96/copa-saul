@@ -178,34 +178,9 @@ export function getThemeById(id: string): Theme | undefined {
   return THEMES.find((t) => t.id === id)
 }
 
-export function getRandomTheme(): Theme {
-  return THEMES[Math.floor(Math.random() * THEMES.length)]
-}
-
-// Seeded shuffle using tournament ID for deterministic but varied order per tournament
-function seededShuffle(array: Theme[], seed: number): Theme[] {
-  const result = [...array]
-  let currentSeed = seed
-
-  // Simple seeded random number generator
-  const seededRandom = () => {
-    currentSeed = (currentSeed * 1103515245 + 12345) & 0x7fffffff
-    return currentSeed / 0x7fffffff
-  }
-
-  // Fisher-Yates shuffle with seeded random
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(seededRandom() * (i + 1))
-    ;[result[i], result[j]] = [result[j], result[i]]
-  }
-
-  return result
-}
-
-// Get theme for a specific match in a tournament (round-robin, no repeats until all used)
-export function getThemeForTournament(tournamentId: number, matchIndex: number): Theme {
-  const shuffledThemes = seededShuffle(THEMES, tournamentId)
-  return shuffledThemes[matchIndex % shuffledThemes.length]
+// Get theme for a specific match in a tournament (cycles through themes in order, no repeats until all used)
+export function getThemeForTournament(_tournamentId: number, matchIndex: number): Theme {
+  return THEMES[matchIndex % THEMES.length]
 }
 
 // Calculate animation durations based on BPM and division
