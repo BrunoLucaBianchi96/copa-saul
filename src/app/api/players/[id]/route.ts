@@ -63,6 +63,7 @@ export async function PATCH(
   const name = formData.get('name') as string | null
   const nickname = formData.get('nickname') as string | null
   const avatar = formData.get('avatar') as File | null
+  const skipBgRemoval = formData.get('skipBgRemoval') === 'true'
 
   const updates: Partial<{ name: string; nickname: string | null; avatarUrl: string }> = {}
 
@@ -81,8 +82,8 @@ export async function PATCH(
     const bytes = await avatar.arrayBuffer()
     const imageBuffer = Buffer.from(bytes)
 
-    // Try to remove background
-    const noBgBuffer = await removeBackgroundWithAPI(imageBuffer)
+    // Try to remove background (unless skipped)
+    const noBgBuffer = skipBgRemoval ? null : await removeBackgroundWithAPI(imageBuffer)
 
     if (noBgBuffer) {
       const blob = await put(`avatars/${timestamp}-${random}_nobg.png`, noBgBuffer, {

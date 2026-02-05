@@ -132,7 +132,8 @@
     "saveChanges": "Guardar Cambios",
     "deletePlayer": "Eliminar jugador",
     "confirmDeletePlayer": "¿Estás seguro de que quieres eliminar a \"{name}\"? Esta acción no se puede deshacer.",
-    "cannotDeletePlayerInMatches": "No se puede eliminar este jugador porque ha participado en partidos."
+    "cannotDeletePlayerInMatches": "No se puede eliminar este jugador porque ha participado en partidos.",
+    "skipBgRemoval": "No remover fondo"
   },
   "errors": {
     "failedToDelete": "Error al eliminar el torneo",

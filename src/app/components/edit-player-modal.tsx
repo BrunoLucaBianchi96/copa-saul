@@ -20,6 +20,7 @@ export function EditPlayerModal({ player, isOpen, onClose }: EditPlayerModalProp
   const [name, setName] = useState(player.name)
   const [nickname, setNickname] = useState(player.nickname || '')
   const [preview, setPreview] = useState<string | null>(player.avatarUrl)
+  const [skipBgRemoval, setSkipBgRemoval] = useState(false)
   const [saving, setSaving] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -55,6 +56,9 @@ export function EditPlayerModal({ player, isOpen, onClose }: EditPlayerModalProp
     const file = fileInputRef.current?.files?.[0]
     if (file) {
       formData.append('avatar', file)
+    }
+    if (skipBgRemoval) {
+      formData.append('skipBgRemoval', 'true')
     }
 
     try {
@@ -150,6 +154,17 @@ export function EditPlayerModal({ player, isOpen, onClose }: EditPlayerModalProp
             />
             <p className="text-xs text-darcula-text-muted mt-1">{t('nicknameHint')}</p>
           </div>
+
+          {/* Skip background removal */}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={skipBgRemoval}
+              onChange={(e) => setSkipBgRemoval(e.target.checked)}
+              className="w-4 h-4 accent-darcula-blue"
+            />
+            <span className="text-sm text-darcula-text-muted">{t('skipBgRemoval')}</span>
+          </label>
 
           {/* Buttons */}
           <div className="flex gap-3 pt-2">

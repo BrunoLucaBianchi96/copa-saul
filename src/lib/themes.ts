@@ -26,6 +26,15 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
   {
+    id: 'matrix',
+    name: 'Spybreak! (The Matrix)',
+    bpm: 128,
+    division: 1,
+    audioFile: '/songs/matrix-spybreak.mp3',
+    normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp1917057.jpg',
+  },
+  {
     id: 'raising-fighting-spirit',
     name: 'The Raising Fighting Spirit',
     bpm: 140,
@@ -171,15 +180,6 @@ export const THEMES: Theme[] = [
     audioFile: '/songs/wii-sports.mp3',
     normalizeVolume: 1,
     backgroundImage: 'https://s1.thcdn.com/design-assets/products/Large/10456603/pic1.jpg',
-  },
-  {
-    id: 'matrix-spybreak',
-    name: 'Spybreak! (The Matrix)',
-    bpm: 128,
-    division: 1,
-    audioFile: '/songs/matrix-spybreak.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp1917057.jpg',
   },
   {
     id: 'scarface-push-it-to-the-limit',

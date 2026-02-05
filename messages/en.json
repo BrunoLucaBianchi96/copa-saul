@@ -132,7 +132,8 @@
     "saveChanges": "Save Changes",
     "deletePlayer": "Delete player",
     "confirmDeletePlayer": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
-    "cannotDeletePlayerInMatches": "Cannot delete this player because they have participated in matches."
+    "cannotDeletePlayerInMatches": "Cannot delete this player because they have participated in matches.",
+    "skipBgRemoval": "Skip background removal"
   },
   "errors": {
     "failedToDelete": "Failed to delete tournament",

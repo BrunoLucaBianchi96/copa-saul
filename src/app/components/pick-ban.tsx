@@ -11,6 +11,7 @@ import {
 } from '@/lib/games'
 import { type Theme, getAnimationDurations } from '@/lib/themes'
 import { GTA4LoadingBackground } from './gta4-loading-background'
+import { MatrixBackground } from './matrix-background'
 
 interface PickBanProps {
   player1Name: string
@@ -733,11 +734,21 @@ export function PickBan({
 
   return (
     <div className="min-h-screen bg-darcula-bg flex flex-col relative overflow-x-hidden">
-      {/* Theme background - GTA4 animated or static image */}
+      {/* Theme background - animated (GTA4/Matrix) or static image */}
       {theme.id === 'gta-4' ? (
         <div className="fixed inset-0 z-0 pointer-events-none">
           <GTA4LoadingBackground />
           {/* Gradient overlay for readability - lower opacity to show more of the animated background */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(30, 31, 34, 0.3) 0%, rgba(30, 31, 34, 0.6) 100%)',
+            }}
+          />
+        </div>
+      ) : theme.id === 'matrix' ? (
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <MatrixBackground />
           <div
             className="absolute inset-0"
             style={{
