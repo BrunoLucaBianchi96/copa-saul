@@ -2,6 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
+function preloadImage(src: string): Promise<void> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => resolve()
+    img.onerror = () => resolve() // Resolve anyway to not block
+    img.src = src
+  })
+}
+
 const GTA4_BACKGROUNDS = [
   '/bgs/gta-4-bgs/1_1.png',
   '/bgs/gta-4-bgs/2_1.png',
@@ -24,6 +33,13 @@ export function GTA4LoadingBackground() {
   const [isFading, setIsFading] = useState(false)
   const [animationKey, setAnimationKey] = useState(0)
   const [randomOffset, setRandomOffset] = useState({ x: 0, y: 0 })
+  const [backgroundsPreloaded, setBackgroundsPreloaded] = useState(false)
+
+  // Preload background images on mount
+  useEffect(() => {
+    Promise.all(GTA4_BACKGROUNDS.map(preloadImage))
+      .then(() => setBackgroundsPreloaded(true))
+  }, [])
 
   // Fetch player avatars on mount
   useEffect(() => {
@@ -32,7 +48,10 @@ export function GTA4LoadingBackground() {
         const res = await fetch('/api/players/avatars')
         if (res.ok) {
           const data = await res.json()
-          setImages(data.avatars || [])
+          const avatars = data.avatars || []
+          // Preload all avatar images before setting state
+          await Promise.all(avatars.map(preloadImage))
+          setImages(avatars)
         }
       } catch {
         // Silently fail - component will just not render
@@ -77,8 +96,13 @@ export function GTA4LoadingBackground() {
     return () => clearInterval(interval)
   }, [images.length])
 
+  // Show black screen until backgrounds are preloaded
+  if (!backgroundsPreloaded) {
+    return <div className="fixed inset-0 bg-black" />
+  }
+
   if (images.length === 0) {
-    // Show just the background while loading or if no avatars
+    // Show just the background while loading avatars or if no avatars
     return (
       <div className="fixed inset-0 overflow-hidden bg-black">
         <div className="absolute inset-0">
