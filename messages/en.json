@@ -76,7 +76,8 @@
     "randomGame": "Random game",
     "selectingEllipsis": "Selecting...",
     "winner": "Winner",
-    "turn": "{name}'s turn"
+    "turn": "{name}'s turn",
+    "backToTournament": "Back to Tournament"
   },
   "result": {
     "theWinnerIs": "The winner is",
@@ -101,7 +102,8 @@
     "joinAsPlayer": "Join as Player",
     "hostDescription": "Hosts can manage tournaments. Players can view standings and matches.",
     "loggingOut": "Logging out...",
-    "logout": "Logout"
+    "logout": "Logout",
+    "tournament": "Tournament"
   },
   "rules": {
     "tournamentRules": "Tournament Rules",

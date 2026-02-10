@@ -76,7 +76,8 @@
     "randomGame": "Juego aleatorio",
     "selectingEllipsis": "Seleccionando...",
     "winner": "Ganador",
-    "turn": "Turno de {name}"
+    "turn": "Turno de {name}",
+    "backToTournament": "Volver al Torneo"
   },
   "result": {
     "theWinnerIs": "El ganador es",
@@ -101,7 +102,8 @@
     "joinAsPlayer": "Unirse como Jugador",
     "hostDescription": "Los anfitriones pueden administrar torneos. Los jugadores pueden ver clasificaciones y partidos.",
     "loggingOut": "Saliendo...",
-    "logout": "Salir"
+    "logout": "Salir",
+    "tournament": "Torneo"
   },
   "rules": {
     "tournamentRules": "Reglas del Torneo",
