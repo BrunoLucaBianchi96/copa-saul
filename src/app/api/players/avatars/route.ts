@@ -3,6 +3,8 @@ import { db } from '@/db'
 import { players } from '@/db/schema'
 import { isNull } from 'drizzle-orm'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const allPlayers = await db
     .select({ avatarUrl: players.avatarUrl })

@@ -32,6 +32,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Large assets
+/public/songs/
+
+# Playwright MCP
+.playwright-mcp/
+
 # Misc
 .DS_Store
 *.pem

@@ -135,6 +135,12 @@
     "cannotDeletePlayerInMatches": "No se puede eliminar este jugador porque ha participado en partidos.",
     "skipBgRemoval": "No remover fondo"
   },
+  "roster": {
+    "roster": "Plantel",
+    "backToTournament": "Volver al Torneo",
+    "participants": "participantes",
+    "noPlayers": "Aún no hay jugadores en este torneo."
+  },
   "errors": {
     "failedToDelete": "Error al eliminar el torneo",
     "failedToDeletePlayer": "Error al eliminar el jugador",

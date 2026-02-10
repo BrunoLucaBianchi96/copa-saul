@@ -26,6 +26,62 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
   {
+    id: 'the-beast-arcane',
+    name: 'The Beast (Arcane)',
+    bpm: 150,
+    division: 1,
+    audioFile: '/songs/the-beast-arcane.mp3',
+    normalizeVolume: 1,
+  },
+  {
+    id: 'bury-the-light',
+    name: 'Bury the Light (DMC5)',
+    bpm: 122,
+    division: 1,
+    audioFile: '/songs/bury-the-light-dmc.mp3',
+    normalizeVolume: 1,
+  },
+  {
+    id: 'running-in-the-90s',
+    name: "Running in the 90's (Initial D)",
+    bpm: 161,
+    division: 1,
+    audioFile: '/songs/running-in-the-90s-initial-d.mp3',
+    normalizeVolume: 1,
+  },
+  {
+    id: 'take-over',
+    name: 'Take Over (Persona 5 Royal)',
+    bpm: 170,
+    division: 1,
+    audioFile: '/songs/take-over-persona-5.mp3',
+    normalizeVolume: 1,
+  },
+  {
+    id: 'crash-bandicoot',
+    name: 'Crash Bandicoot Theme',
+    bpm: 140,
+    division: 1,
+    audioFile: '/songs/crash-bandicoot-main.mp3',
+    normalizeVolume: 1,
+  },
+  {
+    id: 'live-and-learn',
+    name: 'Live and Learn (Sonic Adventure 2)',
+    bpm: 168,
+    division: 1,
+    audioFile: '/songs/live-and-learn-sonic-adventure.mp3',
+    normalizeVolume: 1,
+  },
+  {
+    id: 'marvel-vs-capcom',
+    name: "Captain America's Theme (MvC)",
+    bpm: 160,
+    division: 1,
+    audioFile: '/songs/marvel-vs-capcom-captain-americas-theme.mp3',
+    normalizeVolume: 1,
+  },
+  {
     id: 'matrix',
     name: 'Spybreak! (The Matrix)',
     bpm: 128,
@@ -184,11 +240,11 @@ export const THEMES: Theme[] = [
   {
     id: 'scarface-push-it-to-the-limit',
     name: 'Push It to the Limit (Scarface)',
-    bpm: 122,
+    bpm: 156,
     division: 1,
     audioFile: '/songs/Scarface-push-it-to-the-limit.mp3',
     normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp2073053.jpg',
+    backgroundImage: 'https://wallpapercave.com/wp/wp2479343.jpg',
   },
 ]
 

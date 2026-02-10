@@ -12,6 +12,7 @@ import {
 import { type Theme, getAnimationDurations } from '@/lib/themes'
 import { GTA4LoadingBackground } from './gta4-loading-background'
 import { MatrixBackground } from './matrix-background'
+import { PlayerCard, formatPlayerName, getInitials } from './player-card'
 
 interface PickBanProps {
   player1Name: string
@@ -29,30 +30,6 @@ interface PickBanProps {
   prevMatchId: number | null
   nextMatchId: number | null
   gamePlayCounts: Record<string, number>
-}
-
-// Helper to format player name with alias on separate lines
-function formatPlayerName(name: string): React.ReactNode {
-  // Match pattern: FirstName "Alias" LastName
-  const match = name.match(/^([^"]+)"([^"]+)"(.*)$/)
-  if (match) {
-    const [, firstName, alias, lastName] = match
-    return (
-      <>
-        <span>{firstName.trim()}</span>
-        <span className="block text-[0.7em] opacity-80">&quot;{alias.trim()}&quot;</span>
-        <span>{lastName.trim()}</span>
-      </>
-    )
-  }
-  return name
-}
-
-// Helper to get initials from a name (ignoring quoted alias)
-function getInitials(name: string): string {
-  // Remove quoted alias for initials
-  const nameWithoutAlias = name.replace(/"[^"]+"/g, '').trim()
-  return nameWithoutAlias.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().slice(0, 2)
 }
 
 interface PlayerPortraitProps {
@@ -109,36 +86,23 @@ function PlayerPortrait({
       <button
         onClick={() => canSelectWinner && onSelectWinner()}
         disabled={!canSelectWinner || saving}
-        className={`relative transition-all duration-300 rounded-t-lg overflow-hidden flex-shrink-0 w-32 h-44 sm:w-28 sm:h-36 md:w-36 md:h-48 lg:w-48 lg:h-64 xl:w-64 xl:h-80 ${
+        className={`relative transition-all duration-300 ${
           shouldAnimate
-            ? 'ring-2 lg:ring-4 ring-darcula-blue ring-offset-2 lg:ring-offset-4 ring-offset-darcula-bg idle-bounce'
+            ? 'ring-2 lg:ring-4 ring-darcula-blue ring-offset-2 lg:ring-offset-4 ring-offset-darcula-bg idle-bounce rounded-t-lg'
             : canSelectWinner
-              ? 'hover:ring-2 lg:hover:ring-4 hover:ring-darcula-green hover:ring-offset-2 lg:hover:ring-offset-4 hover:ring-offset-darcula-bg cursor-pointer'
+              ? 'hover:ring-2 lg:hover:ring-4 hover:ring-darcula-green hover:ring-offset-2 lg:hover:ring-offset-4 hover:ring-offset-darcula-bg cursor-pointer rounded-t-lg'
               : opponentIsWinner
                 ? 'grayscale opacity-60'
                 : 'opacity-60'
         }`}
       >
-        {avatar ? (
-          <img
-            src={avatar}
-            alt={name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradientColors} flex items-center justify-center`}>
-            <span className="text-darcula-text-bright text-3xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold">
-              {getInitials(name)}
-            </span>
-          </div>
-        )}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 sm:p-2 lg:p-4">
-          <div className="text-darcula-text-bright text-sm sm:text-sm lg:text-base xl:text-lg font-bold text-center leading-tight">
-            {formatPlayerName(name)}
-          </div>
-        </div>
+        <PlayerCard
+          name={name}
+          avatar={avatar}
+          gradientColors={gradientColors}
+        />
         {canSelectWinner && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity rounded-t-lg">
             <span className="text-darcula-green text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold">{winnerLabel}</span>
           </div>
         )}
@@ -551,7 +515,6 @@ export function PickBan({
     }
 
     animationStartedRef.current = true
-    fadeOutMusic(3000) // Fade music over the selection animation duration
     // Calculate selectable games fresh to avoid closure issues
     const currentGameStates = getGameStates(actions)
     const gamesToSelect = GAMES.filter((g) => currentGameStates.get(g.id)?.status !== 'banned')
@@ -569,14 +532,14 @@ export function PickBan({
 
     const totalDuration = 5000
     const startTime = Date.now()
-    let lastGameId: string | null = null
+    let cycleIndex = Math.floor(Math.random() * gamesToSelect.length)
     let timeoutId: NodeJS.Timeout
     let cancelled = false
 
-    function pickRandomDifferentGame(): string {
-      const availableGames = gamesToSelect.filter(g => g.id !== lastGameId)
-      const idx = Math.floor(Math.random() * availableGames.length)
-      return availableGames[idx].id
+    function pickNextGame(): string {
+      const gameId = gamesToSelect[cycleIndex % gamesToSelect.length].id
+      cycleIndex++
+      return gameId
     }
 
     function animate() {
@@ -590,8 +553,7 @@ export function PickBan({
         return
       }
 
-      const gameId = pickRandomDifferentGame()
-      lastGameId = gameId
+      const gameId = pickNextGame()
       currentAnimatingGameRef.current = gameId
       setAnimatingGame(gameId)
       playClickSound()
@@ -610,7 +572,7 @@ export function PickBan({
       cancelled = true
       if (timeoutId) clearTimeout(timeoutId)
     }
-  }, [state.currentPhase, isHost, selectedGame, actions, fadeOutMusic, playClickSound])
+  }, [state.currentPhase, isHost, selectedGame, actions, playClickSound])
 
   async function selectFinalGame(gameId: string) {
     // Flash the game and background together
@@ -656,10 +618,13 @@ export function PickBan({
     const previousResult = localMatchResult
     setLocalMatchResult(result)
 
-    // Play soundbite and fade in music after it ends
-    playSoundbite('onWinnerChosen').then(() => {
-      fadeInMusic(2000) // Fade music back in over 2 seconds
-    })
+    // Briefly fade out music for the winner soundbite, then fade back in
+    if (theme.soundbites?.onWinnerChosen) {
+      fadeOutMusic(500)
+      playSoundbite('onWinnerChosen').then(() => {
+        fadeInMusic(2000)
+      })
+    }
 
     try {
       const res = await fetch(`/api/tournaments/${tournamentId}/matches/${matchId}`, {

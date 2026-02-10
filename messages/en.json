@@ -135,6 +135,12 @@
     "cannotDeletePlayerInMatches": "Cannot delete this player because they have participated in matches.",
     "skipBgRemoval": "Skip background removal"
   },
+  "roster": {
+    "roster": "Roster",
+    "backToTournament": "Back to Tournament",
+    "participants": "participants",
+    "noPlayers": "No players in this tournament yet."
+  },
   "errors": {
     "failedToDelete": "Failed to delete tournament",
     "failedToDeletePlayer": "Failed to delete player",
