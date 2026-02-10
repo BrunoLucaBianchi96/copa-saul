@@ -143,6 +143,44 @@
     "participants": "participantes",
     "noPlayers": "Aún no hay jugadores en este torneo."
   },
+  "games": {
+    "games": "Juegos",
+    "backToTournament": "Volver al Torneo",
+    "gameCount": "juegos",
+    "noGames": "No hay juegos configurados para este torneo.",
+    "descriptionLabel": "Descripción",
+    "howToPlayLabel": "Cómo Jugar",
+    "noDescription": "Descripción no disponible aún.",
+    "noHowToPlay": "Información de cómo jugar próximamente.",
+    "sparking-zero": {
+      "description": "Sparking Zero es un juego de pelea de Dragon Ball y el sucesor espiritual de la serie Budokai Tenkaichi. Es un juego de pelea 1v1 con un enorme roster de personajes de Dragon Ball, donde podes armar tu equipo con un sistema de puntos",
+      "howToPlay": "Peleás 1v1 con un equipo de personajes a tu elección, con una cantidad máxima de 15 puntos por equipo. Mientras mas fuerte sea el personaje, mas cuesta reclutarlo. Cada personaje tiene habilidades, transformaciones y técnicas fieles al anime."
+    },
+    "taiko-no-tatsujin": {
+      "description": "Taiko no Tatsujin (\"Experto del Taiko\") es un juego de ritmo de Bandai Namco donde golpeás un tambor japonés al ritmo de la música",
+      "howToPlay": "Las notas rojas (don) se tocan golpeando el centro del tambor, las azules (kat) golpeando el borde. Las notas amarillas son redobles donde golpeás lo más rápido que puedas, y las notas globo requieren golpes rápidos para reventarlas. El que termina la canción con más puntos gana."
+    },
+    "trackmania": {
+      "description": "Trackmania es un juego de carreras. No hay colisión entre los jugadores",
+      "howToPlay": "Llegá a la meta mas rápido que el otro. Las pistas pueden ser algo confusas, asi que prestá atención a los carteles que te indican por dónde ir"
+    },
+    "wii-sports-ping-pong": {
+      "description": "Tenis de Mesa de Wii Sports Resort es ping pong con controles de movimiento usando el Wii Remote como paleta. Hacés el movimiento para golpear, y el ángulo y velocidad de tu swing afectan el efecto de la pelota",
+      "howToPlay": "Es bastante intuitivo, vos podés campeón ;)"
+    },
+    "tricky-towers": {
+      "description": "Tricky Towers es como el tetris pero al revés y con fisica. En vez de eliminar líneas, querés hacer la torre mas alta sin que se te caiga",
+      "howToPlay": " TBD"
+    },
+    "duck-game": {
+      "description": "Duck Game es un juego party multijugador 2D, donde patos se matan entre sí con un montón de armas pelotudas. Casi todo mata de un golpe, a menos que tengas algún tipo de protección. Las rondas son rapidísimas, así que lo vamos a hacer en formato \"mejor de 7\" para que haya algo de margen de error.",
+      "howToPlay": "Controles go here"
+    },
+    "boomerang-fu": {
+      "description": "Boomerang Fu es un juego party donde simpáticos personajes de comida se tiran boomerangs. Los controles son un stick y tres botones, así que cualquiera puede jugar. La cosa se pone loca cuando los power-ups se empiezan a acumular: boomerangs de fuego, telequinesis, tiro múltiple, en más de 30 arenas.",
+      "howToPlay": "Son tres botones, no rompas las bolas y jugá"
+    }
+  },
   "errors": {
     "failedToDelete": "Error al eliminar el torneo",
     "failedToDeletePlayer": "Error al eliminar el jugador",

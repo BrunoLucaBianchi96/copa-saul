@@ -1,6 +1,9 @@
 export interface Game {
   id: string
   name: string
+  description?: string
+  howToPlay?: string
+  imageUrl?: string
 }
 
 export const GAMES: Game[] = [

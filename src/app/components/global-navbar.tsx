@@ -18,6 +18,7 @@ export function GlobalNavbar() {
   const t = useTranslations('auth')
   const tHome = useTranslations('home')
   const tRoster = useTranslations('roster')
+  const tGames = useTranslations('games')
   const [loggingOut, setLoggingOut] = useState(false)
 
   const hidden = EXCLUDED_PATTERNS.some((p) => p.test(pathname))
@@ -53,6 +54,12 @@ export function GlobalNavbar() {
               className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
             >
               {tRoster('roster')}
+            </Link>
+            <Link
+              href={`/tournaments/${tournamentId}/games`}
+              className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
+            >
+              {tGames('games')}
             </Link>
           </>
         )}

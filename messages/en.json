@@ -143,6 +143,44 @@
     "participants": "participants",
     "noPlayers": "No players in this tournament yet."
   },
+  "games": {
+    "games": "Games",
+    "backToTournament": "Back to Tournament",
+    "gameCount": "games",
+    "noGames": "No games configured for this tournament.",
+    "descriptionLabel": "Description",
+    "howToPlayLabel": "How to Play",
+    "noDescription": "No description available yet.",
+    "noHowToPlay": "How-to-play info coming soon.",
+    "sparking-zero": {
+      "description": "Sparking Zero is a Dragon Ball fighting game and the latest entry in the Budokai Tenkaichi series. You get fast 3D battles with moves pulled straight from the anime: beam clashes, rush attacks, and ultimate attacks that wreck the arena. The environments actually break apart as you fight, which never stops being satisfying.",
+      "howToPlay": "You fight 1v1 battles with a team of characters of your choosing, with a maximum amount of points per team. Stronger characters cost more points to recruit. Each character has signature abilities, transformations, and techniques faithful to the anime."
+    },
+    "taiko-no-tatsujin": {
+      "description": "Taiko no Tatsujin (\"Expert of Taiko\") is a Bandai Namco rhythm game where you bang on a taiko drum in time with music. Notes scroll across the screen and you hit the drum to match the beat. The song library is massive: J-pop, anime themes, classical, game soundtracks, you name it.",
+      "howToPlay": "Red notes (don) are played by hitting the center of the drum, blue notes (kat) by hitting the rim. Yellow notes are drumrolls where you hit as fast as you can, and balloon notes require rapid hits to pop them. Fill the spirit gauge past the target by the end of the song to clear it."
+    },
+    "trackmania": {
+      "description": "Trackmania is an arcade racer by Ubisoft Nadeo built around time trials and ridiculous stunts. You race through tracks full of loops, jumps, and tight turns trying to shave milliseconds off your time. Easy to pick up, but getting a good time will consume you.",
+      "howToPlay": "Race to the finish line as fast as possible. There are no collisions with other players, everyone races the same track simultaneously and you compete purely on time. Medals are awarded for beating set times, and you can submit your times to online rankings."
+    },
+    "wii-sports-ping-pong": {
+      "description": "Table Tennis from Wii Sports Resort is motion-controlled ping pong using the Wii Remote as your paddle. You swing to hit, and the angle and speed of your motion actually affect the ball's spin. It feels surprisingly close to the real thing.",
+      "howToPlay": "Hold the Wii Remote vertically and swing it to hit the ball. Swing upward to serve, then rally back and forth. The ball must bounce once on each side. First player to reach the target score with a two-point lead wins. You can apply topspin, backspin, or sidespin depending on how you angle your swing."
+    },
+    "tricky-towers": {
+      "description": "Tricky Towers is what happens when you add real physics to Tetris. Instead of clearing rows, you're stacking blocks into a tower, but gravity is not on your side, and your tower will absolutely topple if you get sloppy.",
+      "howToPlay": "Stack falling blocks onto your tower while keeping it balanced and stable. In Race mode, be the first to build past the finish line. In Survival mode, place a set number of bricks without dropping too many. You can also cast light magic spells to reinforce your own tower or dark magic to sabotage your opponents."
+    },
+    "duck-game": {
+      "description": "Duck Game is a 2D multiplayer party game set in \"the futuristic year of 1984,\" where ducks kill each other with an absurd arsenal of 50+ weapons. One hit and you're dead, last duck standing wins. Rounds last seconds and somehow every single one is funny.",
+      "howToPlay": "Pick up weapons (shotguns, net guns, saxophones, magnet guns, and more), shoot or throw them at other ducks, and be the last one alive. Rounds are lightning-fast and the first player to reach 10 points wins the match. Simple controls: move, jump, pick up, shoot, and most importantly, quack."
+    },
+    "boomerang-fu": {
+      "description": "Boomerang Fu is a party game where cute food characters throw boomerangs at each other. The controls are just one stick and three buttons, so anyone can jump in. Things get wild once power-ups start stacking: fire boomerangs, telekinesis, multi-throw, across 30+ arenas.",
+      "howToPlay": "Throw your boomerang at opponents or use it as a melee weapon up close. You can recall your boomerang after throwing it, deflect incoming attacks, and curve throws around corners. Power-ups like fire, telekinesis, and multi-boomerang stack together, creating increasingly chaotic combinations. One hit kills, last food standing wins."
+    }
+  },
   "errors": {
     "failedToDelete": "Failed to delete tournament",
     "failedToDeletePlayer": "Failed to delete player",
