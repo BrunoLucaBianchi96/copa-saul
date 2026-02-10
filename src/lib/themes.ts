@@ -26,68 +26,85 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
   {
+    id: 'mucha-lucha',
+    name: 'Mucha Lucha Theme',
+    bpm: 124,
+    division: 1,
+    audioFile: '/songs/mucha-lucha.mp3',
+    normalizeVolume: 1,
+    backgroundImage: "https://static.wikia.nocookie.net/muchalucha/images/e/e7/S1E11ATitleCard.jpg/",
+  },
+  {
     id: 'balatro',
     name: 'Balatro Main Theme',
     bpm: 110,
     division: 1,
     audioFile: '/songs/balatro-main.mp3',
     normalizeVolume: 1,
+    backgroundImage: 'https://i.redd.it/arcane-wallpaper-collection-3840x2160-v0-31217mvgmxde1.jpg?width=3840&format=pjpg&auto=webp&s=812076ff050a2efe5cc80b58ce1827bae782b6db'
   },
   {
     id: 'the-beast-arcane',
     name: 'The Beast (Arcane)',
-    bpm: 150,
+    bpm: 135,
     division: 1,
     audioFile: '/songs/the-beast-arcane.mp3',
     normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp12409949.jpg',
   },
   {
     id: 'bury-the-light',
     name: 'Bury the Light (DMC5)',
-    bpm: 122,
+    bpm: 150,
     division: 1,
     audioFile: '/songs/bury-the-light-dmc.mp3',
     normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp5554957.jpg'
   },
   {
     id: 'running-in-the-90s',
     name: "Running in the 90's (Initial D)",
-    bpm: 161,
-    division: 1,
+    bpm: 159,
+    division: 2,
     audioFile: '/songs/running-in-the-90s-initial-d.mp3',
     normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp12381690.jpg'
   },
   {
     id: 'take-over',
     name: 'Take Over (Persona 5 Royal)',
-    bpm: 170,
+    bpm: 125,
     division: 1,
     audioFile: '/songs/take-over-persona-5.mp3',
     normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp15118727.webp'
   },
   {
     id: 'crash-bandicoot',
     name: 'Crash Bandicoot Theme',
-    bpm: 140,
+    bpm: 153,
     division: 1,
     audioFile: '/songs/crash-bandicoot-main.mp3',
     normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp10708932.jpg'
   },
   {
     id: 'live-and-learn',
     name: 'Live and Learn (Sonic Adventure 2)',
-    bpm: 168,
+    bpm: 172,
     division: 1,
     audioFile: '/songs/live-and-learn-sonic-adventure.mp3',
     normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp3022024.png'
   },
   {
     id: 'marvel-vs-capcom',
     name: "Captain America's Theme (MvC)",
-    bpm: 160,
+    bpm: 190,
     division: 1,
     audioFile: '/songs/marvel-vs-capcom-captain-americas-theme.mp3',
-    normalizeVolume: 1,
+    normalizeVolume: 1.2,
+    backgroundImage: 'https://wallpapercave.com/wp/wp8157803.jpg',
   },
   {
     id: 'matrix',

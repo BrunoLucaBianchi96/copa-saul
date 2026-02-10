@@ -762,7 +762,7 @@ export function PickBan({
       )}
 
       {/* Nav bar */}
-      <nav className="relative z-10 w-full flex items-center justify-between px-4 py-3">
+      <nav className="relative z-10 w-full flex items-center justify-between px-4 py-3 mb-3">
         <div className="flex items-center gap-3">
           <a
             href={`/tournaments/${tournamentId}`}
@@ -837,6 +837,25 @@ export function PickBan({
           )}
         </div>
       </nav>
+
+      {/* Match info - mobile (shown only on small/medium screens) */}
+      <div className="lg:hidden relative z-10 text-center px-4 pb-2">
+        <div className="text-darcula-text-muted text-xs uppercase tracking-widest">{tCommon('round')} {roundNumber}</div>
+        <div className="text-darcula-text-bright text-base font-bold mt-1 flex items-center justify-center">
+          <span className="flex-1 text-center">{formatPlayerName(player1Name)}</span>
+          <span className="text-darcula-text-muted mx-2 flex-shrink-0">{tCommon('vs')}</span>
+          <span className="flex-1 text-center">{formatPlayerName(player2Name)}</span>
+        </div>
+        {localMatchResult !== 'pending' && (
+          <div className="mt-2 px-4 py-2 bg-darcula-green/20 text-darcula-green rounded-lg inline-block font-bold text-sm">
+            {localMatchResult === 'draw'
+              ? tMatch('draw')
+              : localMatchResult === 'player1'
+                ? `${player1Name} ${tMatch('wins')}!`
+                : `${player2Name} ${tMatch('wins')}!`}
+          </div>
+        )}
+      </div>
 
       {/* Theme indicator - positioned below navbar on left, overlays content */}
       <div className="absolute top-12 left-4 z-20 flex items-center gap-2 text-darcula-text-muted text-sm">
@@ -1030,11 +1049,13 @@ export function PickBan({
           gradientColors="from-darcula-blue to-darcula-purple"
         />
 
-        {/* Match info - center (hidden on small screens) */}
-        <div className="hidden sm:block text-center pb-4 lg:pb-8 flex-shrink-0">
+        {/* Match info - center (hidden on small/medium screens) */}
+        <div className="hidden lg:block text-center pb-4 lg:pb-8 flex-shrink-0">
           <div className="text-darcula-text-muted text-xs sm:text-sm uppercase tracking-widest">{tCommon('round')} {roundNumber}</div>
-          <div className="text-darcula-text-bright text-lg sm:text-xl lg:text-2xl font-bold mt-1">
-            {player1Name} <span className="text-darcula-text-muted mx-2">{tCommon('vs')}</span> {player2Name}
+          <div className="text-darcula-text-bright text-lg sm:text-xl lg:text-2xl font-bold mt-1 flex items-center justify-center">
+            <span className="flex-1 text-center">{formatPlayerName(player1Name)}</span>
+            <span className="text-darcula-text-muted mx-2 flex-shrink-0">{tCommon('vs')}</span>
+            <span className="flex-1 text-center">{formatPlayerName(player2Name)}</span>
           </div>
 
           {/* Show result if match is complete */}

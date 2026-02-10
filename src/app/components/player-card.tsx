@@ -2,8 +2,8 @@
 
 // Helper to format player name with alias on separate lines
 export function formatPlayerName(name: string): React.ReactNode {
-  // Match pattern: FirstName "Alias" LastName
-  const match = name.match(/^([^"]+)"([^"]+)"(.*)$/)
+  // Match pattern: FirstName 'Alias' LastName
+  const match = name.match(/^([^']+)'([^']+)'(.*)$/)
   if (match) {
     const [, firstName, alias, lastName] = match
     return (
@@ -19,7 +19,7 @@ export function formatPlayerName(name: string): React.ReactNode {
 
 // Helper to get initials from a name (ignoring quoted alias)
 export function getInitials(name: string): string {
-  const nameWithoutAlias = name.replace(/"[^"]+"/g, '').trim()
+  const nameWithoutAlias = name.replace(/'[^']+'/g, '').trim()
   return nameWithoutAlias.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().slice(0, 2)
 }
 
