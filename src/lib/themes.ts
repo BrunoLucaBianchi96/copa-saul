@@ -26,6 +26,14 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
   {
+    id: 'balatro',
+    name: 'Balatro Main Theme',
+    bpm: 110,
+    division: 1,
+    audioFile: '/songs/balatro-main.mp3',
+    normalizeVolume: 1,
+  },
+  {
     id: 'the-beast-arcane',
     name: 'The Beast (Arcane)',
     bpm: 150,

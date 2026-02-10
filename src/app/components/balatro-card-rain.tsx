@@ -18,17 +18,21 @@ interface FallingCard {
 }
 
 function generateCard(id: number): FallingCard {
+  const size = 50 + Math.random() * 100 // 50-300px wide
+  // Smaller cards fall slower: size 50 → ~40s, size 150 → ~15s
+  const sizeFactor = (size - 50) / 100 // 0 (smallest) to 1 (largest)
+  const duration = 40 - sizeFactor * 25 + Math.random() * 5
   return {
     id,
     jokerIndex: Math.floor(Math.random() * BALATRO_JOKERS.length),
     left: Math.random() * 100,
-    delay: Math.random() * -40, // negative so cards are already mid-fall on load
-    duration: 20 + Math.random() * 25, // 20-45 seconds to fall
-    size: 100 + Math.random() * 50, // 100-150px wide
+    delay: Math.random() * -40,
+    duration,
+    size,
     rotStart: -20 + Math.random() * 40,
     rotEnd: -20 + Math.random() * 40,
     opacity: 1,
-    startY: '-150px',
+    startY: '-300px',
     key: 0,
   }
 }
@@ -86,8 +90,13 @@ export function BalatroCardRain() {
 
     // Initialize lerp position to current mouse so it doesn't jump from (0,0)
     lerpPosRef.current = { ...mousePosRef.current }
+    let prevLerpX = lerpPosRef.current.x
+    let currentRot = 0
 
-    const LERP_SPEED = 0.1
+    const LERP_SPEED = 0.18
+    const ROT_SENSITIVITY = 0.8  // degrees per px of horizontal velocity
+    const MAX_ROT = 30
+    const ROT_LERP = 0.08        // how fast rotation eases in/out
 
     const tick = () => {
       const lp = lerpPosRef.current
@@ -95,8 +104,13 @@ export function BalatroCardRain() {
       lp.x += (mp.x - lp.x) * LERP_SPEED
       lp.y += (mp.y - lp.y) * LERP_SPEED
 
+      const dx = lp.x - prevLerpX
+      prevLerpX = lp.x
+      const targetRot = Math.max(-MAX_ROT, Math.min(MAX_ROT, -dx * ROT_SENSITIVITY))
+      currentRot += (targetRot - currentRot) * ROT_LERP
+
       if (grabbedElRef.current) {
-        grabbedElRef.current.style.transform = `translate(${lp.x - 100}px, ${lp.y - 140}px) rotate(0deg)`
+        grabbedElRef.current.style.transform = `translate(${lp.x - 100}px, ${lp.y - 140}px) rotate(${currentRot}deg)`
       }
       rafRef.current = requestAnimationFrame(tick)
     }
@@ -127,14 +141,18 @@ export function BalatroCardRain() {
             transform: translateY(var(--start-y)) rotate(var(--rot-start));
           }
           100% {
-            transform: translateY(calc(100vh + 150px)) rotate(var(--rot-end));
+            transform: translateY(calc(100vh + 300px)) rotate(var(--rot-end));
           }
+        }
+        @keyframes cardShrink {
+          from { transform: scale(var(--shrink-from)); }
+          to { transform: scale(1); }
         }
       `}</style>
       {cards.map((card) => {
         const isGrabbed = grabbed === card.id
         const wasDropped = card.key > 0
-        return (
+        return isGrabbed ? (
           <img
             key={`${card.id}-${card.key}`}
             ref={(el) => {
@@ -149,13 +167,7 @@ export function BalatroCardRain() {
               mousePosRef.current = { x: e.clientX, y: e.clientY }
               setGrabbed(card.id)
             }}
-            onAnimationEnd={wasDropped ? () => {
-              // Respawn as a fresh card falling from the top
-              setCards(prev => prev.map(c =>
-                c.id === card.id ? generateCard(card.id) : c
-              ))
-            } : undefined}
-            style={isGrabbed ? {
+            style={{
               position: 'fixed',
               left: 0,
               top: 0,
@@ -165,8 +177,19 @@ export function BalatroCardRain() {
               imageRendering: 'auto',
               pointerEvents: 'auto',
               cursor: 'grabbing',
-              zIndex: 10,
-            } : {
+              zIndex: 200,
+            }}
+          />
+        ) : (
+          <div
+            key={`${card.id}-${card.key}`}
+            onAnimationEnd={wasDropped ? (e) => {
+              if (e.animationName !== 'cardFall') return
+              setCards(prev => prev.map(c =>
+                c.id === card.id ? generateCard(card.id) : c
+              ))
+            } : undefined}
+            style={{
               position: 'absolute',
               left: `${card.left}%`,
               top: 0,
@@ -176,12 +199,34 @@ export function BalatroCardRain() {
               '--start-y': card.startY,
               '--rot-start': `${card.rotStart}deg`,
               '--rot-end': `${card.rotEnd}deg`,
-              filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.6))',
-              imageRendering: 'auto',
+              zIndex: Math.round(card.size),
               pointerEvents: 'auto',
               cursor: 'grab',
             } as React.CSSProperties}
-          />
+          >
+            <img
+              ref={(el) => {
+                if (el) cardRefs.current.set(card.id, el)
+                else cardRefs.current.delete(card.id)
+              }}
+              src={BALATRO_JOKERS[card.jokerIndex].image}
+              alt=""
+              draggable={false}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                mousePosRef.current = { x: e.clientX, y: e.clientY }
+                setGrabbed(card.id)
+              }}
+              style={{
+                width: '100%',
+                filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.6))',
+                imageRendering: 'auto',
+                transformOrigin: 'center center',
+                '--shrink-from': `${200 / card.size}`,
+                ...(wasDropped ? { animation: 'cardShrink 0.3s ease-out forwards' } : {}),
+              } as React.CSSProperties}
+            />
+          </div>
         )
       })}
     </div>
