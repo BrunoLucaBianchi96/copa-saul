@@ -150,6 +150,7 @@
     "noGames": "No hay juegos configurados para este torneo.",
     "descriptionLabel": "Descripción",
     "howToPlayLabel": "Cómo Jugar",
+    "controlsLabel": "Controles",
     "noDescription": "Descripción no disponible aún.",
     "noHowToPlay": "Información de cómo jugar próximamente.",
     "sparking-zero": {
@@ -158,7 +159,7 @@
     },
     "taiko-no-tatsujin": {
       "description": "Taiko no Tatsujin (\"Experto del Taiko\") es un juego de ritmo de Bandai Namco donde golpeás un tambor japonés al ritmo de la música",
-      "howToPlay": "Las notas rojas (don) se tocan golpeando el centro del tambor, las azules (kat) golpeando el borde. Las notas amarillas son redobles donde golpeás lo más rápido que puedas, y las notas globo requieren golpes rápidos para reventarlas. El que termina la canción con más puntos gana."
+      "howToPlay": "Las notas rojas se tocan con 1, las azules con 2. Las notas amarillas son redobles donde apretás lo más rápido que puedas, y las notas globo son lo mismo. El que termina la canción con más puntos gana."
     },
     "trackmania": {
       "description": "Trackmania es un juego de carreras. No hay colisión entre los jugadores",

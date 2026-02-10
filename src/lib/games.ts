@@ -1,15 +1,85 @@
+export interface ControlEntry {
+  label: string
+  buttons: string[] // shorthand notation, e.g. ["PS-SQUARE", "PS-R2"]
+}
+
 export interface Game {
   id: string
   name: string
   description?: string
   howToPlay?: string
   imageUrl?: string
+  videoUrl?: string
+  videoStart?: number
+  controls?: ControlEntry[]
 }
 
 export const GAMES: Game[] = [
-  { id: 'sparking-zero', name: 'Sparking Zero' },
-  { id: 'taiko-no-tatsujin', name: 'Taiko no Tatsujin' },
-  { id: 'trackmania', name: 'Trackmania' },
+  {
+    id: 'sparking-zero',
+    name: 'Sparking Zero',
+    videoUrl: 'https://www.youtube.com/watch?v=wV-dsMTKgH4',
+    videoStart: 25,
+    "controls": [
+      {
+        "label": "Subir",
+        "buttons": ["PS-L1"]
+      },
+      {
+        "label": "Bajar",
+        "buttons": ["PS-L2"]
+      },
+      {
+        "label": "Blockear",
+        "buttons": ["PS-R1+HOLD"]
+      },
+      {
+        "label": "Cargar Ki",
+        "buttons": ["PS-R2+HOLD"]
+      },
+      {
+        "label": "Poderes",
+        "buttons": ["PS-R2+HOLD", "+", "PS-COLOR-SQUARE/PS-COLOR-TRIANGLE/PS-COLOR-CIRCLE/PS-COLOR-CROSS"]
+      },
+      {
+        "label": "Counterear",
+        "buttons": ["PS-COLOR-CIRCLE+HOLD"]
+      },
+      {
+        "label": "Volar rapido",
+        "buttons": ["PS-R2+HOLD", "+", "PS-COLOR-CROSS"]
+      },
+      {
+        "label": "Dashear al otro",
+        "buttons": ["PS-R2+HOLD", "+", "PS-COLOR-CROSS", "PS-COLOR-CROSS"]
+      },
+      {
+        "label": "Combo (todos los combos son cuadrado una a cuatro veces y despues triangulo)",
+        "buttons": ["PS-COLOR-SQUARE", "PS-COLOR-SQUARE","PS-COLOR-TRIANGLE"]
+      },
+      {
+        "label": "Cambiar de personaje",
+        "buttons": ["PS-DPAD-LEFT+HOLD", "+", "PS-COLOR-SQUARE/PS-COLOR-TRIANGLE/PS-COLOR-CIRCLE/PS-COLOR-CROSS"]
+      },
+      {
+        "label": "Transformaciones y fusiones",
+        "buttons": ["PS-DPAD-UP+HOLD", "+", "PS-COLOR-SQUARE/PS-COLOR-TRIANGLE/PS-COLOR-CIRCLE/PS-COLOR-CROSS"]
+      },
+    ],
+  },
+  {
+    id: 'taiko-no-tatsujin',
+    name: 'Taiko no Tatsujin',
+    videoUrl: 'https://www.youtube.com/watch?v=ynP3WcqcUHc',
+    videoStart: 462,
+    controls: [
+      { label: 'Nota roja', buttons: ['WII-1'] },
+      { label: 'Nota azul', buttons: ['WII-2'] },
+      { label: 'Nota globo', buttons: ['WII-1/WII-2'] },
+      { label: 'Nota amarilla', buttons: ['WII-1/WII-2'] },
+    ],
+  },
+  { id: 'trackmania', name: 'Trackmania', videoUrl: 'https://www.youtube.com/watch?v=VEe4e0OA67I', videoStart: 18 },
   { id: 'wii-sports-ping-pong', name: 'Wii Sports Ping Pong' },
   { id: 'tricky-towers', name: 'Tricky Towers' },
   { id: 'duck-game', name: 'Duck Game' },
