@@ -171,14 +171,14 @@
     },
     "tricky-towers": {
       "description": "Tricky Towers es como el tetris pero al revés y con fisica. En vez de eliminar líneas, querés hacer la torre mas alta sin que se te caiga",
-      "howToPlay": " TBD"
+      "howToPlay": "Hay que hacer una torre sin pasarte de altura. Si se te caen bloques, tu torre va a subir. Mirá el videito de arriba, se entiende al toque :)"
     },
     "duck-game": {
       "description": "Duck Game es un juego party multijugador 2D, donde patos se matan entre sí con un montón de armas pelotudas. Casi todo mata de un golpe, a menos que tengas algún tipo de protección. Las rondas son rapidísimas, así que lo vamos a hacer en formato \"mejor de 7\" para que haya algo de margen de error.",
       "howToPlay": "Controles go here"
     },
     "boomerang-fu": {
-      "description": "Boomerang Fu es un juego party donde simpáticos personajes de comida se tiran boomerangs. Los controles son un stick y tres botones, así que cualquiera puede jugar. La cosa se pone loca cuando los power-ups se empiezan a acumular: boomerangs de fuego, telequinesis, tiro múltiple, en más de 30 arenas.",
+      "description": "Boomerang Fu es un party game donde te cagas a boomerangazos. Los controles son un stick y tres botones, pero hay poderes y boludeces",
       "howToPlay": "Son tres botones, no rompas las bolas y jugá"
     }
   },

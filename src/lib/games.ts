@@ -9,6 +9,7 @@ export interface Game {
   description?: string
   howToPlay?: string
   imageUrl?: string
+  imageFit?: 'cover' | 'contain'
   videoUrl?: string
   videoStart?: number
   controls?: ControlEntry[]
@@ -18,6 +19,7 @@ export const GAMES: Game[] = [
   {
     id: 'sparking-zero',
     name: 'Sparking Zero',
+    imageUrl: '/avatars/sparking-zero-2.jpg',
     videoUrl: 'https://www.youtube.com/watch?v=wV-dsMTKgH4',
     videoStart: 25,
     "controls": [
@@ -70,6 +72,8 @@ export const GAMES: Game[] = [
   {
     id: 'taiko-no-tatsujin',
     name: 'Taiko no Tatsujin',
+    imageUrl: '/avatars/taiko.webp',
+    imageFit: 'contain',
     videoUrl: 'https://www.youtube.com/watch?v=ynP3WcqcUHc',
     videoStart: 462,
     controls: [
@@ -79,11 +83,37 @@ export const GAMES: Game[] = [
       { label: 'Nota amarilla', buttons: ['WII-1/WII-2'] },
     ],
   },
-  { id: 'trackmania', name: 'Trackmania', videoUrl: 'https://www.youtube.com/watch?v=VEe4e0OA67I', videoStart: 18 },
-  { id: 'wii-sports-ping-pong', name: 'Wii Sports Ping Pong' },
-  { id: 'tricky-towers', name: 'Tricky Towers' },
-  { id: 'duck-game', name: 'Duck Game' },
-  { id: 'boomerang-fu', name: 'Boomerang Fu' },
+  {
+    id: 'trackmania',
+    name: 'Trackmania',
+    imageUrl: '/avatars/trackmania.jpg',
+    videoUrl: 'https://www.youtube.com/watch?v=VEe4e0OA67I',
+    videoStart: 18,
+    controls: [
+      { label: 'Acelerar', buttons: ['PS-R2'] },
+      { label: 'Frenar', buttons: ['PS-L2'] },
+    ],
+  },
+  { id: 'wii-sports-ping-pong', name: 'Wii Sports Ping Pong', imageUrl: '/avatars/wii-sports.jpg' },
+  { id: 'tricky-towers', name: 'Tricky Towers', imageUrl: '/avatars/tricky-towers.jpg', videoUrl: 'https://www.youtube.com/watch?v=GyT1S0jeRq0', videoStart: 113 },
+  {
+    id: 'duck-game',
+    name: 'Duck Game',
+    imageUrl: '/avatars/duck-game.jpeg',
+    videoUrl: 'https://www.youtube.com/watch?v=VZrwIrfr7xk',
+    videoStart: 327,
+    controls: [
+      { label: 'Moverse', buttons: ['PS-LS'] },
+      { label: 'Lengua', buttons: ['PS-RS'] },
+      { label: 'Saltar / Aceptar', buttons: ['PS-COLOR-CROSS'] },
+      { label: 'Cuac', buttons: ['PS-COLOR-CIRCLE'] },
+      { label: 'Disparar', buttons: ['PS-COLOR-SQUARE'] },
+      { label: 'Agarrar', buttons: ['PS-COLOR-TRIANGLE'] },
+      { label: 'Strafe', buttons: ['PS-L1'] },
+      { label: 'Tropezar / Ragdoll', buttons: ['PS-R1'] },
+    ],
+  },
+  { id: 'boomerang-fu', name: 'Boomerang Fu', imageUrl: '/avatars/boomerang-fu.jpg', videoUrl: 'https://www.youtube.com/watch?v=I1wz1M-n98c', videoStart: 90 },
 ]
 
 export type PickBanActionType = 'ban' | 'pick' | 'skip'

@@ -3,6 +3,7 @@
 interface GameCardProps {
   name: string
   imageUrl?: string
+  imageFit?: 'cover' | 'contain'
   gradientColors?: string
   onClick?: () => void
 }
@@ -10,19 +11,20 @@ interface GameCardProps {
 export function GameCard({
   name,
   imageUrl,
+  imageFit = 'cover',
   gradientColors = 'from-darcula-blue to-darcula-purple',
   onClick,
 }: GameCardProps) {
   return (
     <button
       onClick={onClick}
-      className="relative rounded-t-lg overflow-hidden flex-shrink-0 w-44 h-60 sm:w-48 sm:h-64 cursor-pointer transition-transform duration-200 hover:scale-[1.2] hover:z-10 focus:outline-none"
+      className="relative rounded-t-lg overflow-hidden w-full aspect-[3/4] cursor-pointer transition-transform duration-200 hover:scale-105 hover:z-10 focus:outline-none"
     >
       {imageUrl ? (
         <img
           src={imageUrl}
           alt={name}
-          className="w-full h-full object-cover"
+          className={`w-full h-full ${imageFit === 'contain' ? 'object-contain' : 'object-cover'}`}
         />
       ) : (
         <div className={`w-full h-full bg-gradient-to-br ${gradientColors} flex items-center justify-center`}>

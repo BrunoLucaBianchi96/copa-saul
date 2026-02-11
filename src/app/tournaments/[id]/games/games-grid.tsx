@@ -25,12 +25,13 @@ export function GamesGrid({ games }: GamesGridProps) {
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {games.map((game, i) => (
           <div key={game.id} className="flex justify-center">
             <GameCard
               name={game.name}
               imageUrl={game.imageUrl}
+              imageFit={game.imageFit}
               gradientColors={GRADIENT_COLORS[i % GRADIENT_COLORS.length]}
               onClick={() => setSelectedGame({ game, colorIndex: i })}
             />

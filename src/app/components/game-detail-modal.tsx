@@ -49,7 +49,7 @@ export function GameDetailModal({ game, gradientColors, onClose }: GameDetailMod
             return (
               <iframe
                 className="w-full h-full rounded-t-lg"
-                src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}${startParam}`}
+                src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&vq=large&playlist=${videoId}${startParam}`}
                 allow="autoplay; encrypted-media"
                 allowFullScreen
               />
@@ -58,7 +58,7 @@ export function GameDetailModal({ game, gradientColors, onClose }: GameDetailMod
             <img
               src={game.imageUrl}
               alt={game.name}
-              className="w-full h-full object-cover rounded-t-lg"
+              className={`w-full h-full ${game.imageFit === 'contain' ? 'object-contain' : 'object-cover'} rounded-t-lg`}
             />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${gradientColors} rounded-t-lg flex items-center justify-center`}>
