@@ -31,6 +31,8 @@ interface PickBanProps {
   theme: Theme
   prevMatchId: number | null
   nextMatchId: number | null
+  prevMatchAudioFile: string | null
+  nextMatchAudioFile: string | null
   gamePlayCounts: Record<string, number>
 }
 
@@ -135,6 +137,8 @@ export function PickBan({
   theme,
   prevMatchId,
   nextMatchId,
+  prevMatchAudioFile,
+  nextMatchAudioFile,
   gamePlayCounts,
 }: PickBanProps) {
   const router = useRouter()
@@ -181,6 +185,49 @@ export function PickBan({
       return () => clearTimeout(timer)
     }
   }, [showEntranceAnimation])
+
+  // Preload explosion assets on mount
+  useEffect(() => {
+    const links: HTMLLinkElement[] = []
+
+    const gifLink = document.createElement('link')
+    gifLink.rel = 'preload'
+    gifLink.as = 'image'
+    gifLink.href = '/explosion.gif'
+    document.head.appendChild(gifLink)
+    links.push(gifLink)
+
+    const audioLink = document.createElement('link')
+    audioLink.rel = 'preload'
+    audioLink.as = 'audio'
+    audioLink.href = '/Minecraft-Explosion.mp3'
+    document.head.appendChild(audioLink)
+    links.push(audioLink)
+
+    return () => {
+      links.forEach((link) => link.remove())
+    }
+  }, [])
+
+  // Prefetch adjacent match songs for faster navigation
+  useEffect(() => {
+    const links: HTMLLinkElement[] = []
+
+    for (const audioFile of [prevMatchAudioFile, nextMatchAudioFile]) {
+      if (audioFile) {
+        const link = document.createElement('link')
+        link.rel = 'prefetch'
+        link.as = 'audio'
+        link.href = audioFile
+        document.head.appendChild(link)
+        links.push(link)
+      }
+    }
+
+    return () => {
+      links.forEach((link) => link.remove())
+    }
+  }, [prevMatchAudioFile, nextMatchAudioFile])
 
   // Play explosion sound effect
   const playExplosionSound = useCallback(() => {
@@ -373,6 +420,8 @@ export function PickBan({
   // Play a soundbite if configured for this theme, returns a Promise that resolves when audio ends
   const playSoundbite = useCallback((type: 'onBan' | 'onPick' | 'onGameSelected' | 'onWinnerChosen'): Promise<void> => {
     const soundbite = theme.soundbites?.[type]
+      ?? ((type === 'onBan' || type === 'onPick') ? { path: '/soundbites/MagicClick.ogg' }
+        : type === 'onWinnerChosen' ? { path: '/soundbites/ff-victory.mp3' } : null)
     if (!soundbite) return Promise.resolve()
 
     const { path, offset: offsetMs = 0, volume: volumeMultiplier = 1 } = soundbite
@@ -403,9 +452,9 @@ export function PickBan({
 
   // Play click sound during game selection animation
   const playClickSound = useCallback(() => {
-    const audio = new Audio('/Mouse Click Sound Effect.mp3')
+    const audio = new Audio('/multhit1.ogg')
     audio.volume = 0.5
-    audio.currentTime = 0.25 // 200ms offset
+    audio.currentTime = 0
     audio.play().catch(() => {
       // Autoplay may be blocked - that's ok
     })
@@ -582,13 +631,16 @@ export function PickBan({
     setAnimatingGame(null)
     triggerBackgroundFlash('select')
 
-    // Play custom soundbite if configured, otherwise play default win sound
+    // Play custom soundbite if configured, otherwise play ding.mp3 4 times in quick succession
     if (theme.soundbites?.onGameSelected) {
       playSoundbite('onGameSelected')
     } else {
-      const winAudio = new Audio('/WIN.mp3')
-      winAudio.currentTime = 0.15 // 150ms offset
-      winAudio.play().catch(() => {})
+      for (let i = 0; i < 6; i++) {
+        setTimeout(() => {
+          const ding = new Audio('/soundbites/ding.mp3')
+          ding.play().catch(() => {})
+        }, i * 120)
+      }
     }
 
     // Wait for flash animation (0.5s)
@@ -621,12 +673,10 @@ export function PickBan({
     setLocalMatchResult(result)
 
     // Briefly fade out music for the winner soundbite, then fade back in
-    if (theme.soundbites?.onWinnerChosen) {
-      fadeOutMusic(500)
-      playSoundbite('onWinnerChosen').then(() => {
-        fadeInMusic(2000)
-      })
-    }
+    fadeOutMusic(500)
+    playSoundbite('onWinnerChosen').then(() => {
+      fadeInMusic(2000)
+    })
 
     try {
       const res = await fetch(`/api/tournaments/${tournamentId}/matches/${matchId}`, {

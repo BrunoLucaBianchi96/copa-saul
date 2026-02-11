@@ -41,7 +41,12 @@ export const THEMES: Theme[] = [
     division: 1,
     audioFile: '/songs/balatro-main.mp3',
     normalizeVolume: 1,
-    backgroundImage: 'https://i.redd.it/arcane-wallpaper-collection-3840x2160-v0-31217mvgmxde1.jpg?width=3840&format=pjpg&auto=webp&s=812076ff050a2efe5cc80b58ce1827bae782b6db'
+    backgroundImage: 'https://i.redd.it/arcane-wallpaper-collection-3840x2160-v0-31217mvgmxde1.jpg?width=3840&format=pjpg&auto=webp&s=812076ff050a2efe5cc80b58ce1827bae782b6db',
+    soundbites: {
+      onBan: { path: '/soundbites/card1.ogg' },
+      onPick: { path: '/soundbites/card3.ogg' },
+      onGameSelected: { path: '/soundbites/win.ogg' },
+    },
   },
   {
     id: 'the-beast-arcane',

@@ -44,27 +44,43 @@ async function getGamePlayCounts(tournamentId: number) {
   return counts
 }
 
-async function getAdjacentMatches(tournamentId: number, round: number, currentMatchId: number) {
-  // Get all non-bye matches in this round, ordered by ID
+async function getNonByeMatchesInRound(tournamentId: number, round: number) {
   const roundMatches = await db
-    .select({ id: matches.id })
-    .from(matches)
-    .where(and(eq(matches.tournamentId, tournamentId), eq(matches.round, round)))
-    .orderBy(asc(matches.id))
-
-  // Filter out bye matches (player2Id is null) - we need full match data for this
-  const fullMatches = await db
     .select()
     .from(matches)
     .where(and(eq(matches.tournamentId, tournamentId), eq(matches.round, round)))
     .orderBy(asc(matches.id))
+  return roundMatches.filter((m) => m.player2Id !== null)
+}
 
-  const nonByeMatches = fullMatches.filter((m) => m.player2Id !== null)
+async function getAdjacentMatches(tournamentId: number, round: number, currentMatchId: number, currentRound: number) {
+  const nonByeMatches = await getNonByeMatchesInRound(tournamentId, round)
   const currentIndex = nonByeMatches.findIndex((m) => m.id === currentMatchId)
 
+  // Within the same round
+  let prevMatch = currentIndex > 0 ? nonByeMatches[currentIndex - 1] : null
+  let nextMatch = currentIndex < nonByeMatches.length - 1 ? nonByeMatches[currentIndex + 1] : null
+
+  // Cross round boundaries: go to last match of previous round
+  if (!prevMatch && round > 1) {
+    const prevRoundMatches = await getNonByeMatchesInRound(tournamentId, round - 1)
+    prevMatch = prevRoundMatches.length > 0 ? prevRoundMatches[prevRoundMatches.length - 1] : null
+  }
+
+  // Cross round boundaries: go to first match of next round
+  if (!nextMatch && round < currentRound) {
+    const nextRoundMatches = await getNonByeMatchesInRound(tournamentId, round + 1)
+    nextMatch = nextRoundMatches.length > 0 ? nextRoundMatches[0] : null
+  }
+
+  const prevTheme = prevMatch?.backgroundMusicId ? getThemeById(prevMatch.backgroundMusicId) : undefined
+  const nextTheme = nextMatch?.backgroundMusicId ? getThemeById(nextMatch.backgroundMusicId) : undefined
+
   return {
-    prevMatchId: currentIndex > 0 ? nonByeMatches[currentIndex - 1].id : null,
-    nextMatchId: currentIndex < nonByeMatches.length - 1 ? nonByeMatches[currentIndex + 1].id : null,
+    prevMatchId: prevMatch?.id ?? null,
+    nextMatchId: nextMatch?.id ?? null,
+    prevMatchAudioFile: prevTheme?.audioFile ?? null,
+    nextMatchAudioFile: nextTheme?.audioFile ?? null,
   }
 }
 
@@ -119,7 +135,7 @@ export default async function MatchPage({
     : THEMES[0]
 
   // Get adjacent matches for navigation
-  const { prevMatchId, nextMatchId } = await getAdjacentMatches(tournamentId, match.round, matchId)
+  const { prevMatchId, nextMatchId, prevMatchAudioFile, nextMatchAudioFile } = await getAdjacentMatches(tournamentId, match.round, matchId, tournament.currentRound)
 
   // Get game play counts for radar chart
   const gamePlayCounts = await getGamePlayCounts(tournamentId)
@@ -152,6 +168,8 @@ export default async function MatchPage({
       theme={theme}
       prevMatchId={prevMatchId}
       nextMatchId={nextMatchId}
+      prevMatchAudioFile={prevMatchAudioFile}
+      nextMatchAudioFile={nextMatchAudioFile}
       gamePlayCounts={gamePlayCounts}
     />
   )
