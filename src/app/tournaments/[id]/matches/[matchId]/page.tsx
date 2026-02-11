@@ -53,7 +53,7 @@ async function getNonByeMatchesInRound(tournamentId: number, round: number) {
   return roundMatches.filter((m) => m.player2Id !== null)
 }
 
-async function getAdjacentMatches(tournamentId: number, round: number, currentMatchId: number, currentRound: number) {
+async function getAdjacentMatches(tournamentId: number, round: number, currentMatchId: number) {
   const nonByeMatches = await getNonByeMatchesInRound(tournamentId, round)
   const currentIndex = nonByeMatches.findIndex((m) => m.id === currentMatchId)
 
@@ -67,8 +67,8 @@ async function getAdjacentMatches(tournamentId: number, round: number, currentMa
     prevMatch = prevRoundMatches.length > 0 ? prevRoundMatches[prevRoundMatches.length - 1] : null
   }
 
-  // Cross round boundaries: go to first match of next round
-  if (!nextMatch && round < currentRound) {
+  // Cross round boundaries: go to first match of next round (if matches exist)
+  if (!nextMatch) {
     const nextRoundMatches = await getNonByeMatchesInRound(tournamentId, round + 1)
     nextMatch = nextRoundMatches.length > 0 ? nextRoundMatches[0] : null
   }
@@ -135,7 +135,14 @@ export default async function MatchPage({
     : THEMES[0]
 
   // Get adjacent matches for navigation
-  const { prevMatchId, nextMatchId, prevMatchAudioFile, nextMatchAudioFile } = await getAdjacentMatches(tournamentId, match.round, matchId, tournament.currentRound)
+  const { prevMatchId, nextMatchId, prevMatchAudioFile, nextMatchAudioFile } = await getAdjacentMatches(tournamentId, match.round, matchId)
+
+  // Check if round can be advanced (all matches complete, on current round, not past total rounds or in overtime)
+  const allRoundMatches = await getNonByeMatchesInRound(tournamentId, match.round)
+  const allMatchesComplete = allRoundMatches.every((m) => m.result !== 'pending')
+  const isOnCurrentRound = match.round === tournament.currentRound
+  const canAdvanceRound = isHost && isOnCurrentRound && allMatchesComplete && nextMatchId === null
+    && (tournament.status === 'overtime' || tournament.currentRound < tournament.rounds)
 
   // Get game play counts for radar chart
   const gamePlayCounts = await getGamePlayCounts(tournamentId)
@@ -170,6 +177,7 @@ export default async function MatchPage({
       nextMatchId={nextMatchId}
       prevMatchAudioFile={prevMatchAudioFile}
       nextMatchAudioFile={nextMatchAudioFile}
+      canAdvanceRound={canAdvanceRound}
       gamePlayCounts={gamePlayCounts}
     />
   )

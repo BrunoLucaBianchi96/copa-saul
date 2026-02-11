@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { tournaments, matches, tournamentPlayers } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, asc } from 'drizzle-orm'
 import {
   generatePairings,
   checkFirstPlaceTie,
@@ -63,6 +63,16 @@ async function createMatches(
       matchIndex++
     }
   }
+}
+
+async function getFirstNonByeMatchId(tournamentId: number, round: number): Promise<number | null> {
+  const roundMatches = await db
+    .select({ id: matches.id, player2Id: matches.player2Id })
+    .from(matches)
+    .where(and(eq(matches.tournamentId, tournamentId), eq(matches.round, round)))
+    .orderBy(asc(matches.id))
+  const first = roundMatches.find((m) => m.player2Id !== null)
+  return first?.id ?? null
 }
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -163,7 +173,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
       })
       .where(eq(tournaments.id, tournamentId))
 
-    return NextResponse.json({ success: true, overtimeRound: nextOvertimeRound })
+    const firstMatchId = await getFirstNonByeMatchId(tournamentId, nextRound)
+    return NextResponse.json({ success: true, overtimeRound: nextOvertimeRound, firstMatchId })
   }
 
   // Regular round logic
@@ -192,10 +203,12 @@ export async function POST(request: Request, { params }: { params: { id: string 
         })
         .where(eq(tournaments.id, tournamentId))
 
+      const firstMatchId = await getFirstNonByeMatchId(tournamentId, nextRound)
       return NextResponse.json({
         success: true,
         overtime: true,
         participants: overtimeParticipants,
+        firstMatchId,
       })
     } else {
       // No tie - complete tournament
@@ -216,5 +229,6 @@ export async function POST(request: Request, { params }: { params: { id: string 
     .set({ currentRound: nextRound })
     .where(eq(tournaments.id, tournamentId))
 
-  return NextResponse.json({ success: true })
+  const firstMatchId = await getFirstNonByeMatchId(tournamentId, nextRound)
+  return NextResponse.json({ success: true, firstMatchId })
 }

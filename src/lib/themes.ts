@@ -140,7 +140,8 @@ export const THEMES: Theme[] = [
     bpm: 134,
     division: 1,
     audioFile: '/songs/techno-syndrome.mp3',
-    normalizeVolume: 0.5,
+    normalizeVolume: 0.7,
+    audioOffset: 16000,
     backgroundImage: 'https://cdna.artstation.com/p/assets/images/images/003/714/696/large/pawel-kot-mk2-hd-armory.jpg?1476740914',
     soundbites: {
       onGameSelected: { path: '/soundbites/MORTAL KOMBAT! Scream.mp3', offset: 100, volume: 0.2 },
@@ -198,8 +199,8 @@ export const THEMES: Theme[] = [
     normalizeVolume: 1,
     backgroundImage: 'https://www.arcadequartermaster.com/ssf2/bonus1.png',
     soundbites: {
-      onBan: { path: '/soundbites/Shoryuken - Sound Effect.mp3', offset: 250 },
-      onPick: { path: '/soundbites/hadouken sound effect.mp3' },
+      // onBan: { path: '/soundbites/Shoryuken - Sound Effect.mp3', offset: 250 },
+      // onPick: { path: '/soundbites/hadouken sound effect.mp3' },
     },
   },
   {
@@ -213,6 +214,8 @@ export const THEMES: Theme[] = [
     soundbites: {
       onGameSelected: { path: '/soundbites/Za Warudo - Sound Effect.mp3', volume: 0.6},
       onWinnerChosen: { path: '/soundbites/Yare Yare Daze.mp3', volume: 5 },
+      onBan: { path: '/soundbites/bakudan.mp3' },
+      onPick: { path: '/soundbites/bakudan.mp3' },
     },
   },
   {

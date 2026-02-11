@@ -33,6 +33,7 @@ interface PickBanProps {
   nextMatchId: number | null
   prevMatchAudioFile: string | null
   nextMatchAudioFile: string | null
+  canAdvanceRound: boolean
   gamePlayCounts: Record<string, number>
 }
 
@@ -139,6 +140,7 @@ export function PickBan({
   nextMatchId,
   prevMatchAudioFile,
   nextMatchAudioFile,
+  canAdvanceRound,
   gamePlayCounts,
 }: PickBanProps) {
   const router = useRouter()
@@ -152,6 +154,7 @@ export function PickBan({
   const [flashingGame, setFlashingGame] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [advancing, setAdvancing] = useState(false)
   const [backgroundFlash, setBackgroundFlash] = useState<'ban' | 'pick' | 'select' | null>(null)
   const [localMatchResult, setLocalMatchResult] = useState(matchResult)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -726,6 +729,27 @@ export function PickBan({
     }
   }
 
+  async function handleAdvanceRound() {
+    setAdvancing(true)
+    try {
+      const res = await fetch(`/api/tournaments/${tournamentId}/next-round`, { method: 'POST' })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.completed) {
+          router.push(`/tournaments/${tournamentId}/result`)
+        } else if (data.firstMatchId) {
+          router.push(`/tournaments/${tournamentId}/matches/${data.firstMatchId}`)
+        } else {
+          router.refresh()
+        }
+      } else {
+        alert(tErrors('failedToAdvance'))
+      }
+    } finally {
+      setAdvancing(false)
+    }
+  }
+
   // Calculate positions for games in a polygon
   const numGames = GAMES.length
   const radius = 240
@@ -851,6 +875,24 @@ export function PickBan({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </a>
+          ) : canAdvanceRound ? (
+            <button
+              onClick={handleAdvanceRound}
+              disabled={advancing}
+              className="p-2 rounded bg-darcula-blue text-darcula-bg hover:bg-darcula-blue/80 transition disabled:opacity-50"
+              title={tCommon('processing')}
+            >
+              {advancing ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              )}
+            </button>
           ) : (
             <span className="p-2 rounded border border-darcula-border text-darcula-text opacity-30 cursor-not-allowed">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
