@@ -78,7 +78,7 @@ function PlayerPortrait({
   return (
     <div
       key={key}
-      className={`relative ${showEntranceAnimation ? 'portrait-enter' : ''} ${shouldAnimate ? 'idle-sway' : ''}`}
+      className={`relative pointer-events-auto ${showEntranceAnimation ? 'portrait-enter' : ''} ${shouldAnimate ? 'idle-sway' : ''}`}
       style={{
         '--drop-duration': '1s',
         animationDelay: entranceDelay,
@@ -876,9 +876,10 @@ export function PickBan({
       </div>
 
       {/* Pick-ban wheel container - full width, centers the wheel */}
-      <div className="relative z-10 w-full flex justify-center py-4 mb-auto">
+      <div className="relative z-10 w-full flex justify-center py-4 mb-auto pointer-events-none">
         {/* Wrapper that has the scaled dimensions for proper layout */}
         <div
+          className="pointer-events-auto"
           style={{
             width: (centerX * 2) * wheelScale,
             height: (centerY * 2) * wheelScale,
@@ -1030,7 +1031,7 @@ export function PickBan({
       </div>
 
       {/* Footer with portraits and match info */}
-      <div className="relative z-10 w-full flex items-end justify-center gap-4 px-4 py-4">
+      <div className="relative z-10 w-full flex items-end justify-center gap-4 px-4 py-4 pointer-events-none">
         <PlayerPortrait
           playerNumber={1}
           name={player1Name}
@@ -1050,7 +1051,7 @@ export function PickBan({
         />
 
         {/* Match info - center (hidden on small/medium screens) */}
-        <div className="hidden lg:block text-center pb-4 lg:pb-8 flex-shrink-0">
+        <div className="hidden lg:block text-center pb-4 lg:pb-8 flex-shrink-0 pointer-events-auto">
           <div className="text-darcula-text-muted text-xs sm:text-sm uppercase tracking-widest">{tCommon('round')} {roundNumber}</div>
           <div className="text-darcula-text-bright text-lg sm:text-xl lg:text-2xl font-bold mt-1 flex items-center justify-center">
             <span className="flex-1 text-center">{formatPlayerName(player1Name)}</span>
