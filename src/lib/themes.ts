@@ -49,6 +49,7 @@ export const THEMES: Theme[] = [
     bpm: 135,
     division: 1,
     audioFile: '/songs/the-beast-arcane.mp3',
+    audioOffset: 10000,
     normalizeVolume: 1,
     backgroundImage: 'https://wallpapercave.com/wp/wp12409949.jpg',
   },
@@ -57,6 +58,7 @@ export const THEMES: Theme[] = [
     name: 'Bury the Light (DMC5)',
     bpm: 150,
     division: 1,
+    audioOffset: 26000,
     audioFile: '/songs/bury-the-light-dmc.mp3',
     normalizeVolume: 1,
     backgroundImage: 'https://wallpapercave.com/wp/wp5554957.jpg'

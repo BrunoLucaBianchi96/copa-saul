@@ -974,26 +974,46 @@ export function PickBan({
               className={`
                 absolute w-28 h-28 rounded-lg flex flex-col items-center justify-center
                 text-sm font-bold text-center transition-all duration-200
-                transform -translate-x-1/2 -translate-y-1/2
+                transform -translate-x-1/2 -translate-y-1/2 overflow-hidden
                 ${
                   status === 'banned'
-                    ? 'bg-darcula-red/20 border-2 border-darcula-red/50'
+                    ? 'border-4 border-darcula-red'
                     : isFlashing
-                      ? 'bg-darcula-green/30 border-4 border-darcula-yellow scale-110 game-selected-flash'
+                      ? 'border-4 border-darcula-yellow scale-110 game-selected-flash'
                       : isSelected || isMatchGame
-                        ? 'bg-darcula-green/30 border-4 border-darcula-yellow'
+                        ? 'border-4 border-darcula-yellow'
                         : isHighlighted
-                          ? 'bg-darcula-green/40 border-2 border-darcula-green border-dashed scale-110'
+                          ? 'border-2 border-darcula-green border-dashed scale-110'
                           : status === 'protected'
-                            ? 'bg-darcula-blue/20 border-2 border-darcula-blue'
-                            : 'bg-darcula-surface/80 border-2 border-darcula-border/50'
+                            ? 'border-4 border-darcula-blue'
+                            : 'border-2 border-darcula-border/50'
                 }
                 ${canClick ? 'hover:scale-110 hover:border-dashed hover:border-darcula-text cursor-pointer' : 'cursor-default'}
-                backdrop-blur-sm
               `}
               style={{ left: x, top: y }}
             >
-              <span className={`text-lg uppercase tracking-wide ${
+              {/* Background image */}
+              {game.imageUrl && (
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{ backgroundImage: `url(${game.imageUrl})` }}
+                />
+              )}
+              {/* Dark overlay for text readability */}
+              <div className={`absolute inset-0 ${
+                status === 'banned'
+                  ? 'bg-darcula-red/70'
+                  : isFlashing
+                    ? 'bg-darcula-green/50'
+                    : isSelected || isMatchGame
+                      ? 'bg-darcula-green/50'
+                      : isHighlighted
+                        ? 'bg-darcula-green/50'
+                        : status === 'protected'
+                          ? 'bg-darcula-blue/60'
+                          : 'bg-black/50'
+              }`} />
+              <span className={`relative z-[1] text-lg uppercase tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] ${
                 status === 'banned' ? 'text-darcula-text-muted' : 'text-darcula-text-bright'
               }`}>
                 {game.name}
@@ -1001,8 +1021,8 @@ export function PickBan({
 
               {/* Banned X overlay */}
               {status === 'banned' && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="w-16 h-16 text-darcula-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <div className="absolute inset-0 flex items-center justify-center z-[2]">
+                  <svg className="w-20 h-20 text-darcula-red drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                     <path d="M6 6l12 12M6 18L18 6" />
                   </svg>
                 </div>

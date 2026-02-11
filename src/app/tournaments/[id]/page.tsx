@@ -89,7 +89,7 @@ export default async function TournamentPage({
 
   const t = await getTranslations('tournament')
   const tStatus = await getTranslations('status')
-  const tRoster = await getTranslations('roster')
+
 
   // Determine which round to view
   const viewingRound = searchParams.round
@@ -132,15 +132,7 @@ export default async function TournamentPage({
             </span>
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/tournaments/${id}/roster`}
-            className="px-3 py-1.5 text-sm bg-darcula-surface border border-darcula-border rounded-lg text-darcula-text hover:bg-darcula-elevated transition-colors"
-          >
-            {tRoster('roster')}
-          </Link>
-          <TournamentActions tournament={tournament} isHost={isHost} players={standings} />
-        </div>
+        <TournamentActions tournament={tournament} isHost={isHost} players={standings} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
