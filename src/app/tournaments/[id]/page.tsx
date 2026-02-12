@@ -41,6 +41,7 @@ async function getRoundMatches(tournamentId: number, round: number) {
       result: matches.result,
       selectedGame: matches.selectedGame,
       pickBanHistory: matches.pickBanHistory,
+      pointsAwarded: matches.pointsAwarded,
     })
     .from(matches)
     .where(and(eq(matches.tournamentId, tournamentId), eq(matches.round, round)))

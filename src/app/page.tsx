@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { db } from '@/db'
 import { tournaments, players } from '@/db/schema'
-import { desc, isNull } from 'drizzle-orm'
-import { getSession, isHost } from '@/lib/session'
+import { desc, eq, isNull } from 'drizzle-orm'
+import { getSession, getSessionPlayerId, isHost } from '@/lib/session'
 import { getTranslations } from 'next-intl/server'
 import { LoginForm } from './components/login-form'
 import { LogoutButton } from './components/logout-button'
@@ -20,21 +20,32 @@ async function getPlayers() {
   return db.select().from(players).where(isNull(players.deletedAt))
 }
 
+async function getPlayerName(playerId: number): Promise<string | null> {
+  const result = await db.select({ name: players.name }).from(players).where(eq(players.id, playerId))
+  return result[0]?.name ?? null
+}
+
 export default async function Home() {
   const role = await getSession()
   const t = await getTranslations('home')
   const tCommon = await getTranslations('common')
 
+  const allPlayers = await getPlayers()
+
   if (!role) {
     return (
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-4xl font-bold text-center mb-8 text-darcula-text-bright">{t('appTitle')}</h1>
-        <LoginForm />
+        <LoginForm players={allPlayers.map(p => ({ id: p.id, name: p.name, avatarUrl: p.avatarUrl }))} />
       </main>
     )
   }
 
-  const [allTournaments, allPlayers] = await Promise.all([getTournaments(), getPlayers()])
+  const allTournaments = await getTournaments()
+
+  // Get logged-in player name for header
+  const sessionPlayerId = await getSessionPlayerId()
+  const playerName = sessionPlayerId ? await getPlayerName(sessionPlayerId) : null
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -43,7 +54,7 @@ export default async function Home() {
         <div className="flex items-center gap-4">
           {!isHost(role) && <RulesInfoButton />}
           <span className={`text-sm px-3 py-1 rounded ${isHost(role) ? 'bg-darcula-blue/20 text-darcula-blue' : 'bg-darcula-elevated text-darcula-text'}`}>
-            {isHost(role) ? tCommon('host') : tCommon('player')}
+            {isHost(role) ? tCommon('host') : playerName || tCommon('player')}
           </span>
           <LogoutButton />
         </div>

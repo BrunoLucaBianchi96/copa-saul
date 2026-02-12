@@ -90,7 +90,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     )
   }
 
-  if (!isHost) {
+  if (!isHost && tournament.status !== 'pending') {
     return null
   }
 
@@ -140,13 +140,23 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     }
 
     return (
-      <button
-        onClick={() => setShowPlayerSelect(true)}
-        disabled={loading}
-        className="bg-darcula-green text-darcula-bg px-4 py-2 rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
-      >
-        {t('startTournament')}
-      </button>
+      <div className="flex gap-2 items-center">
+        <a
+          href={`/tournaments/${tournament.id}/bets`}
+          className="px-4 py-2 border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition text-sm"
+        >
+          {t('setBets')}
+        </a>
+        {isHost && (
+          <button
+            onClick={() => setShowPlayerSelect(true)}
+            disabled={loading}
+            className="bg-darcula-green text-darcula-bg px-4 py-2 rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
+          >
+            {t('startTournament')}
+          </button>
+        )}
+      </div>
     )
   }
 

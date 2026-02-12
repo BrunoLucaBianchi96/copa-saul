@@ -23,38 +23,22 @@ export async function POST(
     return NextResponse.json({ error: 'Match not found' }, { status: 404 })
   }
 
-  // If the match had a result, subtract points from the winner
-  if (match[0].result === 'player1') {
-    const p1 = await db
+  // If the match had a winner, subtract the awarded points
+  if (match[0].winnerId && match[0].pointsAwarded && match[0].pointsAwarded > 0) {
+    const winner = await db
       .select()
       .from(tournamentPlayers)
       .where(
         and(
           eq(tournamentPlayers.tournamentId, tournamentId),
-          eq(tournamentPlayers.playerId, match[0].player1Id)
+          eq(tournamentPlayers.playerId, match[0].winnerId)
         )
       )
-    if (p1[0] && p1[0].points > 0) {
+    if (winner[0]) {
       await db
         .update(tournamentPlayers)
-        .set({ points: p1[0].points - 1 })
-        .where(eq(tournamentPlayers.id, p1[0].id))
-    }
-  } else if (match[0].result === 'player2' && match[0].player2Id) {
-    const p2 = await db
-      .select()
-      .from(tournamentPlayers)
-      .where(
-        and(
-          eq(tournamentPlayers.tournamentId, tournamentId),
-          eq(tournamentPlayers.playerId, match[0].player2Id)
-        )
-      )
-    if (p2[0] && p2[0].points > 0) {
-      await db
-        .update(tournamentPlayers)
-        .set({ points: p2[0].points - 1 })
-        .where(eq(tournamentPlayers.id, p2[0].id))
+        .set({ points: Math.max(0, winner[0].points - match[0].pointsAwarded) })
+        .where(eq(tournamentPlayers.id, winner[0].id))
     }
   }
 
@@ -67,6 +51,7 @@ export async function POST(
       pickBanHistory: null,
       selectedGame: null,
       pickBanComplete: false,
+      pointsAwarded: null,
     })
     .where(eq(matches.id, matchId))
 

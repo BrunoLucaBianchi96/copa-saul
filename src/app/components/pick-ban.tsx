@@ -37,6 +37,7 @@ interface PickBanProps {
   nextMatchAudioFile: string | null
   canAdvanceRound: boolean
   gamePlayCounts: Record<string, number>
+  sessionPlayerId: number | null
 }
 
 interface PlayerPortraitProps {
@@ -146,6 +147,7 @@ export function PickBan({
   nextMatchAudioFile,
   canAdvanceRound,
   gamePlayCounts,
+  sessionPlayerId,
 }: PickBanProps) {
   const router = useRouter()
   const t = useTranslations('pickBan')
@@ -473,8 +475,43 @@ export function PickBan({
   // Games that can be selected at the end (not banned)
   const selectableGames = GAMES.filter((g) => gameStates.get(g.id)?.status !== 'banned')
 
-  const isInteractive = isHost && localMatchResult === 'pending' && state.currentPhase !== 'complete' && state.currentPhase !== 'selecting'
+  const isMyTurn = sessionPlayerId !== null && sessionPlayerId === (state.currentPlayer === 1 ? player1Id : player2Id)
+  const isInteractive = (isHost || isMyTurn) && localMatchResult === 'pending' && state.currentPhase !== 'complete' && state.currentPhase !== 'selecting'
   const canSelectWinner = isHost && localMatchResult === 'pending' && state.currentPhase === 'complete'
+
+  // Poll for state changes when it's not the player's turn
+  useEffect(() => {
+    // Only poll for players (not host), when match is pending, and it's not their turn
+    if (isHost || localMatchResult !== 'pending') return
+    if (isMyTurn) return
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/tournaments/${tournamentId}/matches/${matchId}/state`)
+        if (!res.ok) return
+        const data = await res.json()
+
+        // Update actions if they changed
+        if (data.pickBanHistory && JSON.stringify(data.pickBanHistory) !== JSON.stringify(actions)) {
+          setActions(data.pickBanHistory)
+        }
+
+        // Update selected game if set
+        if (data.selectedGame && data.selectedGame !== selectedGame) {
+          setSelectedGame(data.selectedGame)
+        }
+
+        // Update result if changed
+        if (data.result !== 'pending' && data.result !== localMatchResult) {
+          setLocalMatchResult(data.result)
+        }
+      } catch {
+        // Polling failure is non-critical
+      }
+    }, 2500)
+
+    return () => clearInterval(interval)
+  }, [isHost, isMyTurn, localMatchResult, tournamentId, matchId, actions, selectedGame])
   // Show active player animation for everyone (not just host)
   const isActivePhase = localMatchResult === 'pending' && state.currentPhase !== 'complete' && state.currentPhase !== 'selecting'
   const player1IsWinner = localMatchResult === 'player1'
@@ -996,6 +1033,12 @@ export function PickBan({
             {phaseInfo.phase}: <span> {phaseInfo.detail} </span>
           </span>
         </div>
+        {/* Waiting indicator for players when it's not their turn */}
+        {sessionPlayerId && !isHost && !isMyTurn && localMatchResult === 'pending' && state.currentPhase !== 'complete' && state.currentPhase !== 'selecting' && (
+          <div className="mt-2 text-sm text-darcula-text-muted animate-pulse">
+            {t('waitingFor', { name: currentPlayerName })}
+          </div>
+        )}
       </div>
 
       {/* Pick-ban wheel container - full width, centers the wheel */}

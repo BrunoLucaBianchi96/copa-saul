@@ -50,6 +50,7 @@
     "uncheckAbsentPlayers": "Desmarca los jugadores que no asistieron",
     "needAtLeast2Players": "Se necesitan al menos 2 jugadores",
     "start": "Iniciar",
+    "setBets": "Apuestas",
     "deleteTournament": "Eliminar torneo",
     "confirmDeleteTournament": "¿Estás seguro de que quieres eliminar \"{name}\"? Esta acción no se puede deshacer."
   },
@@ -77,6 +78,7 @@
     "selectingEllipsis": "Seleccionando...",
     "winner": "Ganador",
     "turn": "Turno de {name}",
+    "waitingFor": "Esperando a {name}...",
     "backToTournament": "Volver al Torneo"
   },
   "result": {
@@ -103,7 +105,9 @@
     "hostDescription": "Los anfitriones pueden administrar torneos. Los jugadores pueden ver clasificaciones y partidos.",
     "loggingOut": "Saliendo...",
     "logout": "Salir",
-    "tournament": "Torneo"
+    "tournament": "Torneo",
+    "selectYourName": "Selecciona tu nombre",
+    "noPlayersAvailable": "No hay jugadores disponibles. Pedile al anfitrión que agregue jugadores."
   },
   "rules": {
     "tournamentRules": "Reglas del Torneo",
@@ -115,8 +119,10 @@
     "pickBanStep3": "Jugador 2 banea un juego",
     "pickBanStep4": "Se selecciona un juego aleatorio de los restantes",
     "scoringTitle": "Puntuación",
-    "scoringWin": "Victoria: 1 punto",
-    "scoringLoss": "Derrota: 0 puntos",
+    "scoringDescription": "Cada jugador distribuye 140 puntos entre los 7 juegos (mínimo 10 cada uno). Los puntos para el ganador dependen de las apuestas de ambos jugadores:",
+    "scoringEqual": "Apuestas iguales: el ganador recibe el monto apostado",
+    "scoringUnderdog": "Gana el débil: recibe la apuesta mayor del perdedor",
+    "scoringFavorite": "Gana el favorito: puntos reducidos (apuesta perdedor + mitad de la diferencia)",
     "tiebreakerTitle": "Desempate",
     "tiebreakerDescription": "Si hay empate en puntos, se juega una ronda de tiempo extra solo con esos jugadores (más uno si es necesario para emparejar). Esto se repite hasta que haya un único ganador."
   },
@@ -181,6 +187,46 @@
       "description": "Boomerang Fu es un party game donde te cagas a boomerangazos. Los controles son un stick y tres botones, pero hay poderes y boludeces",
       "howToPlay": "Son tres botones, no rompas las bolas y jugá"
     }
+  },
+  "bets": {
+    "title": "Configurar Apuestas",
+    "backToTournament": "Volver al Torneo",
+    "allocatePoints": "Distribuí tus {total} puntos entre los 7 juegos",
+    "selectPlayer": "Seleccionar jugador",
+    "settingBetsFor": "Configurando apuestas para:",
+    "loading": "Cargando apuestas...",
+    "selectPlayerFirst": "Seleccioná un jugador para configurar apuestas.",
+    "total": "Total",
+    "remaining": "restantes",
+    "over": "de más",
+    "minimumBet": "Mínimo {min} puntos por juego",
+    "resetToDefault": "Restablecer",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "savedSuccessfully": "¡Apuestas guardadas!",
+    "howItWorks": "Cómo Funcionan las Apuestas",
+    "infoAllocationTitle": "Distribución de Puntos",
+    "infoAllocation1": "Tenés {total} puntos para distribuir entre los 7 juegos",
+    "infoAllocation2": "Cada juego debe tener entre {min} y {max} puntos",
+    "infoAllocation3": "Tus apuestas son secretas — los demás no pueden verlas",
+    "infoScoringTitle": "Cómo Se Otorgan Puntos",
+    "infoScoringDesc": "Cuando ganás un partido, los puntos que recibís dependen de las apuestas de ambos jugadores para el juego que se jugó:",
+    "infoScoringEqual": "Apuestas iguales: recibís el monto apostado (ej: ambos apuestan 20 → ganador recibe 20)",
+    "infoScoringUnderdog": "Gana el débil: recibís la apuesta mayor del perdedor (ej: vos apostás 10, el otro 50 → recibís 50)",
+    "infoScoringFavorite": "Gana el favorito: recompensa reducida — apuesta del perdedor + mitad de la diferencia (ej: vos apostás 50, el otro 10 → recibís 30)",
+    "infoExampleTitle": "Ejemplo",
+    "infoExample1": "Ponés 40 pts en Trackmania, tu oponente pone 15.",
+    "infoExample2": "Si ganás vos: recibís 15 + (40-15)/2 = 27 pts. Tu apuesta alta rinde menos porque eras el favorito.",
+    "infoExample3": "Si gana el otro: recibe tus 40 pts completos. ¡El débil se lleva la recompensa grande!",
+    "infoStrategyTitle": "Estrategia",
+    "infoStrategyDesc": "Apostá alto en juegos donde tenés confianza — pero ojo: si ganás, recibís menos puntos. Apostá bajo en juegos donde esperás perder — si das la sorpresa, le robás muchos puntos a tu oponente.",
+    "matchupExamplesButton": "Ver Ejemplos de Partidos",
+    "matchupExamplesTitle": "Ejemplos de Partidos",
+    "matchup_noob": "Apuesta baja",
+    "matchup_mid": "Apuesta media",
+    "matchup_pro": "Apuesta alta",
+    "matchupWinsA": "Gana {name}",
+    "matchupWinsB": "Gana {name}"
   },
   "errors": {
     "failedToDelete": "Error al eliminar el torneo",

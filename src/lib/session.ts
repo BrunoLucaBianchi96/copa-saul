@@ -8,14 +8,26 @@ export async function getSession(): Promise<Role | null> {
   const cookieStore = await cookies()
   const session = cookieStore.get(SESSION_COOKIE)
   if (!session?.value) return null
-  const role = session.value as Role
-  if (role !== 'host' && role !== 'player') return null
-  return role
+  if (session.value === 'host') return 'host'
+  if (session.value === 'player' || session.value.startsWith('player:')) return 'player'
+  return null
 }
 
-export async function setSession(role: Role): Promise<void> {
+export async function getSessionPlayerId(): Promise<number | null> {
   const cookieStore = await cookies()
-  cookieStore.set(SESSION_COOKIE, role, {
+  const session = cookieStore.get(SESSION_COOKIE)
+  if (!session?.value) return null
+  if (session.value.startsWith('player:')) {
+    const id = parseInt(session.value.split(':')[1])
+    return isNaN(id) ? null : id
+  }
+  return null
+}
+
+export async function setSession(role: Role, playerId?: number): Promise<void> {
+  const cookieStore = await cookies()
+  const value = role === 'player' && playerId ? `player:${playerId}` : role
+  cookieStore.set(SESSION_COOKIE, value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

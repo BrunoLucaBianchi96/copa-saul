@@ -14,6 +14,7 @@ interface Match {
   player2Name: string | null
   selectedGame?: string | null
   pickBanHistory?: string | null
+  pointsAwarded?: number | null
 }
 
 interface MatchListProps {
@@ -119,6 +120,11 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
                         ? `${match.player1Name} ${t('wins')}`
                         : `${match.player2Name} ${t('wins')}`}
                   </span>
+                  {match.pointsAwarded && match.pointsAwarded > 0 && (
+                    <span className="ml-2 text-darcula-green">
+                      +{match.pointsAwarded} {tCommon('pts')}
+                    </span>
+                  )}
                 </>
               ) : (
                 <span className="text-darcula-orange">{status}</span>

@@ -41,9 +41,19 @@ export const matches = sqliteTable('matches', {
   selectedGame: text('selected_game'), // The game chosen after pick-ban
   pickBanComplete: integer('pick_ban_complete', { mode: 'boolean' }).default(false),
   backgroundMusicId: text('background_music_id'), // Theme ID for the match
+  pointsAwarded: integer('points_awarded'), // Points awarded to winner, used by reset
+})
+
+export const playerBets = sqliteTable('player_bets', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  tournamentId: integer('tournament_id').notNull().references(() => tournaments.id),
+  playerId: integer('player_id').notNull().references(() => players.id),
+  gameId: text('game_id').notNull(),
+  bet: integer('bet').notNull().default(20),
 })
 
 export type Player = typeof players.$inferSelect
 export type Tournament = typeof tournaments.$inferSelect
 export type TournamentPlayer = typeof tournamentPlayers.$inferSelect
 export type Match = typeof matches.$inferSelect
+export type PlayerBet = typeof playerBets.$inferSelect

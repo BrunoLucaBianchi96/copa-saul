@@ -2,7 +2,7 @@ import { db } from '@/db'
 import { matches, players, tournaments } from '@/db/schema'
 import { eq, and, asc, isNotNull } from 'drizzle-orm'
 import { notFound, redirect } from 'next/navigation'
-import { getSession, isHost as checkIsHost } from '@/lib/session'
+import { getSession, isHost as checkIsHost, getSessionPlayerId } from '@/lib/session'
 import { PickBan } from '@/app/components/pick-ban'
 import { type PickBanAction } from '@/lib/games'
 import { getThemeById, THEMES } from '@/lib/themes'
@@ -123,6 +123,7 @@ export default async function MatchPage({
     : []
 
   const isHost = checkIsHost(role)
+  const sessionPlayerId = await getSessionPlayerId()
 
   // If it's a bye match, redirect back
   if (!player2) {
@@ -181,6 +182,7 @@ export default async function MatchPage({
       nextMatchAudioFile={nextMatchAudioFile}
       canAdvanceRound={canAdvanceRound}
       gamePlayCounts={gamePlayCounts}
+      sessionPlayerId={sessionPlayerId}
     />
   )
 }

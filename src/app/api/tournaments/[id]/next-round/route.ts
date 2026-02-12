@@ -10,6 +10,7 @@ import {
 } from '@/lib/swiss'
 import { requireHost } from '@/lib/session'
 import { getThemeForTournament } from '@/lib/themes'
+import { BYE_POINTS } from '@/lib/scoring'
 
 async function createMatches(
   tournamentId: number,
@@ -48,7 +49,7 @@ async function createMatches(
       if (current[0]) {
         await db
           .update(tournamentPlayers)
-          .set({ points: current[0].points + 1 })
+          .set({ points: current[0].points + BYE_POINTS })
           .where(eq(tournamentPlayers.id, current[0].id))
       }
     } else {

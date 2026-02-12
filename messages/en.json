@@ -50,6 +50,7 @@
     "uncheckAbsentPlayers": "Uncheck players who didn't show up",
     "needAtLeast2Players": "Need at least 2 players",
     "start": "Start",
+    "setBets": "Set Bets",
     "deleteTournament": "Delete tournament",
     "confirmDeleteTournament": "Are you sure you want to delete \"{name}\"? This action cannot be undone."
   },
@@ -77,6 +78,7 @@
     "selectingEllipsis": "Selecting...",
     "winner": "Winner",
     "turn": "{name}'s turn",
+    "waitingFor": "Waiting for {name}...",
     "backToTournament": "Back to Tournament"
   },
   "result": {
@@ -103,7 +105,9 @@
     "hostDescription": "Hosts can manage tournaments. Players can view standings and matches.",
     "loggingOut": "Logging out...",
     "logout": "Logout",
-    "tournament": "Tournament"
+    "tournament": "Tournament",
+    "selectYourName": "Select Your Name",
+    "noPlayersAvailable": "No players available. Ask the host to add players first."
   },
   "rules": {
     "tournamentRules": "Tournament Rules",
@@ -115,8 +119,10 @@
     "pickBanStep3": "Player 2 bans one game",
     "pickBanStep4": "A random game is selected from the remaining games",
     "scoringTitle": "Scoring",
-    "scoringWin": "Win: 1 point",
-    "scoringLoss": "Loss: 0 points",
+    "scoringDescription": "Each player allocates 140 points across 7 games (min 10 each). Points awarded to the winner depend on both players' bets:",
+    "scoringEqual": "Equal bets: winner gets bet amount",
+    "scoringUnderdog": "Underdog wins: winner gets the loser's higher bet",
+    "scoringFavorite": "Favorite wins: reduced points (loser bet + half the difference)",
     "tiebreakerTitle": "Tiebreaker",
     "tiebreakerDescription": "If players are tied on points, an overtime round is played with just those players (plus one if needed for even matchups). This repeats until there's a single winner."
   },
@@ -181,6 +187,46 @@
       "description": "Boomerang Fu is a party game where cute food characters throw boomerangs at each other. The controls are just one stick and three buttons, so anyone can jump in. Things get wild once power-ups start stacking: fire boomerangs, telekinesis, multi-throw, across 30+ arenas.",
       "howToPlay": "Throw your boomerang at opponents or use it as a melee weapon up close. You can recall your boomerang after throwing it, deflect incoming attacks, and curve throws around corners. Power-ups like fire, telekinesis, and multi-boomerang stack together, creating increasingly chaotic combinations. One hit kills, last food standing wins."
     }
+  },
+  "bets": {
+    "title": "Set Bets",
+    "backToTournament": "Back to Tournament",
+    "allocatePoints": "Allocate your {total} points across 7 games",
+    "selectPlayer": "Select player",
+    "settingBetsFor": "Setting bets for:",
+    "loading": "Loading bets...",
+    "selectPlayerFirst": "Select a player to set bets.",
+    "total": "Total",
+    "remaining": "remaining",
+    "over": "over",
+    "minimumBet": "Minimum {min} points per game",
+    "resetToDefault": "Reset to Default",
+    "save": "Save Bets",
+    "saving": "Saving...",
+    "savedSuccessfully": "Bets saved successfully!",
+    "howItWorks": "How Bets Work",
+    "infoAllocationTitle": "Point Allocation",
+    "infoAllocation1": "You have {total} points to distribute across 7 games",
+    "infoAllocation2": "Each game must have between {min} and {max} points",
+    "infoAllocation3": "Your bets are secret — other players can't see them",
+    "infoScoringTitle": "How Points Are Awarded",
+    "infoScoringDesc": "When you win a match, the points you earn depend on both players' bets for the game that was played:",
+    "infoScoringEqual": "Equal bets: you get the bet amount (e.g. both bet 20 → winner gets 20)",
+    "infoScoringUnderdog": "Underdog wins: you get the loser's higher bet (e.g. you bet 10, they bet 50 → you get 50)",
+    "infoScoringFavorite": "Favorite wins: reduced reward — loser's bet + half the difference (e.g. you bet 50, they bet 10 → you get 30)",
+    "infoExampleTitle": "Example",
+    "infoExample1": "You put 40 pts on Trackmania, your opponent puts 15.",
+    "infoExample2": "If you win: you get 15 + (40-15)/2 = 27 pts. Your big bet pays less because you were the favorite.",
+    "infoExample3": "If they win: they get your full 40 pts. The underdog gets the bigger reward!",
+    "infoStrategyTitle": "Strategy",
+    "infoStrategyDesc": "Bet high on games you're confident in — but beware: if you win, you get reduced points. Bet low on games you expect to lose — if you pull off the upset, you'll steal big points from your opponent.",
+    "matchupExamplesButton": "See Matchup Examples",
+    "matchupExamplesTitle": "Matchup Examples",
+    "matchup_noob": "Low bet",
+    "matchup_mid": "Mid bet",
+    "matchup_pro": "High bet",
+    "matchupWinsA": "{name} wins",
+    "matchupWinsB": "{name} wins"
   },
   "errors": {
     "failedToDelete": "Failed to delete tournament",

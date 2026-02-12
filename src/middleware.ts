@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
 
   // Check for session cookie
   const session = request.cookies.get('copa-saul-session')
-  if (!session?.value || (session.value !== 'host' && session.value !== 'player')) {
+  if (!session?.value || (session.value !== 'host' && session.value !== 'player' && !session.value.startsWith('player:'))) {
     const loginUrl = new URL('/', request.url)
     return NextResponse.redirect(loginUrl)
   }

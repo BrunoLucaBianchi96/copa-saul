@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm'
 import { generatePairings } from '@/lib/swiss'
 import { requireHost } from '@/lib/session'
 import { getThemeForTournament } from '@/lib/themes'
+import { BYE_POINTS } from '@/lib/scoring'
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const auth = await requireHost()
@@ -73,12 +74,15 @@ export async function POST(request: Request, { params }: { params: { id: string 
         result: 'bye',
         winnerId: pairing.player1Id,
       })
-      // Award point for bye
+      // Award points for bye
       await db
         .update(tournamentPlayers)
-        .set({ points: 1 })
+        .set({ points: BYE_POINTS })
         .where(
-          eq(tournamentPlayers.tournamentId, tournamentId)
+          and(
+            eq(tournamentPlayers.tournamentId, tournamentId),
+            eq(tournamentPlayers.playerId, pairing.player1Id)
+          )
         )
     } else {
       await db.insert(matches).values({

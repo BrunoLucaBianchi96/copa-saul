@@ -56,9 +56,11 @@ export function RulesInfoButton() {
               {/* Scoring */}
               <section>
                 <h3 className="font-semibold text-darcula-blue mb-2">{t('scoringTitle')}</h3>
+                <p className="text-sm text-darcula-text-muted mb-2">{t('scoringDescription')}</p>
                 <ul className="text-sm text-darcula-text-muted list-disc list-inside space-y-1">
-                  <li>{t('scoringWin')}</li>
-                  <li>{t('scoringLoss')}</li>
+                  <li>{t('scoringEqual')}</li>
+                  <li>{t('scoringUnderdog')}</li>
+                  <li>{t('scoringFavorite')}</li>
                 </ul>
               </section>
 

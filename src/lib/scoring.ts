@@ -1,0 +1,103 @@
+import { db } from '@/db'
+import { playerBets } from '@/db/schema'
+import { eq, and } from 'drizzle-orm'
+import { GAMES } from '@/lib/games'
+
+// Re-export constants and pure functions from client-safe module
+export {
+  TOTAL_BET_POINTS,
+  MIN_BET_PER_GAME,
+  MAX_BET_PER_GAME,
+  DEFAULT_BET,
+  BYE_POINTS,
+  calculateMatchPoints,
+  type BetAllocation,
+} from './scoring-constants'
+
+import { TOTAL_BET_POINTS, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, type BetAllocation } from './scoring-constants'
+
+/**
+ * Validate that a set of bets is legal:
+ * - Exactly 7 entries (one per game)
+ * - Each bet >= 10
+ * - Total === 140
+ * - All gameIds are valid
+ */
+export function validateBets(bets: BetAllocation[]): { valid: boolean; error?: string } {
+  const validGameIds = new Set(GAMES.map((g) => g.id))
+
+  if (bets.length !== GAMES.length) {
+    return { valid: false, error: `Must have exactly ${GAMES.length} bets` }
+  }
+
+  const seenGameIds = new Set<string>()
+  let total = 0
+
+  for (const bet of bets) {
+    if (!validGameIds.has(bet.gameId)) {
+      return { valid: false, error: `Invalid game ID: ${bet.gameId}` }
+    }
+    if (seenGameIds.has(bet.gameId)) {
+      return { valid: false, error: `Duplicate game ID: ${bet.gameId}` }
+    }
+    if (!Number.isInteger(bet.bet) || bet.bet < MIN_BET_PER_GAME) {
+      return { valid: false, error: `Bet for ${bet.gameId} must be at least ${MIN_BET_PER_GAME}` }
+    }
+    if (bet.bet > MAX_BET_PER_GAME) {
+      return { valid: false, error: `Bet for ${bet.gameId} must be at most ${MAX_BET_PER_GAME}` }
+    }
+    seenGameIds.add(bet.gameId)
+    total += bet.bet
+  }
+
+  if (total !== TOTAL_BET_POINTS) {
+    return { valid: false, error: `Total must be ${TOTAL_BET_POINTS}, got ${total}` }
+  }
+
+  return { valid: true }
+}
+
+/**
+ * Get a player's bet for a specific game in a tournament.
+ * Returns DEFAULT_BET if no bet has been placed.
+ */
+export async function getPlayerBetForGame(
+  tournamentId: number,
+  playerId: number,
+  gameId: string
+): Promise<number> {
+  const bet = await db
+    .select()
+    .from(playerBets)
+    .where(
+      and(
+        eq(playerBets.tournamentId, tournamentId),
+        eq(playerBets.playerId, playerId),
+        eq(playerBets.gameId, gameId)
+      )
+    )
+  return bet[0]?.bet ?? DEFAULT_BET
+}
+
+/**
+ * Get all bets for a player in a tournament.
+ * Returns default bets for any games not explicitly set.
+ */
+export async function getPlayerBets(
+  tournamentId: number,
+  playerId: number
+): Promise<BetAllocation[]> {
+  const bets = await db
+    .select()
+    .from(playerBets)
+    .where(
+      and(eq(playerBets.tournamentId, tournamentId), eq(playerBets.playerId, playerId))
+    )
+
+  const betMap = new Map(bets.map((b) => [b.gameId, b.bet]))
+
+  return GAMES.map((game) => ({
+    gameId: game.id,
+    bet: betMap.get(game.id) ?? DEFAULT_BET,
+  }))
+}

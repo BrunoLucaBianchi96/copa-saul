@@ -3,25 +3,37 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { Avatar } from '@/app/components/avatar'
 
-type LoginMode = 'select' | 'host'
+interface Player {
+  id: number
+  name: string
+  avatarUrl: string | null
+}
 
-export function LoginForm() {
+interface LoginFormProps {
+  players: Player[]
+}
+
+type LoginMode = 'select' | 'host' | 'player-select'
+
+export function LoginForm({ players }: LoginFormProps) {
   const router = useRouter()
   const t = useTranslations('auth')
   const [mode, setMode] = useState<LoginMode>('select')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
 
-  async function login(role: 'host' | 'player', pwd?: string) {
+  async function login(role: 'host' | 'player', pwd?: string, playerId?: number) {
     setLoading(true)
     setError('')
 
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role, password: pwd }),
+      body: JSON.stringify({ role, password: pwd, playerId }),
     })
 
     if (res.ok) {
@@ -86,6 +98,58 @@ export function LoginForm() {
     )
   }
 
+  if (mode === 'player-select') {
+    return (
+      <div className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-8 max-w-md mx-auto">
+        <h2 className="text-2xl font-bold text-darcula-text-bright mb-6 text-center">{t('selectYourName')}</h2>
+
+        <div className="space-y-2 max-h-80 overflow-y-auto mb-4">
+          {players.map((player) => (
+            <button
+              key={player.id}
+              onClick={() => setSelectedPlayerId(player.id)}
+              className={`w-full flex items-center gap-3 p-3 rounded transition ${
+                selectedPlayerId === player.id
+                  ? 'bg-darcula-blue/20 border border-darcula-blue'
+                  : 'bg-darcula-elevated border border-darcula-border hover:border-darcula-text-muted'
+              }`}
+            >
+              <Avatar src={player.avatarUrl} name={player.name} size="sm" />
+              <span className="text-darcula-text font-medium">{player.name}</span>
+            </button>
+          ))}
+        </div>
+
+        {players.length === 0 && (
+          <p className="text-darcula-text-muted text-center mb-4">{t('noPlayersAvailable')}</p>
+        )}
+
+        {error && <p className="text-darcula-red text-sm mb-4">{error}</p>}
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setMode('select')
+              setSelectedPlayerId(null)
+              setError('')
+            }}
+            className="flex-1 px-4 py-2 border border-darcula-border rounded hover:bg-darcula-elevated transition text-darcula-text"
+          >
+            {t('back')}
+          </button>
+          <button
+            onClick={() => selectedPlayerId && login('player', undefined, selectedPlayerId)}
+            disabled={loading || !selectedPlayerId}
+            className="flex-1 bg-darcula-green text-darcula-bg px-4 py-2 rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
+          >
+            {loading ? t('joining') : t('login')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-8 max-w-md mx-auto">
       <h2 className="text-2xl font-bold text-darcula-text-bright mb-6 text-center">{t('welcomeTitle')}</h2>
@@ -100,11 +164,11 @@ export function LoginForm() {
           {t('loginAsHost')}
         </button>
         <button
-          onClick={() => login('player')}
+          onClick={() => setMode('player-select')}
           disabled={loading}
           className="w-full bg-darcula-elevated text-darcula-text px-4 py-3 rounded hover:bg-darcula-border transition disabled:opacity-50 border border-darcula-border"
         >
-          {loading ? t('joining') : t('joinAsPlayer')}
+          {t('joinAsPlayer')}
         </button>
       </div>
 
