@@ -167,6 +167,8 @@ export default async function MatchPage({
       player2Avatar={player2.avatarUrl}
       matchId={matchId}
       tournamentId={tournamentId}
+      player1Id={player1.id}
+      player2Id={player2.id}
       initialActions={pickBanHistory}
       initialSelectedGame={match.selectedGame || undefined}
       isHost={isHost}

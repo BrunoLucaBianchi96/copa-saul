@@ -31,6 +31,8 @@ interface PickBanProps {
   theme: Theme
   prevMatchId: number | null
   nextMatchId: number | null
+  player1Id: number
+  player2Id: number
   prevMatchAudioFile: string | null
   nextMatchAudioFile: string | null
   canAdvanceRound: boolean
@@ -138,6 +140,8 @@ export function PickBan({
   theme,
   prevMatchId,
   nextMatchId,
+  player1Id,
+  player2Id,
   prevMatchAudioFile,
   nextMatchAudioFile,
   canAdvanceRound,
@@ -157,6 +161,7 @@ export function PickBan({
   const [advancing, setAdvancing] = useState(false)
   const [backgroundFlash, setBackgroundFlash] = useState<'ban' | 'pick' | 'select' | null>(null)
   const [localMatchResult, setLocalMatchResult] = useState(matchResult)
+  const [victoryScreenLoaded, setVictoryScreenLoaded] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showEntranceAnimation, setShowEntranceAnimation] = useState(
     initialActions.length === 0 && matchResult === 'pending'
@@ -474,7 +479,21 @@ export function PickBan({
   const isActivePhase = localMatchResult === 'pending' && state.currentPhase !== 'complete' && state.currentPhase !== 'selecting'
   const player1IsWinner = localMatchResult === 'player1'
   const player2IsWinner = localMatchResult === 'player2'
+  const winnerId = player1IsWinner ? player1Id : player2IsWinner ? player2Id : null
+  const victoryScreenUrl = winnerId ? `/victory-screens/${winnerId}.jpeg` : null
   const matchComplete = localMatchResult !== 'pending'
+
+  // Check if the winner has a victory screen image
+  useEffect(() => {
+    if (!victoryScreenUrl) {
+      setVictoryScreenLoaded(false)
+      return
+    }
+    const img = new Image()
+    img.onload = () => setVictoryScreenLoaded(true)
+    img.onerror = () => setVictoryScreenLoaded(false)
+    img.src = victoryScreenUrl
+  }, [victoryScreenUrl])
 
   function getPhaseInstruction(): { phase: string; detail: string } {
     if (localMatchResult !== 'pending') {
@@ -816,6 +835,18 @@ export function PickBan({
             backgroundSize: theme.backgroundSize === 'repeat' ? 'auto 100%' : (theme.backgroundSize || 'cover'),
             backgroundPosition: 'center',
             backgroundRepeat: theme.backgroundSize === 'repeat' ? 'repeat-x' : 'no-repeat',
+          }}
+        />
+      )}
+
+      {/* Victory screen overlay */}
+      {victoryScreenUrl && victoryScreenLoaded && (
+        <div
+          className="fixed inset-0 z-[1] pointer-events-none transition-opacity duration-1000"
+          style={{
+            backgroundImage: `linear-gradient(to bottom, rgba(30, 31, 34, 0.3) 0%, rgba(30, 31, 34, 0.7) 100%), url(${victoryScreenUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
           }}
         />
       )}
