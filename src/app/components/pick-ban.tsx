@@ -434,7 +434,7 @@ export function PickBan({
   const playSoundbite = useCallback((type: 'onBan' | 'onPick' | 'onGameSelected' | 'onWinnerChosen'): Promise<void> => {
     const soundbite = theme.soundbites?.[type]
       ?? ((type === 'onBan' || type === 'onPick') ? { path: '/soundbites/MagicClick.ogg' }
-        : type === 'onWinnerChosen' ? { path: '/soundbites/ff-victory.mp3' } : null)
+        : type === 'onWinnerChosen' ? { path: '/soundbites/ff-victory.mp3', volume: 0.1 } : null)
     if (!soundbite) return Promise.resolve()
 
     const { path, offset: offsetMs = 0, volume: volumeMultiplier = 1 } = soundbite
@@ -1051,8 +1051,8 @@ export function PickBan({
         <div className="absolute inset-0 pointer-events-none">
           <BetRadarChart
             datasets={[
-              { bets: player1Bets, fill: 'rgba(104, 151, 187, 0.15)', stroke: 'rgba(104, 151, 187, 0.4)' },
-              { bets: player2Bets, fill: 'rgba(80, 161, 79, 0.15)', stroke: 'rgba(80, 161, 79, 0.4)' },
+              { bets: player1Bets, fill: 'rgba(104, 151, 187, 0.25)', stroke: 'rgba(104, 151, 187, 0.6)' },
+              { bets: player2Bets, fill: 'rgba(80, 161, 79, 0.25)', stroke: 'rgba(80, 161, 79, 0.6)' },
             ]}
           />
         </div>

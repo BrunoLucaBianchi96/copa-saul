@@ -200,6 +200,7 @@
     "remaining": "remaining",
     "over": "over",
     "minimumBet": "Minimum {min} points per game",
+    "setToMinimum": "All to {min}",
     "resetToDefault": "Reset to Default",
     "save": "Save Bets",
     "saving": "Saving...",

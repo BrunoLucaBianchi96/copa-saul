@@ -34,18 +34,33 @@ function getPoint(idx: number, scale: number) {
   }
 }
 
-function getBetPoints(bets: Record<string, number>) {
-  const minR = RADIUS * 0.1
-  const maxR = RADIUS * WEB_SCALE
-  return GAMES.map((game, idx) => {
+const MAX_R = RADIUS * WEB_SCALE
+const MIN_R = MAX_R * (MIN_BET_PER_GAME / MAX_BET_PER_GAME)
+
+function getBetPath(bets: Record<string, number>) {
+  // Outer ring: bet values scaled proportionally (clockwise)
+  const outer = GAMES.map((game, idx) => {
     const bet = bets[game.id] || MIN_BET_PER_GAME
     const angle = getAngle(idx)
-    const r = minR + ((bet - MIN_BET_PER_GAME) / (MAX_BET_PER_GAME - MIN_BET_PER_GAME)) * (maxR - minR)
-    return `${CENTER_X + r * Math.cos(angle)},${CENTER_Y + r * Math.sin(angle)}`
-  }).join(' ')
+    const r = MAX_R * (bet / MAX_BET_PER_GAME)
+    return { x: CENTER_X + r * Math.cos(angle), y: CENTER_Y + r * Math.sin(angle) }
+  })
+  // Inner ring: minimum radius (counter-clockwise for hole)
+  const inner = GAMES.map((_, idx) => {
+    const angle = getAngle(idx)
+    return { x: CENTER_X + MIN_R * Math.cos(angle), y: CENTER_Y + MIN_R * Math.sin(angle) }
+  }).reverse()
+
+  const outerPath = outer.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
+  const innerPath = inner.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
+  return `${outerPath} ${innerPath}`
 }
 
 const outerPoints = GAMES.map((_, idx) => getPoint(idx, WEB_SCALE))
+const minBetPoints = GAMES.map((_, idx) => {
+  const angle = getAngle(idx)
+  return { x: CENTER_X + MIN_R * Math.cos(angle), y: CENTER_Y + MIN_R * Math.sin(angle) }
+})
 const subdivisionRings = SUBDIVISIONS.map((scale) =>
   GAMES.map((_, idx) => getPoint(idx, scale))
 )
@@ -53,11 +68,11 @@ const subdivisionRings = SUBDIVISIONS.map((scale) =>
 export function BetRadarChart({ datasets, showLabels = false }: BetRadarChartProps) {
   return (
     <svg viewBox={`0 0 ${CENTER_X * 2} ${CENTER_Y * 2}`} className="w-full h-full">
-      {/* Outer polygon */}
+      {/* Outer polygon with background */}
       <polygon
         points={outerPoints.map((p) => `${p.x},${p.y}`).join(' ')}
-        fill="none"
-        stroke="rgba(169, 183, 198, 0.2)"
+        fill="rgba(30, 31, 34, 0.93)"
+        stroke="rgba(169, 183, 198, 0.3)"
         strokeWidth="2"
       />
       {/* Inner subdivision polygons */}
@@ -82,14 +97,23 @@ export function BetRadarChart({ datasets, showLabels = false }: BetRadarChartPro
           strokeWidth="1"
         />
       ))}
-      {/* Bet data polygons */}
+      {/* Minimum bet floor (shared by all players) */}
+      <polygon
+        points={minBetPoints.map((p) => `${p.x},${p.y}`).join(' ')}
+        fill="rgba(169, 183, 198, 0.08)"
+        stroke="rgba(169, 183, 198, 0.2)"
+        strokeWidth="1"
+        strokeDasharray="4 3"
+      />
+      {/* Bet data polygons (donut shape) */}
       {datasets.map((dataset, i) => (
-        <polygon
+        <path
           key={i}
-          points={getBetPoints(dataset.bets)}
+          d={getBetPath(dataset.bets)}
           fill={dataset.fill}
           stroke={dataset.stroke}
           strokeWidth="2"
+          fillRule="evenodd"
         />
       ))}
       {/* Game name labels */}

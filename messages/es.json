@@ -200,6 +200,7 @@
     "remaining": "restantes",
     "over": "de más",
     "minimumBet": "Mínimo {min} puntos por juego",
+    "setToMinimum": "Todo a {min}",
     "resetToDefault": "Restablecer",
     "save": "Guardar",
     "saving": "Guardando...",

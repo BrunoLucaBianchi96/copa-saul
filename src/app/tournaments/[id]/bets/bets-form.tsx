@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { GAMES } from '@/lib/games'
+import { GAMES, type Game } from '@/lib/games'
 import { TOTAL_BET_POINTS, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, calculateMatchPoints } from '@/lib/scoring-constants'
 import { BetRadarChart } from '@/app/components/bet-radar-chart'
+import { GameDetailModal } from '@/app/components/game-detail-modal'
 
 interface Player {
   playerId: number
@@ -34,6 +35,7 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [detailGame, setDetailGame] = useState<Game | null>(null)
 
   const total = Object.values(bets).reduce((sum, b) => sum + b, 0)
   const isValid = total === TOTAL_BET_POINTS && Object.values(bets).every((b) => b >= MIN_BET_PER_GAME && b <= MAX_BET_PER_GAME)
@@ -86,6 +88,11 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
     }
   }
 
+  function setAllToMinimum() {
+    setBets(Object.fromEntries(GAMES.map((g) => [g.id, MIN_BET_PER_GAME])))
+    setSaved(false)
+  }
+
   function resetToDefault() {
     setBets(Object.fromEntries(GAMES.map((g) => [g.id, DEFAULT_BET])))
     setSaved(false)
@@ -99,9 +106,9 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
   const selectedPlayerName = players.find((p) => p.playerId === selectedPlayerId)?.playerName
 
   return (
-    <div className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-6">
+    <div className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-3 sm:p-6">
       {/* Info button */}
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-2 sm:mb-4">
         <button
           onClick={() => setShowInfo(true)}
           className="p-2 rounded-full bg-darcula-elevated border border-darcula-border text-darcula-text-muted hover:text-darcula-blue hover:border-darcula-blue transition-colors"
@@ -228,7 +235,7 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
 
       {/* Player selection */}
       {isHost ? (
-        <div className="mb-6">
+        <div>
           <label className="block text-sm text-darcula-text-muted mb-2">{t('selectPlayer')}</label>
           <select
             value={selectedPlayerId ?? ''}
@@ -255,33 +262,44 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
       ) : selectedPlayerId ? (
         <>
           {/* Radar chart */}
-          <div className="w-48 h-48 sm:w-56 sm:h-56 mx-auto mb-6">
+          <div className="w-[500px] h-[500px] max-w-full mx-auto mb-6">
             <BetRadarChart
               datasets={[{
                 bets,
-                fill: 'rgba(104, 151, 187, 0.15)',
-                stroke: 'rgba(104, 151, 187, 0.4)',
+                fill: 'rgba(104, 151, 187, 0.3)',
+                stroke: 'rgba(104, 151, 187, 0.8)',
               }]}
               showLabels
             />
           </div>
 
           {/* Game bet rows */}
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {GAMES.map((game) => (
               <div
                 key={game.id}
-                className="flex items-center gap-3 bg-darcula-elevated rounded-lg p-3"
+                className="bg-darcula-elevated rounded-lg p-2 sm:p-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3"
               >
-                {game.imageUrl && (
-                  <img
-                    src={game.imageUrl}
-                    alt={game.name}
-                    className="w-12 h-12 rounded object-cover flex-shrink-0"
-                  />
-                )}
-                <span className="text-darcula-text flex-1 min-w-0 truncate">{game.name}</span>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 sm:flex-1">
+                  {game.imageUrl && (
+                    <img
+                      src={game.imageUrl}
+                      alt={game.name}
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded object-cover flex-shrink-0"
+                    />
+                  )}
+                  <span className="text-darcula-text flex-1 min-w-0 truncate text-sm sm:text-base">{game.name}</span>
+                  <button
+                    onClick={() => setDetailGame(game)}
+                    className="flex-shrink-0 text-darcula-text-muted hover:text-darcula-blue transition-colors"
+                    title={game.name}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 justify-center sm:justify-end">
                   <button
                     onClick={() => updateBet(game.id, Math.max(MIN_BET_PER_GAME, bets[game.id] - 5))}
                     className="w-8 h-8 rounded bg-darcula-bg border border-darcula-border text-darcula-text hover:bg-darcula-border transition flex items-center justify-center"
@@ -312,8 +330,8 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
           </div>
 
           {/* Total and actions */}
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-lg font-medium">
+          <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+            <div className="text-base sm:text-lg font-medium">
               <span className="text-darcula-text-muted">{t('total')}: </span>
               <span className={total === TOTAL_BET_POINTS ? 'text-darcula-green' : 'text-darcula-red'}>
                 {total} / {TOTAL_BET_POINTS}
@@ -325,17 +343,23 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
               )}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3 justify-center sm:justify-end">
+              <button
+                onClick={setAllToMinimum}
+                className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition"
+              >
+                {t('setToMinimum', { min: MIN_BET_PER_GAME })}
+              </button>
               <button
                 onClick={resetToDefault}
-                className="px-4 py-2 border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition"
               >
                 {t('resetToDefault')}
               </button>
               <button
                 onClick={saveBets}
                 disabled={!isValid || loading}
-                className="px-4 py-2 bg-darcula-green text-darcula-bg rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base bg-darcula-green text-darcula-bg rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
               >
                 {loading ? t('saving') : t('save')}
               </button>
@@ -356,6 +380,15 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
         </>
       ) : (
         <p className="text-darcula-text-muted text-center py-8">{t('selectPlayerFirst')}</p>
+      )}
+
+      {/* Game detail modal */}
+      {detailGame && (
+        <GameDetailModal
+          game={detailGame}
+          gradientColors="from-darcula-blue to-darcula-purple"
+          onClose={() => setDetailGame(null)}
+        />
       )}
     </div>
   )

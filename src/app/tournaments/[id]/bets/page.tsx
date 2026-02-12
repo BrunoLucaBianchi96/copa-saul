@@ -46,8 +46,8 @@ export default async function BetsPage({ params }: { params: { id: string } }) {
   const t = await getTranslations('bets')
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-6">
+    <main className="container mx-auto px-2 py-4 sm:px-4 sm:py-8 max-w-4xl">
+      <div className="mb-4 sm:mb-6">
         <Link href={`/tournaments/${id}`} className="text-darcula-blue hover:underline text-sm">
           &larr; {t('backToTournament')}
         </Link>
