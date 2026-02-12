@@ -1,11 +1,12 @@
 import { db } from '@/db'
 import { matches, players, tournaments } from '@/db/schema'
-import { eq, and, asc, isNotNull } from 'drizzle-orm'
+import { eq, and, asc } from 'drizzle-orm'
 import { notFound, redirect } from 'next/navigation'
 import { getSession, isHost as checkIsHost, getSessionPlayerId } from '@/lib/session'
 import { PickBan } from '@/app/components/pick-ban'
 import { type PickBanAction } from '@/lib/games'
 import { getThemeById, THEMES } from '@/lib/themes'
+import { getPlayerBets } from '@/lib/scoring'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,24 +25,12 @@ async function getPlayer(playerId: number) {
   return result[0] || null
 }
 
-async function getGamePlayCounts(tournamentId: number) {
-  const matchesWithGames = await db
-    .select({ selectedGame: matches.selectedGame })
-    .from(matches)
-    .where(
-      and(
-        eq(matches.tournamentId, tournamentId),
-        isNotNull(matches.selectedGame)
-      )
-    )
-
-  const counts: Record<string, number> = {}
-  for (const match of matchesWithGames) {
-    if (match.selectedGame) {
-      counts[match.selectedGame] = (counts[match.selectedGame] || 0) + 1
-    }
+function betsToRecord(bets: { gameId: string; bet: number }[]): Record<string, number> {
+  const record: Record<string, number> = {}
+  for (const b of bets) {
+    record[b.gameId] = b.bet
   }
-  return counts
+  return record
 }
 
 async function getNonByeMatchesInRound(tournamentId: number, round: number) {
@@ -145,8 +134,13 @@ export default async function MatchPage({
   const canAdvanceRound = isHost && isOnCurrentRound && allMatchesComplete && nextMatchId === null
     && (tournament.status === 'overtime' || tournament.currentRound < tournament.rounds)
 
-  // Get game play counts for radar chart
-  const gamePlayCounts = await getGamePlayCounts(tournamentId)
+  // Get player bets for radar chart overlay
+  const [p1Bets, p2Bets] = await Promise.all([
+    getPlayerBets(tournamentId, player1.id),
+    getPlayerBets(tournamentId, player2.id),
+  ])
+  const player1Bets = betsToRecord(p1Bets)
+  const player2Bets = betsToRecord(p2Bets)
 
   // Format name with nickname: "FirstName 'Nickname' LastName"
   function formatDisplayName(name: string, nickname: string | null): string {
@@ -181,7 +175,8 @@ export default async function MatchPage({
       prevMatchAudioFile={prevMatchAudioFile}
       nextMatchAudioFile={nextMatchAudioFile}
       canAdvanceRound={canAdvanceRound}
-      gamePlayCounts={gamePlayCounts}
+      player1Bets={player1Bets}
+      player2Bets={player2Bets}
       sessionPlayerId={sessionPlayerId}
     />
   )

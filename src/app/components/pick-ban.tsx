@@ -10,6 +10,7 @@ import {
   calculatePickBanState,
 } from '@/lib/games'
 import { type Theme, getAnimationDurations } from '@/lib/themes'
+import { MIN_BET_PER_GAME, MAX_BET_PER_GAME } from '@/lib/scoring-constants'
 import { GTA4LoadingBackground } from './gta4-loading-background'
 import { MatrixBackground } from './matrix-background'
 import { BalatroBackground } from './balatro-background'
@@ -36,7 +37,8 @@ interface PickBanProps {
   prevMatchAudioFile: string | null
   nextMatchAudioFile: string | null
   canAdvanceRound: boolean
-  gamePlayCounts: Record<string, number>
+  player1Bets: Record<string, number>
+  player2Bets: Record<string, number>
   sessionPlayerId: number | null
 }
 
@@ -146,7 +148,8 @@ export function PickBan({
   prevMatchAudioFile,
   nextMatchAudioFile,
   canAdvanceRound,
-  gamePlayCounts,
+  player1Bets,
+  player2Bets,
   sessionPlayerId,
 }: PickBanProps) {
   const router = useRouter()
@@ -820,12 +823,14 @@ export function PickBan({
     return { x, y }
   })
 
-  const innerPolygonPoints = GAMES.map((_, idx) => {
-    const angle = (idx * 2 * Math.PI) / numGames - Math.PI / 2
-    const x = centerX + radius * 0.3 * Math.cos(angle)
-    const y = centerY + radius * 0.3 * Math.sin(angle)
-    return { x, y }
-  })
+  const webSubdivisions = [0.2, 0.3, 0.4, 0.5].map((scale) =>
+    GAMES.map((_, idx) => {
+      const angle = (idx * 2 * Math.PI) / numGames - Math.PI / 2
+      const x = centerX + radius * scale * Math.cos(angle)
+      const y = centerY + radius * scale * Math.sin(angle)
+      return { x, y }
+    })
+  )
 
   const phaseInfo = getPhaseInstruction()
 
@@ -1068,13 +1073,16 @@ export function PickBan({
             stroke="rgba(169, 183, 198, 0.2)"
             strokeWidth="2"
           />
-          {/* Inner polygon */}
-          <polygon
-            points={innerPolygonPoints.map(p => `${p.x},${p.y}`).join(' ')}
-            fill="none"
-            stroke="rgba(169, 183, 198, 0.15)"
-            strokeWidth="1"
-          />
+          {/* Inner subdivision polygons */}
+          {webSubdivisions.map((points, i) => (
+            <polygon
+              key={i}
+              points={points.map(p => `${p.x},${p.y}`).join(' ')}
+              fill="none"
+              stroke="rgba(169, 183, 198, 0.15)"
+              strokeWidth="1"
+            />
+          ))}
           {/* Lines from center to each vertex */}
           {polygonPoints.map((point, idx) => (
             <line
@@ -1087,27 +1095,40 @@ export function PickBan({
               strokeWidth="1"
             />
           ))}
-          {/* Radar chart polygon for game play frequency */}
+          {/* Player 1 bet radar polygon (blue) */}
           <polygon
             points={(() => {
-              const minRadius = radius * 0.15  // Base offset for zero-play games
-              const maxRadius = radius * 0.5   // Maximum extension
-              const maxPlays = Math.max(...Object.values(gamePlayCounts), 1)
-
+              const minRadius = radius * 0.1
+              const maxRadius = radius * 0.6
               return GAMES.map((game, idx) => {
-                const playCount = gamePlayCounts[game.id] || 0
+                const bet = player1Bets[game.id] || MIN_BET_PER_GAME
                 const angle = (idx * 2 * Math.PI) / numGames - Math.PI / 2
-
-                // Scale: minRadius when 0 plays, up to maxRadius at max plays
-                const r = minRadius + (playCount / maxPlays) * (maxRadius - minRadius)
-
+                const r = minRadius + ((bet - MIN_BET_PER_GAME) / (MAX_BET_PER_GAME - MIN_BET_PER_GAME)) * (maxRadius - minRadius)
                 const x = centerX + r * Math.cos(angle)
                 const y = centerY + r * Math.sin(angle)
                 return `${x},${y}`
               }).join(' ')
             })()}
             fill="rgba(104, 151, 187, 0.15)"
-            stroke="rgba(104, 151, 187, 0.3)"
+            stroke="rgba(104, 151, 187, 0.4)"
+            strokeWidth="2"
+          />
+          {/* Player 2 bet radar polygon (green) */}
+          <polygon
+            points={(() => {
+              const minRadius = radius * 0.1
+              const maxRadius = radius * 0.6
+              return GAMES.map((game, idx) => {
+                const bet = player2Bets[game.id] || MIN_BET_PER_GAME
+                const angle = (idx * 2 * Math.PI) / numGames - Math.PI / 2
+                const r = minRadius + ((bet - MIN_BET_PER_GAME) / (MAX_BET_PER_GAME - MIN_BET_PER_GAME)) * (maxRadius - minRadius)
+                const x = centerX + r * Math.cos(angle)
+                const y = centerY + r * Math.sin(angle)
+                return `${x},${y}`
+              }).join(' ')
+            })()}
+            fill="rgba(80, 161, 79, 0.15)"
+            stroke="rgba(80, 161, 79, 0.4)"
             strokeWidth="2"
           />
         </svg>
