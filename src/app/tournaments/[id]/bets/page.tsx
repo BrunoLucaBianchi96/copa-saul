@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getSession, isHost as checkIsHost, getSessionPlayerId } from '@/lib/session'
 import { getTranslations } from 'next-intl/server'
 import { BetsForm } from './bets-form'
+import { TOTAL_BET_POINTS } from '@/lib/scoring-constants'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,7 +53,7 @@ export default async function BetsPage({ params }: { params: { id: string } }) {
         </Link>
         <h1 className="text-3xl font-bold text-darcula-text-bright mt-2">{t('title')}</h1>
         <p className="text-darcula-text-muted mt-1">
-          {t('allocatePoints', { total: 140 })}
+          {t('allocatePoints', { total: TOTAL_BET_POINTS })}
         </p>
       </div>
 

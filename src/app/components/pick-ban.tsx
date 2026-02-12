@@ -10,7 +10,7 @@ import {
   calculatePickBanState,
 } from '@/lib/games'
 import { type Theme, getAnimationDurations } from '@/lib/themes'
-import { MIN_BET_PER_GAME, MAX_BET_PER_GAME } from '@/lib/scoring-constants'
+import { BetRadarChart } from './bet-radar-chart'
 import { GTA4LoadingBackground } from './gta4-loading-background'
 import { MatrixBackground } from './matrix-background'
 import { BalatroBackground } from './balatro-background'
@@ -815,23 +815,6 @@ export function PickBan({
   const centerX = 300
   const centerY = 260
 
-  // Generate polygon points for the web
-  const polygonPoints = GAMES.map((_, idx) => {
-    const angle = (idx * 2 * Math.PI) / numGames - Math.PI / 2
-    const x = centerX + radius * 0.6 * Math.cos(angle)
-    const y = centerY + radius * 0.6 * Math.sin(angle)
-    return { x, y }
-  })
-
-  const webSubdivisions = [0.2, 0.3, 0.4, 0.5].map((scale) =>
-    GAMES.map((_, idx) => {
-      const angle = (idx * 2 * Math.PI) / numGames - Math.PI / 2
-      const x = centerX + radius * scale * Math.cos(angle)
-      const y = centerY + radius * scale * Math.sin(angle)
-      return { x, y }
-    })
-  )
-
   const phaseInfo = getPhaseInstruction()
 
   return (
@@ -1065,73 +1048,14 @@ export function PickBan({
             }}
           >
         {/* Spider web SVG */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          {/* Outer polygon */}
-          <polygon
-            points={polygonPoints.map(p => `${p.x},${p.y}`).join(' ')}
-            fill="none"
-            stroke="rgba(169, 183, 198, 0.2)"
-            strokeWidth="2"
+        <div className="absolute inset-0 pointer-events-none">
+          <BetRadarChart
+            datasets={[
+              { bets: player1Bets, fill: 'rgba(104, 151, 187, 0.15)', stroke: 'rgba(104, 151, 187, 0.4)' },
+              { bets: player2Bets, fill: 'rgba(80, 161, 79, 0.15)', stroke: 'rgba(80, 161, 79, 0.4)' },
+            ]}
           />
-          {/* Inner subdivision polygons */}
-          {webSubdivisions.map((points, i) => (
-            <polygon
-              key={i}
-              points={points.map(p => `${p.x},${p.y}`).join(' ')}
-              fill="none"
-              stroke="rgba(169, 183, 198, 0.15)"
-              strokeWidth="1"
-            />
-          ))}
-          {/* Lines from center to each vertex */}
-          {polygonPoints.map((point, idx) => (
-            <line
-              key={idx}
-              x1={centerX}
-              y1={centerY}
-              x2={point.x}
-              y2={point.y}
-              stroke="rgba(169, 183, 198, 0.15)"
-              strokeWidth="1"
-            />
-          ))}
-          {/* Player 1 bet radar polygon (blue) */}
-          <polygon
-            points={(() => {
-              const minRadius = radius * 0.1
-              const maxRadius = radius * 0.6
-              return GAMES.map((game, idx) => {
-                const bet = player1Bets[game.id] || MIN_BET_PER_GAME
-                const angle = (idx * 2 * Math.PI) / numGames - Math.PI / 2
-                const r = minRadius + ((bet - MIN_BET_PER_GAME) / (MAX_BET_PER_GAME - MIN_BET_PER_GAME)) * (maxRadius - minRadius)
-                const x = centerX + r * Math.cos(angle)
-                const y = centerY + r * Math.sin(angle)
-                return `${x},${y}`
-              }).join(' ')
-            })()}
-            fill="rgba(104, 151, 187, 0.15)"
-            stroke="rgba(104, 151, 187, 0.4)"
-            strokeWidth="2"
-          />
-          {/* Player 2 bet radar polygon (green) */}
-          <polygon
-            points={(() => {
-              const minRadius = radius * 0.1
-              const maxRadius = radius * 0.6
-              return GAMES.map((game, idx) => {
-                const bet = player2Bets[game.id] || MIN_BET_PER_GAME
-                const angle = (idx * 2 * Math.PI) / numGames - Math.PI / 2
-                const r = minRadius + ((bet - MIN_BET_PER_GAME) / (MAX_BET_PER_GAME - MIN_BET_PER_GAME)) * (maxRadius - minRadius)
-                const x = centerX + r * Math.cos(angle)
-                const y = centerY + r * Math.sin(angle)
-                return `${x},${y}`
-              }).join(' ')
-            })()}
-            fill="rgba(80, 161, 79, 0.15)"
-            stroke="rgba(80, 161, 79, 0.4)"
-            strokeWidth="2"
-          />
-        </svg>
+        </div>
 
         {/* Game cards */}
         {GAMES.map((game, idx) => {

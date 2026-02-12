@@ -5,6 +5,7 @@ import { GAMES } from '@/lib/games'
 
 // Re-export constants and pure functions from client-safe module
 export {
+  NUM_GAMES,
   TOTAL_BET_POINTS,
   MIN_BET_PER_GAME,
   MAX_BET_PER_GAME,

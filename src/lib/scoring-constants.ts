@@ -1,8 +1,10 @@
-export const TOTAL_BET_POINTS = 140
-export const MIN_BET_PER_GAME = 10
+// --- Bet system balance knobs ---
+export const NUM_GAMES = 7
+export const TOTAL_BET_POINTS = 280
+export const MIN_BET_PER_GAME = 20
 export const MAX_BET_PER_GAME = 80
-export const DEFAULT_BET = 20 // 140 / 7
-export const BYE_POINTS = 20
+export const DEFAULT_BET = Math.floor(TOTAL_BET_POINTS / NUM_GAMES)
+export const BYE_POINTS = MIN_BET_PER_GAME
 
 export interface BetAllocation {
   gameId: string

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { GAMES } from '@/lib/games'
 import { TOTAL_BET_POINTS, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, calculateMatchPoints } from '@/lib/scoring-constants'
+import { BetRadarChart } from '@/app/components/bet-radar-chart'
 
 interface Player {
   playerId: number
@@ -253,6 +254,18 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
         <p className="text-darcula-text-muted text-center py-8">{t('loading')}</p>
       ) : selectedPlayerId ? (
         <>
+          {/* Radar chart */}
+          <div className="w-48 h-48 sm:w-56 sm:h-56 mx-auto mb-6">
+            <BetRadarChart
+              datasets={[{
+                bets,
+                fill: 'rgba(104, 151, 187, 0.15)',
+                stroke: 'rgba(104, 151, 187, 0.4)',
+              }]}
+              showLabels
+            />
+          </div>
+
           {/* Game bet rows */}
           <div className="space-y-3">
             {GAMES.map((game) => (
@@ -288,7 +301,8 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
                   />
                   <button
                     onClick={() => updateBet(game.id, Math.min(MAX_BET_PER_GAME, bets[game.id] + 5))}
-                    className="w-8 h-8 rounded bg-darcula-bg border border-darcula-border text-darcula-text hover:bg-darcula-border transition flex items-center justify-center"
+                    disabled={bets[game.id] >= MAX_BET_PER_GAME || total >= TOTAL_BET_POINTS}
+                    className="w-8 h-8 rounded bg-darcula-bg border border-darcula-border text-darcula-text hover:bg-darcula-border transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     +
                   </button>
