@@ -35,20 +35,6 @@ export const THEMES: Theme[] = [
     backgroundImage: "https://static.wikia.nocookie.net/muchalucha/images/e/e7/S1E11ATitleCard.jpg/",
   },
   {
-    id: 'balatro',
-    name: 'Balatro Main Theme',
-    bpm: 110,
-    division: 1,
-    audioFile: '/songs/balatro-main.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://i.redd.it/arcane-wallpaper-collection-3840x2160-v0-31217mvgmxde1.jpg?width=3840&format=pjpg&auto=webp&s=812076ff050a2efe5cc80b58ce1827bae782b6db',
-    soundbites: {
-      onBan: { path: '/soundbites/card1.ogg' },
-      onPick: { path: '/soundbites/card3.ogg' },
-      onGameSelected: { path: '/soundbites/win.ogg' },
-    },
-  },
-  {
     id: 'the-beast-arcane',
     name: 'The Beast (Arcane)',
     bpm: 135,
@@ -94,15 +80,6 @@ export const THEMES: Theme[] = [
     audioFile: '/songs/crash-bandicoot-main.mp3',
     normalizeVolume: 1,
     backgroundImage: 'https://wallpapercave.com/wp/wp10708932.jpg'
-  },
-  {
-    id: 'live-and-learn',
-    name: 'Live and Learn (Sonic Adventure 2)',
-    bpm: 172,
-    division: 1,
-    audioFile: '/songs/live-and-learn-sonic-adventure.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp3022024.png'
   },
   {
     id: 'marvel-vs-capcom',
@@ -204,21 +181,6 @@ export const THEMES: Theme[] = [
     },
   },
   {
-    id: 'stardust-crusaders',
-    name: "Jotaro's Theme (JoJo)",
-    bpm: 140,
-    division: 2,
-    audioFile: '/songs/stardust-crusaders.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapers.com/images/hd/stardust-crusaders-1920-x-1080-wallpaper-d675thhdqigslk2g.jpg',
-    soundbites: {
-      onGameSelected: { path: '/soundbites/Za Warudo - Sound Effect.mp3', volume: 0.6},
-      onWinnerChosen: { path: '/soundbites/Yare Yare Daze.mp3', volume: 5 },
-      onBan: { path: '/soundbites/bakudan.mp3' },
-      onPick: { path: '/soundbites/bakudan.mp3' },
-    },
-  },
-  {
     id: 'overtaken',
     name: 'Overtaken (One Piece)',
     bpm: 107,
@@ -281,15 +243,89 @@ export const THEMES: Theme[] = [
     normalizeVolume: 1,
     backgroundImage: 'https://wallpapercave.com/wp/wp2479343.jpg',
   },
+  // Priority themes — kept at the end so the fallback logic doesn't assign them
+  // to non-priority players before priority rules get a chance to fire.
+  {
+    id: 'balatro',
+    name: 'Balatro Main Theme',
+    bpm: 110,
+    division: 1,
+    audioFile: '/songs/balatro-main.mp3',
+    normalizeVolume: 1,
+    backgroundImage: 'https://i.redd.it/arcane-wallpaper-collection-3840x2160-v0-31217mvgmxde1.jpg?width=3840&format=pjpg&auto=webp&s=812076ff050a2efe5cc80b58ce1827bae782b6db',
+    soundbites: {
+      onBan: { path: '/soundbites/card1.ogg' },
+      onPick: { path: '/soundbites/card3.ogg' },
+      onGameSelected: { path: '/soundbites/win.ogg' },
+    },
+  },
+  {
+    id: 'stardust-crusaders',
+    name: "Jotaro's Theme (JoJo)",
+    bpm: 140,
+    division: 2,
+    audioFile: '/songs/stardust-crusaders.mp3',
+    normalizeVolume: 1,
+    backgroundImage: 'https://wallpapers.com/images/hd/stardust-crusaders-1920-x-1080-wallpaper-d675thhdqigslk2g.jpg',
+    soundbites: {
+      onGameSelected: { path: '/soundbites/Za Warudo - Sound Effect.mp3', volume: 0.6},
+      onWinnerChosen: { path: '/soundbites/Yare Yare Daze.mp3', volume: 5 },
+      onBan: { path: '/soundbites/bakudan.mp3' },
+      onPick: { path: '/soundbites/bakudan.mp3' },
+    },
+  },
+  {
+    id: 'live-and-learn',
+    name: 'Live and Learn (Sonic Adventure 2)',
+    bpm: 172,
+    division: 1,
+    audioFile: '/songs/live-and-learn-sonic-adventure.mp3',
+    normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp3022024.png'
+  },
 ]
 
 export function getThemeById(id: string): Theme | undefined {
   return THEMES.find((t) => t.id === id)
 }
 
-// Get theme for a specific match in a tournament (cycles through themes in order, no repeats until all used)
-export function getThemeForTournament(_tournamentId: number, matchIndex: number): Theme {
-  return THEMES[matchIndex % THEMES.length]
+interface ThemePriority {
+  playerName: string   // case-insensitive substring match on player name
+  themeId: string      // theme to assign
+  round?: number       // if set, only applies in this round
+}
+
+const THEME_PRIORITIES: ThemePriority[] = [
+  { playerName: 'Lucho', themeId: 'balatro', round: 1 },
+  { playerName: 'Lucho', themeId: 'stardust-crusaders', round: 4 },
+  { playerName: 'Ailen', themeId: 'live-and-learn' },
+]
+
+// Get theme for a match based on player-priority rules, falling back to sequential assignment
+export function getThemeForMatch(
+  usedThemeIds: string[],
+  playerNames: string[],
+  round: number,
+): Theme {
+  // Check priority rules
+  for (const rule of THEME_PRIORITIES) {
+    if (rule.round !== undefined && rule.round !== round) continue
+    const matches = playerNames.some(
+      (name) => name.toLowerCase().includes(rule.playerName.toLowerCase())
+    )
+    if (matches && !usedThemeIds.includes(rule.themeId)) {
+      const theme = THEMES.find((t) => t.id === rule.themeId)
+      if (theme) return theme
+    }
+  }
+
+  // Fall back: first unused theme in THEMES order
+  for (const theme of THEMES) {
+    if (!usedThemeIds.includes(theme.id)) return theme
+  }
+
+  // All exhausted — cycle
+  return THEMES[usedThemeIds.length % THEMES.length]
 }
 
 // Calculate animation durations based on BPM and division

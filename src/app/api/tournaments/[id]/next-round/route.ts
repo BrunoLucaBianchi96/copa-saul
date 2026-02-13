@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { tournaments, matches, tournamentPlayers } from '@/db/schema'
-import { eq, and, asc } from 'drizzle-orm'
+import { tournaments, matches, tournamentPlayers, players } from '@/db/schema'
+import { eq, and, asc, inArray } from 'drizzle-orm'
 import {
   generatePairings,
   checkFirstPlaceTie,
@@ -9,7 +9,7 @@ import {
   generateOvertimePairings,
 } from '@/lib/swiss'
 import { requireHost } from '@/lib/session'
-import { getThemeForTournament } from '@/lib/themes'
+import { getThemeForMatch } from '@/lib/themes'
 import { BYE_POINTS } from '@/lib/scoring'
 
 async function createMatches(
@@ -17,14 +17,25 @@ async function createMatches(
   round: number,
   pairings: { player1Id: number; player2Id: number | null }[]
 ) {
-  // Count existing non-bye matches for round-robin theme selection
+  // Seed usedThemeIds from all existing matches in the tournament
   const existingMatches = await db
     .select()
     .from(matches)
     .where(eq(matches.tournamentId, tournamentId))
-  const existingNonByeCount = existingMatches.filter((m) => m.player2Id !== null).length
+  const usedThemeIds = existingMatches
+    .filter((m) => m.backgroundMusicId)
+    .map((m) => m.backgroundMusicId!)
 
-  let matchIndex = existingNonByeCount
+  // Build player name map for theme priority matching
+  const allPlayerIds = pairings.flatMap((p) =>
+    p.player2Id ? [p.player1Id, p.player2Id] : [p.player1Id]
+  )
+  const playerRows = await db
+    .select({ id: players.id, name: players.name })
+    .from(players)
+    .where(inArray(players.id, allPlayerIds))
+  const playerNameMap = new Map(playerRows.map((p) => [p.id, p.name]))
+
   for (const pairing of pairings) {
     if (pairing.player2Id === null) {
       // Bye
@@ -53,15 +64,20 @@ async function createMatches(
           .where(eq(tournamentPlayers.id, current[0].id))
       }
     } else {
+      const names = [
+        playerNameMap.get(pairing.player1Id) ?? '',
+        playerNameMap.get(pairing.player2Id) ?? '',
+      ]
+      const theme = getThemeForMatch(usedThemeIds, names, round)
+      usedThemeIds.push(theme.id)
       await db.insert(matches).values({
         tournamentId,
         round,
         player1Id: pairing.player1Id,
         player2Id: pairing.player2Id,
         result: 'pending',
-        backgroundMusicId: getThemeForTournament(tournamentId, matchIndex).id,
+        backgroundMusicId: theme.id,
       })
-      matchIndex++
     }
   }
 }
