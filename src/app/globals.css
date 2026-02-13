@@ -129,3 +129,13 @@
 .background-flash-3x {
   animation: backgroundFlash3x 0.9s ease-out forwards;
 }
+
+@keyframes floatUp {
+  0% { opacity: 1; transform: translate(-50%, 0); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -80px); }
+}
+
+.floating-points {
+  animation: floatUp 4s ease-out forwards;
+}

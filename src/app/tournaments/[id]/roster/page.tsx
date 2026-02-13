@@ -3,9 +3,9 @@ import { tournaments, tournamentPlayers, players } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { getSession } from '@/lib/session'
+import { getSession, isHost as checkIsHost } from '@/lib/session'
 import { getTranslations } from 'next-intl/server'
-import { PlayerCard } from '@/app/components/player-card'
+import { RosterGrid } from '@/app/components/roster-grid'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,10 +17,12 @@ async function getTournament(id: number) {
 async function getRosterPlayers(tournamentId: number) {
   return db
     .select({
-      playerId: tournamentPlayers.playerId,
-      playerName: players.name,
-      playerNickname: players.nickname,
-      playerAvatar: players.avatarUrl,
+      id: players.id,
+      name: players.name,
+      nickname: players.nickname,
+      avatarUrl: players.avatarUrl,
+      createdAt: players.createdAt,
+      deletedAt: players.deletedAt,
     })
     .from(tournamentPlayers)
     .innerJoin(players, eq(tournamentPlayers.playerId, players.id))
@@ -65,7 +67,14 @@ export default async function RosterPage({ params }: { params: { id: string } })
   }
 
   const rosterPlayers = await getRosterPlayers(id)
+  const isHost = checkIsHost(role)
   const t = await getTranslations('roster')
+
+  const playersWithMeta = rosterPlayers.map((p, i) => ({
+    player: p,
+    displayName: formatDisplayName(p.name, p.nickname),
+    gradientColors: GRADIENT_COLORS[i % GRADIENT_COLORS.length],
+  }))
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -87,20 +96,7 @@ export default async function RosterPage({ params }: { params: { id: string } })
       {rosterPlayers.length === 0 ? (
         <p className="text-darcula-text-muted">{t('noPlayers')}</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-          {rosterPlayers.map((p, i) => (
-            <div key={p.playerId} className="flex justify-center transition-transform duration-200 hover:scale-[1.2] hover:z-10">
-              <PlayerCard
-                name={formatDisplayName(p.playerName, p.playerNickname)}
-                avatar={p.playerAvatar}
-                gradientColors={GRADIENT_COLORS[i % GRADIENT_COLORS.length]}
-                className="w-44 h-60 sm:w-48 sm:h-64"
-                nameClassName="text-base"
-                initialsClassName="text-4xl"
-              />
-            </div>
-          ))}
-        </div>
+        <RosterGrid players={playersWithMeta} isHost={isHost} />
       )}
     </main>
   )

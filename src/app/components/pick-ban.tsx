@@ -10,6 +10,7 @@ import {
   calculatePickBanState,
 } from '@/lib/games'
 import { type Theme, getAnimationDurations } from '@/lib/themes'
+import { calculateMatchPoints, DEFAULT_BET } from '@/lib/scoring-constants'
 import { BetRadarChart } from './bet-radar-chart'
 import { GTA4LoadingBackground } from './gta4-loading-background'
 import { MatrixBackground } from './matrix-background'
@@ -178,6 +179,7 @@ export function PickBan({
   const currentAnimatingGameRef = useRef<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [wheelScale, setWheelScale] = useState(1)
+  const [floatingPoints, setFloatingPoints] = useState<{ player: 1 | 2; points: number } | null>(null)
 
   // Reset animation ref when matchId changes (e.g., navigating away and back)
   useEffect(() => {
@@ -734,6 +736,17 @@ export function PickBan({
     const previousResult = localMatchResult
     setLocalMatchResult(result)
 
+    // Show floating points for the winner
+    if (result !== 'draw' && selectedGame) {
+      const winnerBets = result === 'player1' ? player1Bets : player2Bets
+      const loserBets = result === 'player1' ? player2Bets : player1Bets
+      const winnerBet = winnerBets[selectedGame] ?? DEFAULT_BET
+      const loserBet = loserBets[selectedGame] ?? DEFAULT_BET
+      const pts = calculateMatchPoints(winnerBet, loserBet)
+      setFloatingPoints({ player: result === 'player1' ? 1 : 2, points: pts })
+      setTimeout(() => setFloatingPoints(null), 2000)
+    }
+
     // Briefly fade out music for the winner soundbite, then fade back in
     fadeOutMusic(500)
     playSoundbite('onWinnerChosen').then(() => {
@@ -1163,23 +1176,32 @@ export function PickBan({
 
       {/* Footer with portraits and match info */}
       <div className="relative z-10 w-full flex items-end justify-center gap-4 px-4 py-4 pointer-events-none">
-        <PlayerPortrait
-          playerNumber={1}
-          name={player1Name}
-          avatar={player1Avatar}
-          isActive={isActivePhase && state.currentPlayer === 1}
-          isWinner={player1IsWinner}
-          opponentIsWinner={player2IsWinner}
-          canSelectWinner={canSelectWinner}
-          saving={saving}
-          showEntranceAnimation={showEntranceAnimation}
-          showExplosion={showExplosion1}
-          animationDurations={animationDurations}
-          actionsLength={actions.length}
-          onSelectWinner={() => handleRecordResult('player1')}
-          winnerLabel={t('winner')}
-          gradientColors="from-darcula-blue to-darcula-purple"
-        />
+        <div className="relative">
+          {floatingPoints?.player === 1 && (
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none floating-points">
+              <span className="text-darcula-green font-black text-2xl sm:text-3xl lg:text-4xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                +{floatingPoints.points}pts!
+              </span>
+            </div>
+          )}
+          <PlayerPortrait
+            playerNumber={1}
+            name={player1Name}
+            avatar={player1Avatar}
+            isActive={isActivePhase && state.currentPlayer === 1}
+            isWinner={player1IsWinner}
+            opponentIsWinner={player2IsWinner}
+            canSelectWinner={canSelectWinner}
+            saving={saving}
+            showEntranceAnimation={showEntranceAnimation}
+            showExplosion={showExplosion1}
+            animationDurations={animationDurations}
+            actionsLength={actions.length}
+            onSelectWinner={() => handleRecordResult('player1')}
+            winnerLabel={t('winner')}
+            gradientColors="from-darcula-blue to-darcula-purple"
+          />
+        </div>
 
         {/* Match info - center (hidden on small/medium screens) */}
         <div className="hidden lg:block text-center pb-4 lg:pb-8 flex-shrink-0 pointer-events-auto">
@@ -1202,24 +1224,33 @@ export function PickBan({
           )}
         </div>
 
-        <PlayerPortrait
-          playerNumber={2}
-          name={player2Name}
-          avatar={player2Avatar}
-          isActive={isActivePhase && state.currentPlayer === 2}
-          isWinner={player2IsWinner}
-          opponentIsWinner={player1IsWinner}
-          canSelectWinner={canSelectWinner}
-          saving={saving}
-          showEntranceAnimation={showEntranceAnimation}
-          showExplosion={showExplosion2}
-          animationDurations={animationDurations}
-          actionsLength={actions.length}
-          onSelectWinner={() => handleRecordResult('player2')}
-          winnerLabel={t('winner')}
-          gradientColors="from-darcula-orange to-darcula-red"
-          entranceDelay={showEntranceAnimation ? '0.15s' : undefined}
-        />
+        <div className="relative">
+          {floatingPoints?.player === 2 && (
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none floating-points">
+              <span className="text-darcula-green font-black text-2xl sm:text-3xl lg:text-4xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                +{floatingPoints.points}pts!
+              </span>
+            </div>
+          )}
+          <PlayerPortrait
+            playerNumber={2}
+            name={player2Name}
+            avatar={player2Avatar}
+            isActive={isActivePhase && state.currentPlayer === 2}
+            isWinner={player2IsWinner}
+            opponentIsWinner={player1IsWinner}
+            canSelectWinner={canSelectWinner}
+            saving={saving}
+            showEntranceAnimation={showEntranceAnimation}
+            showExplosion={showExplosion2}
+            animationDurations={animationDurations}
+            actionsLength={actions.length}
+            onSelectWinner={() => handleRecordResult('player2')}
+            winnerLabel={t('winner')}
+            gradientColors="from-darcula-orange to-darcula-red"
+            entranceDelay={showEntranceAnimation ? '0.15s' : undefined}
+          />
+        </div>
       </div>
 
     </div>
