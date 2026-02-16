@@ -92,6 +92,9 @@ function PlayerPortrait({
       style={{
         '--drop-duration': '1s',
         animationDelay: entranceDelay,
+        filter: playerNumber === 1
+          ? 'drop-shadow(0 0 12px rgba(104, 151, 187, 0.7))'
+          : 'drop-shadow(0 0 12px rgba(106, 175, 89, 0.7))',
         ...(shouldAnimate ? { '--sway-duration': `${animationDurations.sway}s`, '--bounce-duration': `${animationDurations.bounce}s` } : {})
       } as React.CSSProperties}
     >
@@ -355,7 +358,7 @@ export function PickBan({
     }
   }, [theme.audioFile, theme.audioOffset])
 
-  // Auto-mute when tab loses focus
+  // Auto-mute when tab loses focus or browser window loses OS focus
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
@@ -364,17 +367,34 @@ export function PickBan({
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // Tab is hidden - store current volume and mute
         volumeBeforeMute = audio.volume
         audio.volume = 0
       } else {
-        // Tab is visible - restore volume
+        audio.volume = volumeBeforeMute
+      }
+    }
+
+    const handleWindowBlur = () => {
+      if (audio.volume > 0) {
+        volumeBeforeMute = audio.volume
+      }
+      audio.volume = 0
+    }
+
+    const handleWindowFocus = () => {
+      if (!document.hidden) {
         audio.volume = volumeBeforeMute
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('blur', handleWindowBlur)
+    window.addEventListener('focus', handleWindowFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('blur', handleWindowBlur)
+      window.removeEventListener('focus', handleWindowFocus)
+    }
   }, [])
 
   // Calculate wheel scale based on available width
@@ -902,6 +922,32 @@ export function PickBan({
         />
       )}
 
+      {/* Active player color corner gradient */}
+      {isActivePhase && (
+        <div
+          className="fixed inset-0 z-[1] pointer-events-none transition-opacity duration-300"
+          style={{
+            background: state.currentPlayer === 1
+              ? 'linear-gradient(to right, rgba(104, 151, 187, 0.8) 0%, transparent 50%)'
+              : 'linear-gradient(to left, rgba(106, 175, 89, 0.8) 0%, transparent 50%)',
+            mixBlendMode: 'hard-light',
+          }}
+        />
+      )}
+
+      {/* Winner color tinge from bottom */}
+      {matchComplete && localMatchResult !== 'draw' && (
+        <div
+          className="fixed inset-0 z-[1] pointer-events-none transition-opacity duration-1000"
+          style={{
+            background: localMatchResult === 'player1'
+              ? 'linear-gradient(to top, rgba(104, 151, 187, 0.5) 0%, rgba(104, 151, 187, 0.15) 40%, transparent 70%)'
+              : 'linear-gradient(to top, rgba(106, 175, 89, 0.5) 0%, rgba(106, 175, 89, 0.15) 40%, transparent 70%)',
+            mixBlendMode: 'hard-light',
+          }}
+        />
+      )}
+
       {/* Victory screen overlay */}
       {victoryScreenUrl && victoryScreenLoaded && (
         <div
@@ -934,7 +980,7 @@ export function PickBan({
         <div className="flex items-center gap-3">
           <a
             href={`/tournaments/${tournamentId}`}
-            className="text-darcula-text-muted hover:text-darcula-text text-sm inline-flex items-center gap-1 transition-colors"
+            className="text-darcula-text hover:text-darcula-text-bright text-sm inline-flex items-center gap-1 transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1013,7 +1059,7 @@ export function PickBan({
             <button
               onClick={handleResetRound}
               disabled={resetting}
-              className="text-darcula-text-muted hover:text-darcula-red text-sm inline-flex items-center gap-1 transition-colors disabled:opacity-50"
+              className="text-darcula-text hover:text-darcula-red text-sm inline-flex items-center gap-1 transition-colors disabled:opacity-50 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -1026,10 +1072,10 @@ export function PickBan({
 
       {/* Match info - mobile (shown only on small/medium screens) */}
       <div className="lg:hidden relative z-10 text-center px-4 pb-2">
-        <div className="text-darcula-text-muted text-xs uppercase tracking-widest">{tCommon('round')} {roundNumber}</div>
-        <div className="text-darcula-text-bright text-base font-bold mt-1 flex items-center justify-center">
+        <div className="text-darcula-text text-xs uppercase tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{tCommon('round')} {roundNumber}</div>
+        <div className="text-darcula-text-bright text-base font-bold mt-1 flex items-center justify-center drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
           <span className="flex-1 text-center">{formatPlayerName(player1Name)}</span>
-          <span className="text-darcula-text-muted mx-2 flex-shrink-0">{tCommon('vs')}</span>
+          <span className="text-darcula-text mx-2 flex-shrink-0">{tCommon('vs')}</span>
           <span className="flex-1 text-center">{formatPlayerName(player2Name)}</span>
         </div>
         {localMatchResult !== 'pending' && (
@@ -1044,12 +1090,12 @@ export function PickBan({
       </div>
 
       {/* Theme indicator - positioned below navbar on left, overlays content */}
-      <div className="absolute top-12 left-4 z-20 flex items-center gap-2 text-darcula-text-muted text-sm">
+      <div className="absolute top-12 left-4 z-20 flex items-center gap-2 text-darcula-text text-sm drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
         </svg>
         <span>{theme.name}</span>
-        <span className="text-darcula-text-muted/50">({theme.bpm} BPM)</span>
+        <span className="text-darcula-text/50">({theme.bpm} BPM)</span>
       </div>
 
       {/* Phase indicator */}
