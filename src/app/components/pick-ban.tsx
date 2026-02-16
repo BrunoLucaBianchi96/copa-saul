@@ -9,6 +9,7 @@ import {
   getGameStates,
   calculatePickBanState,
 } from '@/lib/games'
+import { useMatchStream, type MatchState } from '@/app/hooks/useMatchStream'
 import { type Theme, getAnimationDurations } from '@/lib/themes'
 import { calculateMatchPoints, DEFAULT_BET } from '@/lib/scoring-constants'
 import { BetRadarChart } from './bet-radar-chart'
@@ -180,6 +181,7 @@ export function PickBan({
   const entranceAnimationShownRef = useRef(initialActions.length === 0 && matchResult === 'pending')
   const currentAnimatingGameRef = useRef<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const optimisticCountRef = useRef(initialActions.length)
   const [wheelScale, setWheelScale] = useState(1)
   const [floatingPoints, setFloatingPoints] = useState<{ player: 1 | 2; points: number } | null>(null)
 
@@ -486,39 +488,55 @@ export function PickBan({
   const isInteractive = (isHost || isMyTurn) && localMatchResult === 'pending' && state.currentPhase !== 'complete' && state.currentPhase !== 'selecting'
   const canSelectWinner = isHost && localMatchResult === 'pending' && state.currentPhase === 'complete'
 
-  // Poll for state changes when it's not the player's turn
-  useEffect(() => {
-    // Only poll for players (not host), when match is pending, and it's not their turn
-    if (isHost || localMatchResult !== 'pending') return
-    if (isMyTurn) return
+  // SSE: real-time state sync for all clients (host + players)
+  const handleStateUpdate = useCallback((serverState: MatchState) => {
+    const serverActionCount = serverState.pickBanHistory.length
 
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/tournaments/${tournamentId}/matches/${matchId}/state`)
-        if (!res.ok) return
-        const data = await res.json()
+    // Detect reset: server has 0 actions but we have some locally
+    if (serverActionCount === 0 && actions.length > 0) {
+      setActions([])
+      setSelectedGame(undefined)
+      setAnimatingGame(null)
+      setFlashingGame(null)
+      setBackgroundFlash(null)
+      setLocalMatchResult('pending')
+      animationStartedRef.current = false
+      currentAnimatingGameRef.current = null
+      optimisticCountRef.current = 0
+      return
+    }
 
-        // Update actions if they changed
-        if (data.pickBanHistory && JSON.stringify(data.pickBanHistory) !== JSON.stringify(actions)) {
-          setActions(data.pickBanHistory)
-        }
+    // Skip if server hasn't caught up to our optimistic update yet
+    if (serverActionCount < optimisticCountRef.current) {
+      return
+    }
 
-        // Update selected game if set
-        if (data.selectedGame && data.selectedGame !== selectedGame) {
-          setSelectedGame(data.selectedGame)
-        }
+    // Update actions if they changed
+    if (serverActionCount !== actions.length || JSON.stringify(serverState.pickBanHistory) !== JSON.stringify(actions)) {
+      setActions(serverState.pickBanHistory)
+      optimisticCountRef.current = serverActionCount
+    }
 
-        // Update result if changed
-        if (data.result !== 'pending' && data.result !== localMatchResult) {
-          setLocalMatchResult(data.result)
-        }
-      } catch {
-        // Polling failure is non-critical
+    // Update selected game if set
+    if (serverState.selectedGame && serverState.selectedGame !== selectedGame) {
+      setSelectedGame(serverState.selectedGame)
+    }
+
+    // Update result if changed
+    if (serverState.result !== localMatchResult) {
+      setLocalMatchResult(serverState.result)
+      if (serverState.result !== 'pending') {
+        router.refresh()
       }
-    }, 2500)
+    }
+  }, [actions, selectedGame, localMatchResult, router])
 
-    return () => clearInterval(interval)
-  }, [isHost, isMyTurn, localMatchResult, tournamentId, matchId, actions, selectedGame])
+  useMatchStream({
+    tournamentId,
+    matchId,
+    enabled: true,
+    onStateUpdate: handleStateUpdate,
+  })
   // Show active player animation for everyone (not just host)
   const isActivePhase = localMatchResult === 'pending' && state.currentPhase !== 'complete' && state.currentPhase !== 'selecting'
   const player1IsWinner = localMatchResult === 'player1'
@@ -560,6 +578,7 @@ export function PickBan({
 
   const saveAction = useCallback(async (newAction: PickBanAction) => {
     // Optimistically update UI immediately
+    optimisticCountRef.current++
     setActions((prev) => [...prev, newAction])
 
     try {
@@ -571,11 +590,13 @@ export function PickBan({
 
       if (!res.ok) {
         // Roll back on failure
+        optimisticCountRef.current--
         setActions((prev) => prev.filter((a) => a !== newAction))
         alert(tErrors('failedToSaveAction'))
       }
     } catch {
       // Roll back on network error
+      optimisticCountRef.current--
       setActions((prev) => prev.filter((a) => a !== newAction))
       alert(tErrors('networkError'))
     }
