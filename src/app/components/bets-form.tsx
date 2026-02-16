@@ -13,13 +13,14 @@ interface Player {
 }
 
 interface BetsFormProps {
-  tournamentId: number
   players: Player[]
   sessionPlayerId: number | null
   isHost: boolean
+  tournamentId?: number
+  readOnly?: boolean
 }
 
-export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: BetsFormProps) {
+export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readOnly }: BetsFormProps) {
   const t = useTranslations('bets')
   const tCommon = useTranslations('common')
   const tErrors = useTranslations('errors')
@@ -40,11 +41,16 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
   const total = Object.values(bets).reduce((sum, b) => sum + b, 0)
   const isValid = total === TOTAL_BET_POINTS && Object.values(bets).every((b) => b >= MIN_BET_PER_GAME && b <= MAX_BET_PER_GAME)
 
+  // Determine API endpoint based on context
+  const apiUrl = tournamentId
+    ? `/api/tournaments/${tournamentId}/bets`
+    : '/api/bets'
+
   useEffect(() => {
     if (!selectedPlayerId) return
     setFetching(true)
     setSaved(false)
-    fetch(`/api/tournaments/${tournamentId}/bets?playerId=${selectedPlayerId}`)
+    fetch(`${apiUrl}?playerId=${selectedPlayerId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.bets) {
@@ -62,14 +68,14 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
         }
       })
       .finally(() => setFetching(false))
-  }, [selectedPlayerId, tournamentId])
+  }, [selectedPlayerId, apiUrl])
 
   async function saveBets() {
-    if (!selectedPlayerId || !isValid) return
+    if (!selectedPlayerId || !isValid || readOnly) return
     setLoading(true)
     setSaved(false)
     try {
-      const res = await fetch(`/api/tournaments/${tournamentId}/bets`, {
+      const res = await fetch(apiUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,8 +99,9 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
     setSaved(false)
   }
 
-  function resetToDefault() {
-    setBets(Object.fromEntries(GAMES.map((g) => [g.id, DEFAULT_BET])))
+  function setEvenBet() {
+    const evenBet = Math.floor(TOTAL_BET_POINTS / GAMES.length)
+    setBets(Object.fromEntries(GAMES.map((g) => [g.id, evenBet])))
     setSaved(false)
   }
 
@@ -299,32 +306,39 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
                     </svg>
                   </button>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0 justify-center sm:justify-end">
-                  <button
-                    onClick={() => updateBet(game.id, Math.max(MIN_BET_PER_GAME, bets[game.id] - 5))}
-                    className="w-8 h-8 rounded bg-darcula-bg border border-darcula-border text-darcula-text hover:bg-darcula-border transition flex items-center justify-center"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min={MIN_BET_PER_GAME}
-                    max={MAX_BET_PER_GAME}
-                    value={bets[game.id]}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value)
-                      if (!isNaN(val)) updateBet(game.id, Math.min(MAX_BET_PER_GAME, Math.max(MIN_BET_PER_GAME, val)))
-                    }}
-                    className="w-16 text-center bg-darcula-bg border border-darcula-border rounded px-2 py-1 text-darcula-text focus:outline-none focus:border-darcula-blue [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                  <button
-                    onClick={() => updateBet(game.id, Math.min(MAX_BET_PER_GAME, bets[game.id] + 5))}
-                    disabled={bets[game.id] >= MAX_BET_PER_GAME || total >= TOTAL_BET_POINTS}
-                    className="w-8 h-8 rounded bg-darcula-bg border border-darcula-border text-darcula-text hover:bg-darcula-border transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    +
-                  </button>
-                </div>
+                {readOnly ? (
+                  <div className="flex items-center justify-center sm:justify-end flex-shrink-0">
+                    <span className="w-16 text-center text-darcula-text font-medium">{bets[game.id]}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 flex-shrink-0 justify-center sm:justify-end">
+                    <button
+                      onClick={() => updateBet(game.id, Math.max(MIN_BET_PER_GAME, bets[game.id] - 5))}
+                      disabled={bets[game.id] <= MIN_BET_PER_GAME}
+                      className="w-8 h-8 rounded bg-darcula-bg border border-darcula-border text-darcula-text hover:bg-darcula-border transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min={MIN_BET_PER_GAME}
+                      max={MAX_BET_PER_GAME}
+                      value={bets[game.id]}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value)
+                        if (!isNaN(val)) updateBet(game.id, Math.min(MAX_BET_PER_GAME, Math.max(MIN_BET_PER_GAME, val)))
+                      }}
+                      className="w-16 text-center bg-darcula-bg border border-darcula-border rounded px-2 py-1 text-darcula-text focus:outline-none focus:border-darcula-blue [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <button
+                      onClick={() => updateBet(game.id, Math.min(MAX_BET_PER_GAME, bets[game.id] + 5))}
+                      disabled={bets[game.id] >= MAX_BET_PER_GAME || total >= TOTAL_BET_POINTS}
+                      className="w-8 h-8 rounded bg-darcula-bg border border-darcula-border text-darcula-text hover:bg-darcula-border transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      +
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -336,40 +350,51 @@ export function BetsForm({ tournamentId, players, sessionPlayerId, isHost }: Bet
               <span className={total === TOTAL_BET_POINTS ? 'text-darcula-green' : 'text-darcula-red'}>
                 {total} / {TOTAL_BET_POINTS}
               </span>
-              {total !== TOTAL_BET_POINTS && (
+              {!readOnly && total !== TOTAL_BET_POINTS && (
                 <span className="text-sm text-darcula-text-muted ml-2">
                   ({total < TOTAL_BET_POINTS ? `${TOTAL_BET_POINTS - total} ${t('remaining')}` : `${total - TOTAL_BET_POINTS} ${t('over')}`})
                 </span>
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2 sm:gap-3 justify-center sm:justify-end">
-              <button
-                onClick={setAllToMinimum}
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition"
-              >
-                {t('setToMinimum', { min: MIN_BET_PER_GAME })}
-              </button>
-              <button
-                onClick={resetToDefault}
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition"
-              >
-                {t('resetToDefault')}
-              </button>
-              <button
-                onClick={saveBets}
-                disabled={!isValid || loading}
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base bg-darcula-green text-darcula-bg rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
-              >
-                {loading ? t('saving') : t('save')}
-              </button>
-            </div>
+            {!readOnly && (
+              <div className="flex flex-wrap gap-2 sm:gap-3 justify-center sm:justify-end">
+                <button
+                  onClick={setAllToMinimum}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition"
+                >
+                  {t('setToMinimum')}
+                </button>
+                <button
+                  onClick={setEvenBet}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition"
+                >
+                  {t('evenBet')}
+                </button>
+                <button
+                  onClick={saveBets}
+                  disabled={!isValid || loading}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base bg-darcula-green text-darcula-bg rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
+                >
+                  {loading ? t('saving') : t('save')}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Minimum bet hint */}
-          <p className="mt-2 text-sm text-darcula-text-muted">
-            {t('minimumBet', { min: MIN_BET_PER_GAME })}
-          </p>
+          {!readOnly && (
+            <p className="mt-2 text-sm text-darcula-text-muted">
+              {t('minimumBet', { min: MIN_BET_PER_GAME })}
+            </p>
+          )}
+
+          {/* Read-only indicator */}
+          {readOnly && (
+            <div className="mt-4 p-3 bg-darcula-elevated border border-darcula-border rounded text-darcula-text-muted text-sm text-center">
+              {t('readOnlySnapshot')}
+            </div>
+          )}
 
           {/* Success feedback */}
           {saved && (

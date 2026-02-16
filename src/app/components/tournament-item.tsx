@@ -60,7 +60,7 @@ export function TournamentItem({ tournament, isHost }: TournamentItemProps) {
         </div>
         <p className="text-sm text-darcula-text-muted mt-1">
           {tournament.status === 'overtime'
-            ? t('overtimeRound', { number: tournament.overtimeRound ?? 1 })
+            ? t(tournament.overtimeRound === 2 ? 'final' : 'semifinal')
             : t('roundOf', { current: tournament.currentRound, total: tournament.rounds })}
         </p>
       </Link>

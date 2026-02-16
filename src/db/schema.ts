@@ -46,7 +46,7 @@ export const matches = sqliteTable('matches', {
 
 export const playerBets = sqliteTable('player_bets', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  tournamentId: integer('tournament_id').notNull().references(() => tournaments.id),
+  tournamentId: integer('tournament_id').references(() => tournaments.id),
   playerId: integer('player_id').notNull().references(() => players.id),
   gameId: text('game_id').notNull(),
   bet: integer('bet').notNull().default(20),

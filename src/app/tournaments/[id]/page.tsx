@@ -115,7 +115,7 @@ export default async function TournamentPage({
           <h1 className="text-3xl font-bold text-darcula-text-bright mt-2">{tournament.name}</h1>
           <p className="text-darcula-text-muted">
             {tournament.status === 'overtime'
-              ? t('overtimeRound', { number: tournament.overtimeRound ?? 1 })
+              ? t(tournament.overtimeRound === 2 ? 'final' : 'semifinal')
               : t('roundOf', { current: tournament.currentRound, total: tournament.rounds })}
             {' '}&bull;{' '}
             <span
@@ -143,7 +143,7 @@ export default async function TournamentPage({
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-darcula-text">
               {tournament.status === 'overtime' && viewingRound > tournament.rounds
-                ? t('overtimeMatches', { number: viewingRound - tournament.rounds })
+                ? t(viewingRound - tournament.rounds === 2 ? 'finalMatch' : 'semifinalMatches')
                 : t('roundMatches', { number: viewingRound })}
             </h2>
             {tournament.currentRound > 0 && (

@@ -142,7 +142,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     return (
       <div className="flex gap-2 items-center">
         <a
-          href={`/tournaments/${tournament.id}/bets`}
+          href="/bets"
           className="px-4 py-2 border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition text-sm"
         >
           {t('setBets')}
@@ -160,20 +160,22 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     )
   }
 
-  // Overtime mode - show next overtime round button
+  // Finals mode - show "Start Final" button after semifinal (overtimeRound 1)
   if (tournament.status === 'overtime') {
+    // After final (overtimeRound 2), tournament auto-completes via API, no button needed
+    if (tournament.overtimeRound === 2) return null
     return (
       <button
         onClick={nextRound}
         disabled={loading}
         className="bg-darcula-orange text-darcula-bg px-4 py-2 rounded hover:bg-darcula-orange/80 transition disabled:opacity-50 font-medium"
       >
-        {loading ? tCommon('processing') : t('nextOvertimeRound')}
+        {loading ? tCommon('processing') : t('startFinal')}
       </button>
     )
   }
 
-  // At final regular round - next-round API will check for tie and either complete or start overtime
+  // At final regular round - always enters finals
   if (tournament.currentRound >= tournament.rounds) {
     return (
       <button
@@ -181,7 +183,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
         disabled={loading}
         className="bg-darcula-elevated text-darcula-text px-4 py-2 rounded hover:bg-darcula-border transition disabled:opacity-50 border border-darcula-border"
       >
-        {loading ? tCommon('processing') : t('finishRegularRounds')}
+        {loading ? tCommon('processing') : t('startFinals')}
       </button>
     )
   }

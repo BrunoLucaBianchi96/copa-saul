@@ -17,6 +17,7 @@ export function GlobalNavbar() {
   const router = useRouter()
   const t = useTranslations('auth')
   const tHome = useTranslations('home')
+  const tBets = useTranslations('bets')
   const tRoster = useTranslations('roster')
   const tGames = useTranslations('games')
   const [loggingOut, setLoggingOut] = useState(false)
@@ -27,7 +28,6 @@ export function GlobalNavbar() {
   // Extract tournament ID from path if on a tournament sub-page
   const tournamentMatch = pathname.match(/^\/tournaments\/(\d+)/)
   const tournamentId = tournamentMatch?.[1]
-  console.log("tournamentid", tournamentId)
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -40,6 +40,12 @@ export function GlobalNavbar() {
       <div className="flex items-center gap-4">
         <Link href="/" className="text-darcula-text-bright font-bold text-lg hover:text-darcula-blue transition-colors">
           {tHome('appTitle')}
+        </Link>
+        <Link
+          href="/bets"
+          className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
+        >
+          {tBets('myBetsNav')}
         </Link>
         {tournamentId && (
           <>

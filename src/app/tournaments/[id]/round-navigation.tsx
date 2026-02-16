@@ -71,7 +71,7 @@ export function RoundNavigation({
 
       <span className="text-darcula-text-muted text-sm min-w-[80px] text-center">
         {isOvertime && viewingRound > totalRounds
-          ? `OT ${viewingRound - totalRounds}`
+          ? viewingRound - totalRounds === 2 ? 'F' : 'SF'
           : `${t('round')} ${viewingRound}`}
       </span>
 

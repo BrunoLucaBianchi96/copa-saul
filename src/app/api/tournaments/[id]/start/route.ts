@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { tournaments, matches, tournamentPlayers, players } from '@/db/schema'
-import { eq, and, inArray } from 'drizzle-orm'
+import { tournaments, matches, tournamentPlayers, players, playerBets } from '@/db/schema'
+import { eq, and, inArray, isNull } from 'drizzle-orm'
 import { generatePairings } from '@/lib/swiss'
 import { requireHost } from '@/lib/session'
 import { getThemeForMatch } from '@/lib/themes'
-import { BYE_POINTS } from '@/lib/scoring'
+import { BYE_POINTS, DEFAULT_BET } from '@/lib/scoring'
+import { GAMES } from '@/lib/games'
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const auth = await requireHost()
@@ -108,6 +109,34 @@ export async function POST(request: Request, { params }: { params: { id: string 
         player2Id: pairing.player2Id,
         result: 'pending',
         backgroundMusicId: theme.id,
+      })
+    }
+  }
+
+  // Snapshot each player's default bets into tournament-scoped rows
+  const remainingPlayers = await db
+    .select({ playerId: tournamentPlayers.playerId })
+    .from(tournamentPlayers)
+    .where(eq(tournamentPlayers.tournamentId, tournamentId))
+
+  for (const { playerId } of remainingPlayers) {
+    // Read player's default bets (tournamentId IS NULL)
+    const defaultBets = await db
+      .select()
+      .from(playerBets)
+      .where(
+        and(isNull(playerBets.tournamentId), eq(playerBets.playerId, playerId))
+      )
+
+    const betMap = new Map(defaultBets.map((b) => [b.gameId, b.bet]))
+
+    // Insert snapshot for each game
+    for (const game of GAMES) {
+      await db.insert(playerBets).values({
+        tournamentId,
+        playerId,
+        gameId: game.id,
+        bet: betMap.get(game.id) ?? DEFAULT_BET,
       })
     }
   }

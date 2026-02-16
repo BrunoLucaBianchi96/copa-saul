@@ -3,7 +3,7 @@ export const NUM_GAMES = 7
 export const TOTAL_BET_POINTS = 280
 export const MIN_BET_PER_GAME = 20
 export const MAX_BET_PER_GAME = 80
-export const DEFAULT_BET = Math.floor(TOTAL_BET_POINTS / NUM_GAMES)
+export const DEFAULT_BET = MIN_BET_PER_GAME
 export const BYE_POINTS = MIN_BET_PER_GAME
 
 export interface BetAllocation {

@@ -5,7 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession, isHost as checkIsHost, getSessionPlayerId } from '@/lib/session'
 import { getTranslations } from 'next-intl/server'
-import { BetsForm } from './bets-form'
+import { BetsForm } from '@/app/components/bets-form'
 import { TOTAL_BET_POINTS } from '@/lib/scoring-constants'
 
 export const dynamic = 'force-dynamic'
@@ -35,15 +35,13 @@ export default async function BetsPage({ params }: { params: { id: string } }) {
   const tournament = await getTournament(id)
   if (!tournament) notFound()
 
-  if (tournament.status !== 'pending') {
-    redirect(`/tournaments/${id}`)
-  }
-
   const isHost = checkIsHost(role)
   const sessionPlayerId = await getSessionPlayerId()
   const tournamentPlayersList = await getTournamentPlayers(id)
 
   const t = await getTranslations('bets')
+
+  const isPending = tournament.status === 'pending'
 
   return (
     <main className="container mx-auto px-2 py-4 sm:px-4 sm:py-8 max-w-4xl">
@@ -57,12 +55,23 @@ export default async function BetsPage({ params }: { params: { id: string } }) {
         </p>
       </div>
 
-      <BetsForm
-        tournamentId={id}
-        players={tournamentPlayersList}
-        sessionPlayerId={sessionPlayerId}
-        isHost={isHost}
-      />
+      {isPending ? (
+        /* Pre-start: edit global default bets via /api/bets */
+        <BetsForm
+          players={tournamentPlayersList}
+          sessionPlayerId={sessionPlayerId}
+          isHost={isHost}
+        />
+      ) : (
+        /* Post-start: read-only view of the frozen snapshot */
+        <BetsForm
+          tournamentId={id}
+          players={tournamentPlayersList}
+          sessionPlayerId={sessionPlayerId}
+          isHost={isHost}
+          readOnly
+        />
+      )}
     </main>
   )
 }

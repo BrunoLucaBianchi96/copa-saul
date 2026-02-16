@@ -4,9 +4,7 @@ import { tournaments, matches, tournamentPlayers, players } from '@/db/schema'
 import { eq, and, asc, inArray } from 'drizzle-orm'
 import {
   generatePairings,
-  checkFirstPlaceTie,
-  getOvertimeParticipants,
-  generateOvertimePairings,
+  getStandings,
 } from '@/lib/swiss'
 import { requireHost } from '@/lib/session'
 import { getThemeForMatch } from '@/lib/themes'
@@ -131,110 +129,75 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const t = tournament[0]
 
-  // Handle overtime mode
+  // Handle finals mode
   if (t.status === 'overtime') {
     const overtimePlayerIds: number[] = JSON.parse(t.overtimePlayers || '[]')
 
-    // If there were only 2 players in overtime, the match winner is the tournament winner
-    // No need to check for ties - it's mathematically impossible
-    if (overtimePlayerIds.length === 2) {
-      await db
-        .update(tournaments)
-        .set({ status: 'completed' })
-        .where(eq(tournaments.id, tournamentId))
-      return NextResponse.json({ success: true, completed: true })
-    }
+    if (t.overtimeRound === 1) {
+      // Semifinal just completed — create final match (top 2 from updated standings)
+      const allStandings = await getStandings(tournamentId)
+      const finalistStandings = allStandings.filter((p) => overtimePlayerIds.includes(p.playerId))
+      const nextRound = t.currentRound + 1
 
-    // Check if there's still a tie among overtime players
-    const tieCheck = await checkFirstPlaceTie(tournamentId)
-    const stillTied = tieCheck.tiedPlayers.filter((p) =>
-      overtimePlayerIds.includes(p.playerId)
-    )
-
-    if (stillTied.length <= 1) {
-      // We have a winner
-      await db
-        .update(tournaments)
-        .set({ status: 'completed' })
-        .where(eq(tournaments.id, tournamentId))
-      return NextResponse.json({ success: true, completed: true })
-    }
-
-    // Still tied - generate next overtime round
-    const nextOvertimeRound = (t.overtimeRound ?? 0) + 1
-    const nextRound = t.currentRound + 1
-
-    // Check if we need to narrow down participants
-    let participants = overtimePlayerIds
-    if (stillTied.length < overtimePlayerIds.length) {
-      // Some players fell behind, narrow down to those still tied
-      participants = stillTied.map((p) => p.playerId)
-      // If odd, add one more
-      if (participants.length % 2 !== 0) {
-        const nextBest = tieCheck.tiedPlayers.find(
-          (p) => !participants.includes(p.playerId) && overtimePlayerIds.includes(p.playerId)
-        )
-        if (nextBest) participants.push(nextBest.playerId)
-      }
-    }
-
-    const pairings = await generateOvertimePairings(tournamentId, participants)
-    await createMatches(tournamentId, nextRound, pairings)
-
-    await db
-      .update(tournaments)
-      .set({
-        currentRound: nextRound,
-        overtimeRound: nextOvertimeRound,
-        overtimePlayers: JSON.stringify(participants),
-      })
-      .where(eq(tournaments.id, tournamentId))
-
-    const firstMatchId = await getFirstNonByeMatchId(tournamentId, nextRound)
-    return NextResponse.json({ success: true, overtimeRound: nextOvertimeRound, firstMatchId })
-  }
-
-  // Regular round logic
-  const nextRound = t.currentRound + 1
-
-  // Check if we've completed all regular rounds
-  if (nextRound > t.rounds) {
-    // Check for first-place tie
-    const tieCheck = await checkFirstPlaceTie(tournamentId)
-
-    if (tieCheck.hasTie) {
-      // Enter overtime
-      const overtimeParticipants = await getOvertimeParticipants(tournamentId)
-      const overtimePlayerIds = overtimeParticipants.map((p) => p.playerId)
-
-      const pairings = await generateOvertimePairings(tournamentId, overtimePlayerIds)
+      const pairings = [
+        { player1Id: finalistStandings[0].playerId, player2Id: finalistStandings[1].playerId },
+      ]
       await createMatches(tournamentId, nextRound, pairings)
 
       await db
         .update(tournaments)
         .set({
-          status: 'overtime',
           currentRound: nextRound,
-          overtimeRound: 1,
-          overtimePlayers: JSON.stringify(overtimePlayerIds),
+          overtimeRound: 2,
         })
         .where(eq(tournaments.id, tournamentId))
 
       const firstMatchId = await getFirstNonByeMatchId(tournamentId, nextRound)
-      return NextResponse.json({
-        success: true,
-        overtime: true,
-        participants: overtimeParticipants,
-        firstMatchId,
-      })
-    } else {
-      // No tie - complete tournament
+      return NextResponse.json({ success: true, overtimeRound: 2, firstMatchId })
+    }
+
+    if (t.overtimeRound === 2) {
+      // Final just completed — tournament is done
       await db
         .update(tournaments)
         .set({ status: 'completed' })
         .where(eq(tournaments.id, tournamentId))
       return NextResponse.json({ success: true, completed: true })
     }
+  }
+
+  // Regular round logic
+  const nextRound = t.currentRound + 1
+
+  // Check if we've completed all regular rounds — always enter finals
+  if (nextRound > t.rounds) {
+    const standings = await getStandings(tournamentId)
+    const top4 = standings.slice(0, 4)
+    const top4Ids = top4.map((p) => p.playerId)
+
+    // Semifinal: 1st vs 2nd, 3rd vs 4th
+    const pairings = [
+      { player1Id: top4[0].playerId, player2Id: top4[1].playerId },
+      { player1Id: top4[2].playerId, player2Id: top4[3].playerId },
+    ]
+    await createMatches(tournamentId, nextRound, pairings)
+
+    await db
+      .update(tournaments)
+      .set({
+        status: 'overtime',
+        currentRound: nextRound,
+        overtimeRound: 1,
+        overtimePlayers: JSON.stringify(top4Ids),
+      })
+      .where(eq(tournaments.id, tournamentId))
+
+    const firstMatchId = await getFirstNonByeMatchId(tournamentId, nextRound)
+    return NextResponse.json({
+      success: true,
+      overtime: true,
+      firstMatchId,
+    })
   }
 
   // Normal round advancement
