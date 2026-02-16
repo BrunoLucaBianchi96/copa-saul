@@ -10,6 +10,8 @@ import {
   calculatePickBanState,
 } from '@/lib/games'
 import { useMatchStream, type MatchState } from '@/app/hooks/useMatchStream'
+import { useGamepad, type GamepadDirection } from '@/app/hooks/useGamepad'
+import { useWheelNavigation } from '@/app/hooks/useWheelNavigation'
 import { type Theme, getAnimationDurations } from '@/lib/themes'
 import { calculateMatchPoints, DEFAULT_BET } from '@/lib/scoring-constants'
 import { BetRadarChart } from './bet-radar-chart'
@@ -61,6 +63,7 @@ interface PlayerPortraitProps {
   winnerLabel: string
   gradientColors: string
   entranceDelay?: string
+  gamepadFocused?: boolean
 }
 
 function PlayerPortrait({
@@ -80,6 +83,7 @@ function PlayerPortrait({
   winnerLabel,
   gradientColors,
   entranceDelay,
+  gamepadFocused,
 }: PlayerPortraitProps) {
   const keyPrefix = `p${playerNumber}`
   const key = isActive ? `${keyPrefix}-active-${actionsLength}` : isWinner ? `${keyPrefix}-winner` : `${keyPrefix}-inactive`
@@ -111,7 +115,7 @@ function PlayerPortrait({
               : opponentIsWinner
                 ? 'ring-2 ring-offset-1 grayscale opacity-60'
                 : 'ring-2 ring-offset-1 opacity-60'
-        }`}
+        } ${gamepadFocused ? 'gamepad-focus' : ''}`}
       >
         <PlayerCard
           name={name}
@@ -187,6 +191,7 @@ export function PickBan({
   const optimisticCountRef = useRef(initialActions.length)
   const [wheelScale, setWheelScale] = useState(1)
   const [floatingPoints, setFloatingPoints] = useState<{ player: 1 | 2; points: number } | null>(null)
+  const [focusedWinner, setFocusedWinner] = useState<'player1' | 'player2' | null>(null)
 
   // Reset animation ref when matchId changes (e.g., navigating away and back)
   useEffect(() => {
@@ -415,6 +420,52 @@ export function PickBan({
   const state = calculatePickBanState(actions, selectedGame)
   const gameStates = getGameStates(actions)
   const animationDurations = getAnimationDurations(theme)
+
+  // --- Gamepad support ---
+  const { focusedIndex: focusedGameIndex, navigate: navigateWheel, reset: resetWheelFocus } = useWheelNavigation(GAMES.length)
+
+  // Gamepad is always active (navigation buttons work anytime), except during auto-selection animation
+  const gamepadEnabled = state.currentPhase !== 'selecting'
+
+  // useGamepad stores callbacks in refs internally, so these don't need to be stable
+  const handleGamepadButton = (button: string) => {
+    if (button === 'cross') {
+      if (state.currentPhase === 'complete') {
+        if (focusedWinner && canSelectWinner) {
+          handleRecordResult(focusedWinner)
+        }
+      } else if (focusedGameIndex !== null) {
+        handleGameClick(GAMES[focusedGameIndex].id)
+      }
+    } else if (button === 'circle') {
+      router.push(`/tournaments/${tournamentId}`)
+    } else if (button === 'l1' && prevMatchId !== null) {
+      router.push(`/tournaments/${tournamentId}/matches/${prevMatchId}`)
+    } else if (button === 'r1' && nextMatchId !== null) {
+      router.push(`/tournaments/${tournamentId}/matches/${nextMatchId}`)
+    }
+  }
+
+  const handleGamepadDirection = (dir: GamepadDirection) => {
+    if (state.currentPhase === 'complete') {
+      if (dir === 'left') setFocusedWinner('player1')
+      else if (dir === 'right') setFocusedWinner('player2')
+    } else {
+      navigateWheel(dir)
+    }
+  }
+
+  useGamepad({
+    onButtonPress: handleGamepadButton,
+    onDirection: handleGamepadDirection,
+    enabled: gamepadEnabled,
+  })
+
+  // Reset gamepad focus when phase changes
+  useEffect(() => {
+    resetWheelFocus()
+    setFocusedWinner(null)
+  }, [state.currentPhase, resetWheelFocus])
 
   // Fade background music to silence
   const fadeOutMusic = useCallback((durationMs: number) => {
@@ -1160,6 +1211,7 @@ export function PickBan({
           const isFlashing = flashingGame === game.id
           const isSelected = state.currentPhase === 'complete' && game.id === state.selectedGame
           const isMatchGame = localMatchResult !== 'pending' && game.id === selectedGame
+          const isGamepadFocused = focusedGameIndex === idx
 
           return (
             <button
@@ -1184,6 +1236,7 @@ export function PickBan({
                             : 'border-2 border-darcula-border/50'
                 }
                 ${canClick ? 'hover:scale-110 hover:border-dashed hover:border-darcula-text cursor-pointer' : 'cursor-default'}
+                ${isGamepadFocused ? 'gamepad-focus' : ''}
               `}
               style={{ left: x, top: y }}
             >
@@ -1271,6 +1324,7 @@ export function PickBan({
             onSelectWinner={() => handleRecordResult('player1')}
             winnerLabel={t('winner')}
             gradientColors="from-darcula-blue to-darcula-purple"
+            gamepadFocused={focusedWinner === 'player1'}
           />
         </div>
 
@@ -1320,6 +1374,7 @@ export function PickBan({
             winnerLabel={t('winner')}
             gradientColors="from-darcula-orange to-darcula-red"
             entranceDelay={showEntranceAnimation ? '0.15s' : undefined}
+            gamepadFocused={focusedWinner === 'player2'}
           />
         </div>
       </div>

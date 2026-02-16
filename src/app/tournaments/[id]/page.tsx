@@ -7,6 +7,7 @@ import { TournamentActions } from './actions'
 import { MatchList } from './match-list'
 import { RoundNavigation } from './round-navigation'
 import { Leaderboard } from './leaderboard'
+import { TournamentGamepad } from './tournament-gamepad'
 import { getSession, isHost as checkIsHost } from '@/lib/session'
 import { getTranslations } from 'next-intl/server'
 
@@ -105,6 +106,14 @@ export default async function TournamentPage({
     tournament.currentRound > 0 ? await getRoundMatches(id, tournament.currentRound) : []
   const allMatchesComplete = currentRoundMatches.every((m) => m.result !== 'pending')
 
+  // Compute navigable match hrefs (excluding BYE matches) for gamepad navigation
+  const matchHrefs = roundMatches
+    .filter((m) => m.player2Id !== null)
+    .map((m) => `/tournaments/${id}/matches/${m.id}`)
+
+  const canGoPrev = viewingRound > 1
+  const canGoNext = viewingRound < tournament.currentRound
+
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex justify-between items-start mb-6">
@@ -159,11 +168,19 @@ export default async function TournamentPage({
               />
             )}
           </div>
-          {tournament.currentRound === 0 ? (
-            <p className="text-darcula-text-muted">{t('tournamentNotStarted')}</p>
-          ) : (
-            <MatchList matches={roundMatches} tournamentId={id} />
-          )}
+          <TournamentGamepad
+            tournamentId={id}
+            matchHrefs={matchHrefs}
+            viewingRound={viewingRound}
+            canGoPrev={canGoPrev}
+            canGoNext={canGoNext}
+          >
+            {tournament.currentRound === 0 ? (
+              <p className="text-darcula-text-muted">{t('tournamentNotStarted')}</p>
+            ) : (
+              <MatchList matches={roundMatches} tournamentId={id} />
+            )}
+          </TournamentGamepad>
         </section>
       </div>
     </main>

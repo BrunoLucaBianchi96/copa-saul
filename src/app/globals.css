@@ -139,3 +139,19 @@
 .floating-points {
   animation: floatUp 4s ease-out forwards;
 }
+
+/* Gamepad focus indicator */
+@keyframes gamepadGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px 2px rgba(255, 198, 109, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(255, 198, 109, 0.9);
+  }
+}
+
+.gamepad-focus {
+  outline: 3px solid #FFC66D;
+  outline-offset: 2px;
+  animation: gamepadGlow 1.2s ease-in-out infinite;
+}

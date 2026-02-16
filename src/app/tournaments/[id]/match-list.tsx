@@ -1,8 +1,10 @@
 'use client'
 
+import { useContext } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { GAMES, calculatePickBanState, type PickBanAction } from '@/lib/games'
+import { GamepadFocusContext } from './tournament-gamepad'
 
 interface Match {
   id: number
@@ -62,10 +64,14 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
   const t = useTranslations('match')
   const tCommon = useTranslations('common')
   const getMatchStatus = useMatchStatus()
+  const { focusedMatchIndex } = useContext(GamepadFocusContext)
 
   if (matches.length === 0) {
     return <p className="text-darcula-text-muted">{t('pending')}</p>
   }
+
+  // Track navigable index (non-bye matches only)
+  let navigableIdx = -1
 
   return (
     <div className="space-y-3">
@@ -82,6 +88,8 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
           )
         }
 
+        navigableIdx++
+        const isFocused = focusedMatchIndex === navigableIdx
         const status = getMatchStatus(match)
         const isComplete = match.result !== 'pending'
 
@@ -89,7 +97,7 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
           <Link
             key={match.id}
             href={`/tournaments/${tournamentId}/matches/${match.id}`}
-            className="block border border-darcula-border rounded p-4 bg-darcula-elevated hover:bg-darcula-surface hover:border-darcula-text-muted transition-colors"
+            className={`block border border-darcula-border rounded p-4 bg-darcula-elevated hover:bg-darcula-surface hover:border-darcula-text-muted transition-colors ${isFocused ? 'gamepad-focus' : ''}`}
           >
             <div className="flex justify-between items-center">
               <span
