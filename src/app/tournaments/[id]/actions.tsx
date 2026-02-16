@@ -175,16 +175,36 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     )
   }
 
-  // At final regular round - always enters finals
+  async function extendRound() {
+    setLoading(true)
+    const res = await fetch(`/api/tournaments/${tournament.id}/extend-round`, { method: 'POST' })
+    if (res.ok) {
+      router.refresh()
+    } else {
+      alert(tErrors('failedToAdvance'))
+    }
+    setLoading(false)
+  }
+
+  // At final regular round - show start finals + extend option
   if (tournament.currentRound >= tournament.rounds) {
     return (
-      <button
-        onClick={nextRound}
-        disabled={loading}
-        className="bg-darcula-elevated text-darcula-text px-4 py-2 rounded hover:bg-darcula-border transition disabled:opacity-50 border border-darcula-border"
-      >
-        {loading ? tCommon('processing') : t('startFinals')}
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={extendRound}
+          disabled={loading}
+          className="text-darcula-text-muted px-3 py-2 rounded hover:bg-darcula-elevated transition disabled:opacity-50 border border-darcula-border text-sm"
+        >
+          {loading ? tCommon('processing') : t('extendRound')}
+        </button>
+        <button
+          onClick={nextRound}
+          disabled={loading}
+          className="bg-darcula-elevated text-darcula-text px-4 py-2 rounded hover:bg-darcula-border transition disabled:opacity-50 border border-darcula-border"
+        >
+          {loading ? tCommon('processing') : t('startFinals')}
+        </button>
+      </div>
     )
   }
 
