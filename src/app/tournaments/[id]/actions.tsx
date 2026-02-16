@@ -166,6 +166,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     if (tournament.overtimeRound === 2) return null
     return (
       <button
+        data-gamepad-action="0"
         onClick={nextRound}
         disabled={loading}
         className="bg-darcula-orange text-darcula-bg px-4 py-2 rounded hover:bg-darcula-orange/80 transition disabled:opacity-50 font-medium"
@@ -191,6 +192,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     return (
       <div className="flex gap-2">
         <button
+          data-gamepad-action="0"
           onClick={extendRound}
           disabled={loading}
           className="text-darcula-text-muted px-3 py-2 rounded hover:bg-darcula-elevated transition disabled:opacity-50 border border-darcula-border text-sm"
@@ -198,6 +200,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
           {loading ? tCommon('processing') : t('extendRound')}
         </button>
         <button
+          data-gamepad-action="1"
           onClick={nextRound}
           disabled={loading}
           className="bg-darcula-elevated text-darcula-text px-4 py-2 rounded hover:bg-darcula-border transition disabled:opacity-50 border border-darcula-border"

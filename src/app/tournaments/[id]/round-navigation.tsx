@@ -1,8 +1,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useTranslations } from 'next-intl'
+import { GamepadFocusContext } from './tournament-gamepad'
 
 interface RoundNavigationProps {
   tournamentId: number
@@ -28,6 +29,7 @@ export function RoundNavigation({
   const t = useTranslations('common')
   const tErrors = useTranslations('errors')
   const [loading, setLoading] = useState(false)
+  const { setNavigating } = useContext(GamepadFocusContext)
 
   const canGoPrev = viewingRound > 1
   const canGoNext = viewingRound < currentRound
@@ -35,6 +37,7 @@ export function RoundNavigation({
   const canAdvanceRound = isHost && viewingRound === currentRound && allMatchesComplete && (isOvertime || currentRound < totalRounds)
 
   function goToRound(round: number) {
+    setNavigating(true)
     router.push(`/tournaments/${tournamentId}?round=${round}`)
   }
 

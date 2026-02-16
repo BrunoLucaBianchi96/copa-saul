@@ -426,6 +426,7 @@ export function PickBan({
 
   // Gamepad is always active (navigation buttons work anytime), except during auto-selection animation
   const gamepadEnabled = state.currentPhase !== 'selecting'
+  const lastBumperPress = useRef(0)
 
   // useGamepad stores callbacks in refs internally, so these don't need to be stable
   const handleGamepadButton = (button: string) => {
@@ -437,11 +438,19 @@ export function PickBan({
       } else if (focusedGameIndex !== null) {
         handleGameClick(GAMES[focusedGameIndex].id)
       }
+    } else if (button === 'triangle') {
+      handleFullscreenToggle()
     } else if (button === 'circle') {
       router.push(`/tournaments/${tournamentId}`)
     } else if (button === 'l1' && prevMatchId !== null) {
+      const now = Date.now()
+      if (now - lastBumperPress.current < 500) return
+      lastBumperPress.current = now
       router.push(`/tournaments/${tournamentId}/matches/${prevMatchId}`)
     } else if (button === 'r1' && nextMatchId !== null) {
+      const now = Date.now()
+      if (now - lastBumperPress.current < 500) return
+      lastBumperPress.current = now
       router.push(`/tournaments/${tournamentId}/matches/${nextMatchId}`)
     }
   }
@@ -1029,24 +1038,24 @@ export function PickBan({
       {/* Nav bar */}
       <nav className="relative z-10 w-full flex items-center justify-between px-4 py-3 mb-3">
         <div className="flex items-center gap-3">
-          <a
-            href={`/tournaments/${tournamentId}`}
+          <button
+            onClick={() => router.push(`/tournaments/${tournamentId}`)}
             className="text-darcula-text hover:text-darcula-text-bright text-sm inline-flex items-center gap-1 transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             {tCommon('back')}
-          </a>
+          </button>
           {prevMatchId !== null ? (
-            <a
-              href={`/tournaments/${tournamentId}/matches/${prevMatchId}`}
+            <button
+              onClick={() => router.push(`/tournaments/${tournamentId}/matches/${prevMatchId}`)}
               className="p-2 rounded border border-darcula-border text-darcula-text hover:bg-darcula-elevated transition"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-            </a>
+            </button>
           ) : (
             <span className="p-2 rounded border border-darcula-border text-darcula-text opacity-30 cursor-not-allowed">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1058,14 +1067,14 @@ export function PickBan({
 
         <div className="flex items-center gap-3">
           {nextMatchId !== null ? (
-            <a
-              href={`/tournaments/${tournamentId}/matches/${nextMatchId}`}
+            <button
+              onClick={() => router.push(`/tournaments/${tournamentId}/matches/${nextMatchId}`)}
               className="p-2 rounded border border-darcula-border text-darcula-text hover:bg-darcula-elevated transition"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-            </a>
+            </button>
           ) : canAdvanceRound ? (
             <button
               onClick={handleAdvanceRound}

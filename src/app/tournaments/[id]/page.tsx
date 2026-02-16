@@ -149,25 +149,6 @@ export default async function TournamentPage({
         <Leaderboard standings={standings} />
 
         <section className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-darcula-text">
-              {tournament.status === 'overtime' && viewingRound > tournament.rounds
-                ? t(viewingRound - tournament.rounds === 2 ? 'finalMatch' : 'semifinalMatches')
-                : t('roundMatches', { number: viewingRound })}
-            </h2>
-            {tournament.currentRound > 0 && (
-              <RoundNavigation
-                tournamentId={id}
-                viewingRound={viewingRound}
-                currentRound={tournament.currentRound}
-                totalRounds={tournament.rounds}
-                isHost={isHost}
-                allMatchesComplete={allMatchesComplete}
-                isOvertime={tournament.status === 'overtime'}
-                overtimeRound={tournament.overtimeRound ?? undefined}
-              />
-            )}
-          </div>
           <TournamentGamepad
             tournamentId={id}
             matchHrefs={matchHrefs}
@@ -175,6 +156,25 @@ export default async function TournamentPage({
             canGoPrev={canGoPrev}
             canGoNext={canGoNext}
           >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-darcula-text">
+                {tournament.status === 'overtime' && viewingRound > tournament.rounds
+                  ? t(viewingRound - tournament.rounds === 2 ? 'finalMatch' : 'semifinalMatches')
+                  : t('roundMatches', { number: viewingRound })}
+              </h2>
+              {tournament.currentRound > 0 && (
+                <RoundNavigation
+                  tournamentId={id}
+                  viewingRound={viewingRound}
+                  currentRound={tournament.currentRound}
+                  totalRounds={tournament.rounds}
+                  isHost={isHost}
+                  allMatchesComplete={allMatchesComplete}
+                  isOvertime={tournament.status === 'overtime'}
+                  overtimeRound={tournament.overtimeRound ?? undefined}
+                />
+              )}
+            </div>
             {tournament.currentRound === 0 ? (
               <p className="text-darcula-text-muted">{t('tournamentNotStarted')}</p>
             ) : (
