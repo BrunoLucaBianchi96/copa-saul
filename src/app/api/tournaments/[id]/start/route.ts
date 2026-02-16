@@ -37,16 +37,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   // Remove excluded players from tournament
   if (excludedPlayerIds.length > 0) {
-    for (const playerId of excludedPlayerIds) {
-      await db
-        .delete(tournamentPlayers)
-        .where(
-          and(
-            eq(tournamentPlayers.tournamentId, tournamentId),
-            eq(tournamentPlayers.playerId, playerId)
-          )
+    await db
+      .delete(tournamentPlayers)
+      .where(
+        and(
+          eq(tournamentPlayers.tournamentId, tournamentId),
+          inArray(tournamentPlayers.playerId, excludedPlayerIds)
         )
-    }
+      )
   }
 
   // Check we have players
@@ -74,10 +72,13 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   // Create matches with priority-based theme selection
   const usedThemeIds: string[] = []
+  const allMatchRows: (typeof matches.$inferInsert)[] = []
+  const byePlayerIds: number[] = []
+
   for (const pairing of pairings) {
     if (pairing.player2Id === null) {
       // Bye - player automatically gets a point
-      await db.insert(matches).values({
+      allMatchRows.push({
         tournamentId,
         round: 1,
         player1Id: pairing.player1Id,
@@ -85,16 +86,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
         result: 'bye',
         winnerId: pairing.player1Id,
       })
-      // Award points for bye
-      await db
-        .update(tournamentPlayers)
-        .set({ points: BYE_POINTS })
-        .where(
-          and(
-            eq(tournamentPlayers.tournamentId, tournamentId),
-            eq(tournamentPlayers.playerId, pairing.player1Id)
-          )
-        )
+      byePlayerIds.push(pairing.player1Id)
     } else {
       const names = [
         playerNameMap.get(pairing.player1Id) ?? '',
@@ -102,7 +94,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       ]
       const theme = getThemeForMatch(usedThemeIds, names, 1)
       usedThemeIds.push(theme.id)
-      await db.insert(matches).values({
+      allMatchRows.push({
         tournamentId,
         round: 1,
         player1Id: pairing.player1Id,
@@ -113,33 +105,52 @@ export async function POST(request: Request, { params }: { params: { id: string 
     }
   }
 
+  // Bulk insert all matches + parallel bye point updates
+  await Promise.all([
+    db.insert(matches).values(allMatchRows),
+    ...byePlayerIds.map((playerId) =>
+      db
+        .update(tournamentPlayers)
+        .set({ points: BYE_POINTS })
+        .where(
+          and(
+            eq(tournamentPlayers.tournamentId, tournamentId),
+            eq(tournamentPlayers.playerId, playerId)
+          )
+        )
+    ),
+  ])
+
   // Snapshot each player's default bets into tournament-scoped rows
   const remainingPlayers = await db
     .select({ playerId: tournamentPlayers.playerId })
     .from(tournamentPlayers)
     .where(eq(tournamentPlayers.tournamentId, tournamentId))
 
-  for (const { playerId } of remainingPlayers) {
-    // Read player's default bets (tournamentId IS NULL)
-    const defaultBets = await db
-      .select()
-      .from(playerBets)
-      .where(
-        and(isNull(playerBets.tournamentId), eq(playerBets.playerId, playerId))
-      )
+  // Read all players' default bets in parallel
+  const allDefaultBets = await Promise.all(
+    remainingPlayers.map(({ playerId }) =>
+      db
+        .select()
+        .from(playerBets)
+        .where(
+          and(isNull(playerBets.tournamentId), eq(playerBets.playerId, playerId))
+        )
+    )
+  )
 
-    const betMap = new Map(defaultBets.map((b) => [b.gameId, b.bet]))
+  // Build all bet snapshot rows in memory, then bulk insert
+  const allBetRows = remainingPlayers.flatMap(({ playerId }, idx) => {
+    const betMap = new Map(allDefaultBets[idx].map((b) => [b.gameId, b.bet]))
+    return GAMES.map((game) => ({
+      tournamentId,
+      playerId,
+      gameId: game.id,
+      bet: betMap.get(game.id) ?? DEFAULT_BET,
+    }))
+  })
 
-    // Insert snapshot for each game
-    for (const game of GAMES) {
-      await db.insert(playerBets).values({
-        tournamentId,
-        playerId,
-        gameId: game.id,
-        bet: betMap.get(game.id) ?? DEFAULT_BET,
-      })
-    }
-  }
+  await db.insert(playerBets).values(allBetRows)
 
   // Update tournament status
   await db

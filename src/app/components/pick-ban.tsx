@@ -97,14 +97,16 @@ function PlayerPortrait({
       <button
         onClick={() => canSelectWinner && onSelectWinner()}
         disabled={!canSelectWinner || saving}
-        className={`relative transition-all duration-300 ${
+        className={`relative transition-all duration-300 rounded-t-lg ${
+          playerNumber === 1 ? 'ring-darcula-blue' : 'ring-darcula-green'
+        } ring-offset-darcula-bg ${
           shouldAnimate
-            ? 'ring-2 lg:ring-4 ring-darcula-blue ring-offset-2 lg:ring-offset-4 ring-offset-darcula-bg idle-bounce rounded-t-lg'
+            ? 'ring-4 ring-offset-2 lg:ring-offset-4 idle-bounce'
             : canSelectWinner
-              ? 'hover:ring-2 lg:hover:ring-4 hover:ring-darcula-green hover:ring-offset-2 lg:hover:ring-offset-4 hover:ring-offset-darcula-bg cursor-pointer rounded-t-lg'
+              ? 'ring-2 ring-offset-1 lg:ring-offset-2 hover:ring-4 hover:ring-offset-2 lg:hover:ring-offset-4 cursor-pointer'
               : opponentIsWinner
-                ? 'grayscale opacity-60'
-                : 'opacity-60'
+                ? 'ring-2 ring-offset-1 grayscale opacity-60'
+                : 'ring-2 ring-offset-1 opacity-60'
         }`}
       >
         <PlayerCard
@@ -764,6 +766,8 @@ export function PickBan({
         // Roll back on failure
         setLocalMatchResult(previousResult)
         alert(tErrors('failedToRecordResult'))
+      } else {
+        router.refresh()
       }
     } catch {
       // Roll back on network error
@@ -1065,7 +1069,7 @@ export function PickBan({
           <BetRadarChart
             datasets={[
               { bets: player1Bets, fill: 'rgba(104, 151, 187, 0.25)', stroke: 'rgba(104, 151, 187, 0.6)' },
-              { bets: player2Bets, fill: 'rgba(80, 161, 79, 0.25)', stroke: 'rgba(80, 161, 79, 0.6)' },
+              { bets: player2Bets, fill: 'rgba(106, 135, 89, 0.25)', stroke: 'rgba(106, 135, 89, 0.6)' },
             ]}
           />
         </div>

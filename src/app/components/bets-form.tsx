@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { GAMES, type Game } from '@/lib/games'
-import { TOTAL_BET_POINTS, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, calculateMatchPoints } from '@/lib/scoring-constants'
+import { TOTAL_BET_POINTS, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, calculateMatchPoints, generateRandomBets } from '@/lib/scoring-constants'
 import { BetRadarChart } from '@/app/components/bet-radar-chart'
 import { GameDetailModal } from '@/app/components/game-detail-modal'
 
@@ -37,6 +37,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
   const [fetching, setFetching] = useState(false)
   const [saved, setSaved] = useState(false)
   const [detailGame, setDetailGame] = useState<Game | null>(null)
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   const total = Object.values(bets).reduce((sum, b) => sum + b, 0)
   const isValid = total === TOTAL_BET_POINTS && Object.values(bets).every((b) => b >= MIN_BET_PER_GAME && b <= MAX_BET_PER_GAME)
@@ -105,9 +106,53 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
     setSaved(false)
   }
 
+  function setRandomBets() {
+    const randomBets = generateRandomBets()
+    setBets(Object.fromEntries(randomBets.map((b) => [b.gameId, b.bet])))
+    setSaved(false)
+  }
+
   function updateBet(gameId: string, value: number) {
     setBets((prev) => ({ ...prev, [gameId]: value }))
     setSaved(false)
+  }
+
+  async function bulkAction(action: 'reset' | 'random') {
+    const msg = action === 'reset' ? t('confirmResetAll') : t('confirmRandomizeAll')
+    if (!confirm(msg)) return
+    setBulkLoading(true)
+    setSaved(false)
+    try {
+      const res = await fetch('/api/bets/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          playerIds: players.map((p) => p.playerId),
+        }),
+      })
+      if (res.ok) {
+        // Re-fetch current player's bets to reflect changes
+        if (selectedPlayerId) {
+          const betsRes = await fetch(`${apiUrl}?playerId=${selectedPlayerId}`)
+          const data = await betsRes.json()
+          if (data.bets) {
+            const betMap: Record<string, number> = {}
+            for (const b of data.bets) betMap[b.gameId] = b.bet
+            for (const game of GAMES) {
+              if (!(game.id in betMap)) betMap[game.id] = DEFAULT_BET
+            }
+            setBets(betMap)
+          }
+        }
+        alert(action === 'reset' ? t('allPlayersBetsReset') : t('allPlayersBetsRandomized'))
+      } else {
+        const data = await res.json()
+        alert(data.error || tErrors('failedToSaveAction'))
+      }
+    } finally {
+      setBulkLoading(false)
+    }
   }
 
   const selectedPlayerName = players.find((p) => p.playerId === selectedPlayerId)?.playerName
@@ -184,9 +229,9 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
               <div className="space-y-3 text-darcula-text">
                 {([
                   { a: 20, b: 20, keyA: 'noob', keyB: 'noob' },
-                  { a: 15, b: 60, keyA: 'noob', keyB: 'pro' },
-                  { a: 40, b: 15, keyA: 'mid', keyB: 'noob' },
-                  { a: 40, b: 70, keyA: 'mid', keyB: 'pro' },
+                  { a: 30, b: 40, keyA: 'mid', keyB: 'mid' },
+                  { a: 20, b: 50, keyA: 'noob', keyB: 'mid' },
+                  { a: 20, b: 80, keyA: 'noob', keyB: 'pro' },
                 ] as const).map(({ a, b, keyA, keyB }, i) => (
                   <div key={i} className="bg-darcula-elevated rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
@@ -372,6 +417,12 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
                   {t('evenBet')}
                 </button>
                 <button
+                  onClick={setRandomBets}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition"
+                >
+                  {t('randomBet')}
+                </button>
+                <button
                   onClick={saveBets}
                   disabled={!isValid || loading}
                   className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base bg-darcula-green text-darcula-bg rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
@@ -400,6 +451,28 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
           {saved && (
             <div className="mt-4 p-3 bg-darcula-green/10 border border-darcula-green/30 rounded text-darcula-green text-sm text-center">
               {t('savedSuccessfully')}
+            </div>
+          )}
+
+          {/* Host bulk actions */}
+          {isHost && !readOnly && (
+            <div className="mt-6 pt-4 border-t border-darcula-border">
+              <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
+                <button
+                  onClick={() => bulkAction('reset')}
+                  disabled={bulkLoading}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base border border-darcula-red/50 text-darcula-red rounded hover:bg-darcula-red/10 transition disabled:opacity-50"
+                >
+                  {t('resetAllPlayers')}
+                </button>
+                <button
+                  onClick={() => bulkAction('random')}
+                  disabled={bulkLoading}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base border border-darcula-purple/50 text-darcula-purple rounded hover:bg-darcula-purple/10 transition disabled:opacity-50"
+                >
+                  {t('randomizeAllPlayers')}
+                </button>
+              </div>
             </div>
           )}
         </>

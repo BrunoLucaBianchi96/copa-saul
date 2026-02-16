@@ -11,7 +11,9 @@ export {
   MAX_BET_PER_GAME,
   DEFAULT_BET,
   BYE_POINTS,
+  OVERDOG_THRESHOLD,
   calculateMatchPoints,
+  generateRandomBets,
   type BetAllocation,
 } from './scoring-constants'
 
