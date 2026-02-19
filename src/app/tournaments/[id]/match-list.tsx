@@ -64,7 +64,7 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
   const t = useTranslations('match')
   const tCommon = useTranslations('common')
   const getMatchStatus = useMatchStatus()
-  const { focusedMatchIndex } = useContext(GamepadFocusContext)
+  const { focusedMatchIndex, setNavigating } = useContext(GamepadFocusContext)
 
   if (matches.length === 0) {
     return <p className="text-darcula-text-muted">{t('pending')}</p>
@@ -97,6 +97,7 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
           <Link
             key={match.id}
             href={`/tournaments/${tournamentId}/matches/${match.id}`}
+            onClick={() => setNavigating(true)}
             className={`block border border-darcula-border rounded p-4 bg-darcula-elevated hover:bg-darcula-surface hover:border-darcula-text-muted transition-colors ${isFocused ? 'gamepad-focus' : ''}`}
           >
             <div className="flex justify-between items-center">

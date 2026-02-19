@@ -108,6 +108,7 @@ export function TournamentGamepad({
           const actions = getActionElements()
           actions[focusedActionIndex]?.click()
         } else if (focusedMatchIndex !== null && matchHrefs[focusedMatchIndex]) {
+          setNavigating(true)
           router.push(matchHrefs[focusedMatchIndex])
         }
       } else if (button === 'triangle') {

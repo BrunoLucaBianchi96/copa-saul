@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
   GAMES,
+  GAME_URLS_STORAGE_KEY,
   type PickBanAction,
   getGameStates,
   calculatePickBanState,
@@ -179,6 +180,7 @@ export function PickBan({
   const [localMatchResult, setLocalMatchResult] = useState(matchResult)
   const [victoryScreenLoaded, setVictoryScreenLoaded] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [navigating, setNavigating] = useState(false)
   const [showEntranceAnimation, setShowEntranceAnimation] = useState(
     initialActions.length === 0 && matchResult === 'pending'
   )
@@ -192,6 +194,33 @@ export function PickBan({
   const [wheelScale, setWheelScale] = useState(1)
   const [floatingPoints, setFloatingPoints] = useState<{ player: 1 | 2; points: number } | null>(null)
   const [focusedWinner, setFocusedWinner] = useState<'player1' | 'player2' | null>(null)
+  const [focusedOpenGame, setFocusedOpenGame] = useState(false)
+  const [gameLaunchUrl, setGameLaunchUrl] = useState<string | null>(null)
+
+  // Resolve launch URL from localStorage when game is selected
+  useEffect(() => {
+    if (!selectedGame) { setGameLaunchUrl(null); return }
+    const game = GAMES.find(g => g.id === selectedGame)
+    if (!game?.launchable) { setGameLaunchUrl(null); return }
+
+    let url: string | null = null
+    try {
+      const stored = localStorage.getItem(GAME_URLS_STORAGE_KEY)
+      if (stored) {
+        const urls = JSON.parse(stored) as Record<string, string>
+        if (urls[selectedGame] && urls[selectedGame].length > 'steam://rungameid/'.length) {
+          url = urls[selectedGame]
+        }
+      }
+    } catch { /* ignore */ }
+
+    // Fall back to default URL if it has an actual app ID
+    if (!url && game.steamAppId && game.defaultLaunchUrl) {
+      url = game.defaultLaunchUrl
+    }
+
+    setGameLaunchUrl(url)
+  }, [selectedGame])
 
   // Reset animation ref when matchId changes (e.g., navigating away and back)
   useEffect(() => {
@@ -309,6 +338,10 @@ export function PickBan({
     } catch {
       // Fullscreen not supported or denied - that's ok
     }
+  }
+
+  function handleOpenGame() {
+    if (gameLaunchUrl) window.location.href = gameLaunchUrl
   }
 
   // Play background music on mount, with retry on user interaction if blocked
@@ -432,7 +465,9 @@ export function PickBan({
   const handleGamepadButton = (button: string) => {
     if (button === 'cross') {
       if (state.currentPhase === 'complete') {
-        if (focusedWinner && canSelectWinner) {
+        if (focusedOpenGame && gameLaunchUrl) {
+          handleOpenGame()
+        } else if (focusedWinner && canSelectWinner) {
           handleRecordResult(focusedWinner)
         }
       } else if (focusedGameIndex !== null) {
@@ -441,24 +476,39 @@ export function PickBan({
     } else if (button === 'triangle') {
       handleFullscreenToggle()
     } else if (button === 'circle') {
+      setNavigating(true)
       router.push(`/tournaments/${tournamentId}`)
     } else if (button === 'l1' && prevMatchId !== null) {
       const now = Date.now()
       if (now - lastBumperPress.current < 500) return
       lastBumperPress.current = now
+      setNavigating(true)
       router.push(`/tournaments/${tournamentId}/matches/${prevMatchId}`)
     } else if (button === 'r1' && nextMatchId !== null) {
       const now = Date.now()
       if (now - lastBumperPress.current < 500) return
       lastBumperPress.current = now
+      setNavigating(true)
       router.push(`/tournaments/${tournamentId}/matches/${nextMatchId}`)
     }
   }
 
   const handleGamepadDirection = (dir: GamepadDirection) => {
     if (state.currentPhase === 'complete') {
-      if (dir === 'left') setFocusedWinner('player1')
-      else if (dir === 'right') setFocusedWinner('player2')
+      const hasOpenGame = gameLaunchUrl && selectedGame && GAMES.find(g => g.id === selectedGame)?.launchable
+      if (dir === 'up' && hasOpenGame) {
+        setFocusedOpenGame(true)
+        setFocusedWinner(null)
+      } else if (dir === 'down') {
+        setFocusedOpenGame(false)
+        if (!focusedWinner) setFocusedWinner('player1')
+      } else if (dir === 'left') {
+        setFocusedOpenGame(false)
+        setFocusedWinner('player1')
+      } else if (dir === 'right') {
+        setFocusedOpenGame(false)
+        setFocusedWinner('player2')
+      }
     } else {
       navigateWheel(dir)
     }
@@ -474,6 +524,7 @@ export function PickBan({
   useEffect(() => {
     resetWheelFocus()
     setFocusedWinner(null)
+    setFocusedOpenGame(false)
   }, [state.currentPhase, resetWheelFocus])
 
   // Fade background music to silence
@@ -937,6 +988,16 @@ export function PickBan({
 
   return (
     <div className="min-h-screen bg-darcula-bg flex flex-col relative overflow-x-hidden">
+      {/* Navigation loading overlay */}
+      {navigating && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-darcula-bg/70">
+          <svg className="w-12 h-12 animate-spin text-darcula-text-muted" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        </div>
+      )}
+
       {/* Theme background - animated (Balatro/GTA4/Matrix) or static image */}
       {theme.id === 'balatro' ? (
         <div className="fixed inset-0 z-0 pointer-events-none">
@@ -1039,7 +1100,7 @@ export function PickBan({
       <nav className="relative z-10 w-full flex items-center justify-between px-4 py-3 mb-3">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push(`/tournaments/${tournamentId}`)}
+            onClick={() => { setNavigating(true); router.push(`/tournaments/${tournamentId}`) }}
             className="text-darcula-text hover:text-darcula-text-bright text-sm inline-flex items-center gap-1 transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1049,7 +1110,7 @@ export function PickBan({
           </button>
           {prevMatchId !== null ? (
             <button
-              onClick={() => router.push(`/tournaments/${tournamentId}/matches/${prevMatchId}`)}
+              onClick={() => { setNavigating(true); router.push(`/tournaments/${tournamentId}/matches/${prevMatchId}`) }}
               className="p-2 rounded border border-darcula-border text-darcula-text hover:bg-darcula-elevated transition"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1068,7 +1129,7 @@ export function PickBan({
         <div className="flex items-center gap-3">
           {nextMatchId !== null ? (
             <button
-              onClick={() => router.push(`/tournaments/${tournamentId}/matches/${nextMatchId}`)}
+              onClick={() => { setNavigating(true); router.push(`/tournaments/${tournamentId}/matches/${nextMatchId}`) }}
               className="p-2 rounded border border-darcula-border text-darcula-text hover:bg-darcula-elevated transition"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1169,6 +1230,33 @@ export function PickBan({
         {sessionPlayerId && !isHost && !isMyTurn && localMatchResult === 'pending' && state.currentPhase !== 'complete' && state.currentPhase !== 'selecting' && (
           <div className="mt-2 text-sm text-darcula-text-muted animate-pulse">
             {t('waitingFor', { name: currentPlayerName })}
+          </div>
+        )}
+        {/* Open Game button - shown when game is selected and launchable */}
+        {state.currentPhase === 'complete' && selectedGame && GAMES.find(g => g.id === selectedGame)?.launchable && (
+          <div className="mt-3">
+            {gameLaunchUrl ? (
+              <button
+                onClick={handleOpenGame}
+                className={`px-6 py-2 bg-darcula-green text-darcula-bg rounded-lg hover:bg-darcula-green/80 transition font-medium text-sm sm:text-base inline-flex items-center gap-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] ${focusedOpenGame ? 'gamepad-focus' : ''}`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {t('openGame')}
+              </button>
+            ) : (
+              <p className="text-darcula-text-muted text-sm drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                {t('noLaunchUrl')}{' '}
+                <a
+                  href="/setup"
+                  className="text-darcula-blue hover:underline"
+                >
+                  {t('configureInSetup')}
+                </a>
+              </p>
+            )}
           </div>
         )}
       </div>

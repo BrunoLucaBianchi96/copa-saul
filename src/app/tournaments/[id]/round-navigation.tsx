@@ -64,6 +64,7 @@ export function RoundNavigation({
       <button
         onClick={() => goToRound(viewingRound - 1)}
         disabled={!canGoPrev}
+        data-gamepad-action="prev-round"
         className="p-2 rounded border border-darcula-border text-darcula-text hover:bg-darcula-elevated transition disabled:opacity-30 disabled:cursor-not-allowed"
         title={t('back')}
       >
@@ -82,6 +83,7 @@ export function RoundNavigation({
         <button
           onClick={advanceRound}
           disabled={loading}
+          data-gamepad-action="advance-round"
           className="p-2 rounded bg-darcula-blue text-darcula-bg hover:bg-darcula-blue/80 transition disabled:opacity-50"
           title={t('processing')}
         >
@@ -100,6 +102,7 @@ export function RoundNavigation({
         <button
           onClick={() => goToRound(viewingRound + 1)}
           disabled={!canGoNext}
+          data-gamepad-action="next-round"
           className="p-2 rounded border border-darcula-border text-darcula-text hover:bg-darcula-elevated transition disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

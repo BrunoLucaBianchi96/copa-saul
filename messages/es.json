@@ -55,6 +55,7 @@
     "needAtLeast2Players": "Se necesitan al menos 2 jugadores",
     "start": "Iniciar",
     "setBets": "Apuestas",
+    "gameSetup": "Config. Juegos",
     "deleteTournament": "Eliminar torneo",
     "confirmDeleteTournament": "¿Estás seguro de que quieres eliminar \"{name}\"? Esta acción no se puede deshacer."
   },
@@ -83,7 +84,10 @@
     "winner": "Ganador",
     "turn": "Turno de {name}",
     "waitingFor": "Esperando a {name}...",
-    "backToTournament": "Volver al Torneo"
+    "backToTournament": "Volver al Torneo",
+    "openGame": "Abrir Juego",
+    "noLaunchUrl": "No hay URL de lanzamiento configurada.",
+    "configureInSetup": "Configurar en Setup"
   },
   "result": {
     "theWinnerIs": "El ganador es",
@@ -243,6 +247,16 @@
     "confirmRandomizeAll": "¿Aleatorizar las apuestas de TODOS los jugadores? No se puede deshacer.",
     "allPlayersBetsReset": "Las apuestas de todos los jugadores fueron reseteadas al mínimo.",
     "allPlayersBetsRandomized": "Las apuestas de todos los jugadores fueron aleatorizadas."
+  },
+  "setup": {
+    "title": "Config. Juegos",
+    "subtitle": "{count} juegos lanzables",
+    "backToHome": "Volver al Inicio",
+    "description": "Configurá las URLs de lanzamiento para cada juego. Se guardan localmente en esta computadora y se usan para abrir juegos desde la pantalla del partido.",
+    "nonSteamGame": "Juego no-Steam",
+    "save": "Guardar",
+    "savedSuccessfully": "URLs de lanzamiento guardadas!",
+    "resetDefaults": "Restaurar Valores"
   },
   "errors": {
     "failedToDelete": "Error al eliminar el torneo",

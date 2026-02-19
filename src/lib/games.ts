@@ -13,12 +13,19 @@ export interface Game {
   videoUrl?: string
   videoStart?: number
   controls?: ControlEntry[]
+  launchable: boolean
+  steamAppId?: number
+  defaultLaunchUrl?: string
 }
+
+export const GAME_URLS_STORAGE_KEY = 'copa-saul-game-urls'
 
 export const GAMES: Game[] = [
   {
     id: 'sparking-zero',
     name: 'Sparking Zero',
+    launchable: true,
+    defaultLaunchUrl: 'steam://rungameid/',
     imageUrl: '/avatars/sparking-zero-2.jpg',
     videoUrl: 'https://www.youtube.com/watch?v=wV-dsMTKgH4',
     videoStart: 25,
@@ -72,6 +79,7 @@ export const GAMES: Game[] = [
   {
     id: 'taiko-no-tatsujin',
     name: 'Taiko no Tatsujin',
+    launchable: false,
     imageUrl: '/avatars/taiko.webp',
     imageFit: 'contain',
     videoUrl: 'https://www.youtube.com/watch?v=ynP3WcqcUHc',
@@ -86,6 +94,8 @@ export const GAMES: Game[] = [
   {
     id: 'trackmania',
     name: 'Trackmania Turbo',
+    launchable: true,
+    defaultLaunchUrl: 'steam://rungameid/',
     imageUrl: 'https://image.api.playstation.com/cdn/UP0001/CUSA03008_00/Vxl9PD0n9dSbh9wV9TEKtJJYOP39Mc4R.png',
     videoUrl: 'https://www.youtube.com/watch?v=MWr369TCMmo',
     videoStart: 23,
@@ -97,11 +107,14 @@ export const GAMES: Game[] = [
       { label: '⚠️ Reiniciar carrera - NO TOCAR EN CARRERA', buttons: ['PS-COLOR-CIRCLE'] },
     ],
   },
-  { id: 'wii-sports-ping-pong', name: 'Wii Sports Ping Pong', imageUrl: '/avatars/wii-sports.jpg' },
-  { id: 'tricky-towers', name: 'Tricky Towers', imageUrl: '/avatars/tricky-towers.jpg', videoUrl: 'https://www.youtube.com/watch?v=GyT1S0jeRq0', videoStart: 113 },
+  { id: 'wii-sports-ping-pong', name: 'Wii Sports Ping Pong', launchable: false, imageUrl: '/avatars/wii-sports.jpg' },
+  { id: 'tricky-towers', name: 'Tricky Towers', launchable: true, defaultLaunchUrl: 'steam://rungameid/', imageUrl: '/avatars/tricky-towers.jpg', videoUrl: 'https://www.youtube.com/watch?v=GyT1S0jeRq0', videoStart: 113 },
   {
     id: 'duck-game',
     name: 'Duck Game',
+    launchable: true,
+    steamAppId: 312530,
+    defaultLaunchUrl: 'steam://rungameid/312530',
     imageUrl: '/avatars/duck-game.jpeg',
     videoUrl: 'https://www.youtube.com/watch?v=VZrwIrfr7xk',
     videoStart: 327,
@@ -116,7 +129,7 @@ export const GAMES: Game[] = [
       { label: 'Tropezar / Ragdoll', buttons: ['PS-R1'] },
     ],
   },
-  { id: 'boomerang-fu', name: 'Boomerang Fu', imageUrl: '/avatars/boomerang-fu.jpg', videoUrl: 'https://www.youtube.com/watch?v=I1wz1M-n98c', videoStart: 90 },
+  { id: 'boomerang-fu', name: 'Boomerang Fu', launchable: true, steamAppId: 965680, defaultLaunchUrl: 'steam://rungameid/965680', imageUrl: '/avatars/boomerang-fu.jpg', videoUrl: 'https://www.youtube.com/watch?v=I1wz1M-n98c', videoStart: 90 },
 ]
 
 export type PickBanActionType = 'ban' | 'pick' | 'skip'

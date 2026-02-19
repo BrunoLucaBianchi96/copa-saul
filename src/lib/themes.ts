@@ -189,7 +189,7 @@ export const THEMES: Theme[] = [
     normalizeVolume: 1,
     backgroundImage: 'https://wallpapercave.com/wp/wp11199297.png',
   },
-  {
+{
     id: 'red-sun',
     name: 'Red Sun (MGRR)',
     bpm: 150,

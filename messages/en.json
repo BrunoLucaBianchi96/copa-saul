@@ -55,6 +55,7 @@
     "needAtLeast2Players": "Need at least 2 players",
     "start": "Start",
     "setBets": "Set Bets",
+    "gameSetup": "Game Setup",
     "deleteTournament": "Delete tournament",
     "confirmDeleteTournament": "Are you sure you want to delete \"{name}\"? This action cannot be undone."
   },
@@ -83,7 +84,10 @@
     "winner": "Winner",
     "turn": "{name}'s turn",
     "waitingFor": "Waiting for {name}...",
-    "backToTournament": "Back to Tournament"
+    "backToTournament": "Back to Tournament",
+    "openGame": "Open Game",
+    "noLaunchUrl": "No launch URL configured.",
+    "configureInSetup": "Configure in Setup"
   },
   "result": {
     "theWinnerIs": "The winner is",
@@ -243,6 +247,16 @@
     "confirmRandomizeAll": "Randomize bets for ALL players? This cannot be undone.",
     "allPlayersBetsReset": "All players' bets have been reset to minimum.",
     "allPlayersBetsRandomized": "All players' bets have been randomized."
+  },
+  "setup": {
+    "title": "Game Setup",
+    "subtitle": "{count} launchable games",
+    "backToHome": "Back to Home",
+    "description": "Configure launch URLs for each game. These are saved locally on this computer and used to open games directly from the match screen.",
+    "nonSteamGame": "Non-Steam game",
+    "save": "Save",
+    "savedSuccessfully": "Launch URLs saved!",
+    "resetDefaults": "Reset to Defaults"
   },
   "errors": {
     "failedToDelete": "Failed to delete tournament",

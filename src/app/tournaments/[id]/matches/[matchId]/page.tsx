@@ -156,6 +156,7 @@ export default async function MatchPage({
 
   return (
     <PickBan
+      key={matchId}
       player1Name={formatDisplayName(player1.name, player1.nickname)}
       player2Name={formatDisplayName(player2.name, player2.nickname)}
       player1Avatar={player1.avatarUrl}
