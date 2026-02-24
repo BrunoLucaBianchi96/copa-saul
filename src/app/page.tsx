@@ -53,6 +53,14 @@ export default async function Home() {
         <h1 className="text-4xl font-bold text-darcula-text-bright">{t('appTitle')}</h1>
         <div className="flex items-center gap-4">
           {!isHost(role) && <RulesInfoButton />}
+          {isHost(role) && (
+            <Link
+              href="/players/links"
+              className="text-sm px-3 py-1 rounded bg-darcula-elevated text-darcula-text hover:bg-darcula-border transition"
+            >
+              {t('editLinks')}
+            </Link>
+          )}
           <Link
             href="/bets"
             className="text-sm px-3 py-1 rounded bg-darcula-elevated text-darcula-text hover:bg-darcula-border transition"

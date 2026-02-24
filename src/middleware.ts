@@ -19,6 +19,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Allow player self-edit pages and player API (routes enforce their own auth)
+  if (pathname.startsWith('/edit/') || pathname.startsWith('/api/players/')) {
+    return NextResponse.next()
+  }
+
   // Check for session cookie
   const session = request.cookies.get('copa-saul-session')
   if (!session?.value || (session.value !== 'host' && session.value !== 'player' && !session.value.startsWith('player:'))) {

@@ -3,6 +3,7 @@ import { db } from '@/db'
 import { players } from '@/db/schema'
 import { requireHost } from '@/lib/session'
 import { put } from '@vercel/blob'
+import { generateEditToken } from '@/lib/edit-token'
 
 async function removeBackgroundWithAPI(imageBuffer: Buffer): Promise<Buffer | null> {
   const apiKey = process.env.REMOVE_BG_API_KEY
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
   const result = await db.insert(players).values({
     name: name.trim(),
     avatarUrl,
+    editToken: generateEditToken(),
   }).returning()
 
   return NextResponse.json(result[0])

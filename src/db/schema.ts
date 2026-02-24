@@ -5,6 +5,7 @@ export const players = sqliteTable('players', {
   name: text('name').notNull(),
   nickname: text('nickname'),
   avatarUrl: text('avatar_url'),
+  editToken: text('edit_token'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 })

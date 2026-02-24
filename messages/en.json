@@ -30,7 +30,8 @@
     "myBets": "My Bets",
     "noTournaments": "No tournaments yet. Create one to get started!",
     "leaderboard": "Leaderboard",
-    "noPlayersRegistered": "No players registered yet."
+    "noPlayersRegistered": "No players registered yet.",
+    "editLinks": "Edit Links"
   },
   "tournament": {
     "backToHome": "Back to Home",
@@ -257,6 +258,21 @@
     "save": "Save",
     "savedSuccessfully": "Launch URLs saved!",
     "resetDefaults": "Reset to Defaults"
+  },
+  "editProfile": {
+    "title": "Edit Your Profile",
+    "notFound": "Link Not Found",
+    "notFoundDescription": "This edit link is invalid or has expired.",
+    "saving": "Saving...",
+    "save": "Save Changes",
+    "savedSuccessfully": "Profile updated!"
+  },
+  "playerLinks": {
+    "title": "Player Edit Links",
+    "description": "Share these links with players so they can edit their own profile (name, nickname, avatar).",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "noPlayers": "No players registered yet."
   },
   "errors": {
     "failedToDelete": "Failed to delete tournament",

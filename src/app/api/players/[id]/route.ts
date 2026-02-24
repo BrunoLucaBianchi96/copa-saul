@@ -42,11 +42,6 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireHost()
-  if (!auth.authorized) {
-    return NextResponse.json({ error: auth.error }, { status: 403 })
-  }
-
   const playerId = parseInt(params.id)
 
   // Check player exists
@@ -60,6 +55,19 @@ export async function PATCH(
   }
 
   const formData = await request.formData()
+
+  // Auth: either host session OR valid edit token
+  const editToken = formData.get('editToken') as string | null
+  if (editToken) {
+    if (player[0].editToken !== editToken) {
+      return NextResponse.json({ error: 'Invalid edit token' }, { status: 403 })
+    }
+  } else {
+    const auth = await requireHost()
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: 403 })
+    }
+  }
   const name = formData.get('name') as string | null
   const nickname = formData.get('nickname') as string | null
   const avatar = formData.get('avatar') as File | null

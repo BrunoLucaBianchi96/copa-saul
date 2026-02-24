@@ -30,7 +30,8 @@
     "myBets": "Mis Apuestas",
     "noTournaments": "¡Aún no hay torneos. Crea uno para comenzar!",
     "leaderboard": "Clasificación",
-    "noPlayersRegistered": "Aún no hay jugadores registrados."
+    "noPlayersRegistered": "Aún no hay jugadores registrados.",
+    "editLinks": "Links de Edición"
   },
   "tournament": {
     "backToHome": "Volver al Inicio",
@@ -257,6 +258,21 @@
     "save": "Guardar",
     "savedSuccessfully": "URLs de lanzamiento guardadas!",
     "resetDefaults": "Restaurar Valores"
+  },
+  "editProfile": {
+    "title": "Editar Tu Perfil",
+    "notFound": "Link No Encontrado",
+    "notFoundDescription": "Este link de edición es inválido o ha expirado.",
+    "saving": "Guardando...",
+    "save": "Guardar Cambios",
+    "savedSuccessfully": "¡Perfil actualizado!"
+  },
+  "playerLinks": {
+    "title": "Links de Edición",
+    "description": "Compartí estos links con los jugadores para que puedan editar su perfil (nombre, apodo, avatar).",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "noPlayers": "Aún no hay jugadores registrados."
   },
   "errors": {
     "failedToDelete": "Error al eliminar el torneo",
