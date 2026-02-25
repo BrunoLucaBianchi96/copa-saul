@@ -4,6 +4,7 @@ import { tournaments, players } from '@/db/schema'
 import { desc, eq, isNull } from 'drizzle-orm'
 import { getSession, getSessionPlayerId, isHost } from '@/lib/session'
 import { getTranslations } from 'next-intl/server'
+import { cookies } from 'next/headers'
 import { LoginForm } from './components/login-form'
 import { LogoutButton } from './components/logout-button'
 import { TournamentItem } from './components/tournament-item'
@@ -33,10 +34,17 @@ export default async function Home() {
   const allPlayers = await getPlayers()
 
   if (!role) {
+    // Lock player login in prod until Feb 28 2026 5pm ART (UTC-3 = 8pm UTC)
+    // Bypass with cookie: document.cookie = "copa-bypass=1"
+    const isProd = process.env.NODE_ENV === 'production'
+    const unlockDate = new Date('2026-02-28T20:00:00Z')
+    const hasBypass = (await cookies()).get('copa-bypass')?.value === '1'
+    const playerLoginLocked = isProd && Date.now() < unlockDate.getTime() && !hasBypass
+
     return (
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-4xl font-bold text-center mb-8 text-darcula-text-bright">{t('appTitle')}</h1>
-        <LoginForm players={allPlayers.map(p => ({ id: p.id, name: p.name, avatarUrl: p.avatarUrl }))} />
+        <LoginForm players={allPlayers.map(p => ({ id: p.id, name: p.name, avatarUrl: p.avatarUrl }))} playerLoginLocked={playerLoginLocked} />
       </main>
     )
   }

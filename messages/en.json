@@ -116,7 +116,8 @@
     "logout": "Logout",
     "tournament": "Tournament",
     "selectYourName": "Select Your Name",
-    "noPlayersAvailable": "No players available. Ask the host to add players first."
+    "noPlayersAvailable": "No players available. Ask the host to add players first.",
+    "playerLoginLocked": "Player login opens Feb 28"
   },
   "rules": {
     "tournamentRules": "Tournament Rules",

@@ -116,7 +116,8 @@
     "logout": "Salir",
     "tournament": "Torneo",
     "selectYourName": "Selecciona tu nombre",
-    "noPlayersAvailable": "No hay jugadores disponibles. Pedile al anfitrión que agregue jugadores."
+    "noPlayersAvailable": "No hay jugadores disponibles. Pedile al anfitrión que agregue jugadores.",
+    "playerLoginLocked": "El login de jugadores abre el 28 de feb"
   },
   "rules": {
     "tournamentRules": "Reglas del Torneo",

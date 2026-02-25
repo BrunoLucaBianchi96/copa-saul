@@ -13,11 +13,12 @@ interface Player {
 
 interface LoginFormProps {
   players: Player[]
+  playerLoginLocked?: boolean
 }
 
 type LoginMode = 'select' | 'host' | 'player-select'
 
-export function LoginForm({ players }: LoginFormProps) {
+export function LoginForm({ players, playerLoginLocked }: LoginFormProps) {
   const router = useRouter()
   const t = useTranslations('auth')
   const [mode, setMode] = useState<LoginMode>('select')
@@ -165,10 +166,10 @@ export function LoginForm({ players }: LoginFormProps) {
         </button>
         <button
           onClick={() => setMode('player-select')}
-          disabled={loading}
+          disabled={loading || playerLoginLocked}
           className="w-full bg-darcula-elevated text-darcula-text px-4 py-3 rounded hover:bg-darcula-border transition disabled:opacity-50 border border-darcula-border"
         >
-          {t('joinAsPlayer')}
+          {playerLoginLocked ? t('playerLoginLocked') : t('joinAsPlayer')}
         </button>
       </div>
 
