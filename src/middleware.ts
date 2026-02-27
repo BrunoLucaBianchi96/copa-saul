@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server'
 const PUBLIC_PATHS = [
   '/',
   '/balatro-bg',
+  '/games',
 ]
 
 export function middleware(request: NextRequest) {

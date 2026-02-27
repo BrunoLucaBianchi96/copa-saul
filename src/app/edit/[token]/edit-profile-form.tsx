@@ -28,6 +28,7 @@ export function EditProfileForm({
   const [name, setName] = useState(initialName)
   const [nickname, setNickname] = useState(initialNickname)
   const [preview, setPreview] = useState<string | null>(initialAvatarUrl)
+  const [removeAvatar, setRemoveAvatar] = useState(false)
   const [skipBgRemoval, setSkipBgRemoval] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -44,9 +45,16 @@ export function EditProfileForm({
       const reader = new FileReader()
       reader.onloadend = () => {
         setPreview(reader.result as string)
+        setRemoveAvatar(false)
       }
       reader.readAsDataURL(file)
     }
+  }
+
+  function handleRemoveAvatar() {
+    setPreview(null)
+    setRemoveAvatar(true)
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -64,6 +72,9 @@ export function EditProfileForm({
     const file = fileInputRef.current?.files?.[0]
     if (file) {
       formData.append('avatar', file)
+    }
+    if (removeAvatar) {
+      formData.append('removeAvatar', 'true')
     }
     if (skipBgRemoval) {
       formData.append('skipBgRemoval', 'true')
@@ -122,13 +133,24 @@ export function EditProfileForm({
             onChange={handleFileChange}
             className="hidden"
           />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="text-sm text-darcula-text-muted hover:text-darcula-text"
-          >
-            {tPlayer('changePhoto')}
-          </button>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-sm text-darcula-text-muted hover:text-darcula-text"
+            >
+              {tPlayer('changePhoto')}
+            </button>
+            {preview && (
+              <button
+                type="button"
+                onClick={handleRemoveAvatar}
+                className="text-sm text-darcula-red/70 hover:text-darcula-red"
+              >
+                {tPlayer('removePhoto')}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Name input */}

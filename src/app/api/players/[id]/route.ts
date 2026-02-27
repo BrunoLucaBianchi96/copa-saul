@@ -72,8 +72,9 @@ export async function PATCH(
   const nickname = formData.get('nickname') as string | null
   const avatar = formData.get('avatar') as File | null
   const skipBgRemoval = formData.get('skipBgRemoval') === 'true'
+  const removeAvatar = formData.get('removeAvatar') === 'true'
 
-  const updates: Partial<{ name: string; nickname: string | null; avatarUrl: string }> = {}
+  const updates: Partial<{ name: string; nickname: string | null; avatarUrl: string | null }> = {}
 
   if (name && name.trim() !== '') {
     updates.name = name.trim()
@@ -84,7 +85,9 @@ export async function PATCH(
     updates.nickname = nickname.trim() === '' ? null : nickname.trim()
   }
 
-  if (avatar && avatar.size > 0) {
+  if (removeAvatar) {
+    updates.avatarUrl = null
+  } else if (avatar && avatar.size > 0) {
     const timestamp = Date.now()
     const random = Math.random().toString(36).substring(7)
     const bytes = await avatar.arrayBuffer()

@@ -1,30 +1,40 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { playerBets } from '@/db/schema'
+import { players, playerBets } from '@/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 import { GAMES } from '@/lib/games'
 import { getSession, getSessionPlayerId, isHost as checkIsHost } from '@/lib/session'
 import { validateBets, DEFAULT_BET, type BetAllocation } from '@/lib/scoring'
 
-export async function GET(request: Request) {
-  const role = await getSession()
-  if (!role) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+async function authenticatePlayer(playerId: number, editToken: string | null): Promise<boolean> {
+  if (editToken) {
+    const result = await db
+      .select({ id: players.id })
+      .from(players)
+      .where(and(eq(players.id, playerId), eq(players.editToken, editToken), isNull(players.deletedAt)))
+    return result.length > 0
   }
 
+  const role = await getSession()
+  if (!role) return false
+  if (checkIsHost(role)) return true
+
+  const sessionPlayerId = await getSessionPlayerId()
+  return sessionPlayerId === playerId
+}
+
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const playerId = parseInt(searchParams.get('playerId') || '0')
+  const editToken = searchParams.get('editToken')
 
   if (!playerId) {
     return NextResponse.json({ error: 'playerId required' }, { status: 400 })
   }
 
-  // Players can only fetch their own bets
-  if (!checkIsHost(role)) {
-    const sessionPlayerId = await getSessionPlayerId()
-    if (sessionPlayerId !== playerId) {
-      return NextResponse.json({ error: "Cannot view other players' bets" }, { status: 403 })
-    }
+  const authorized = await authenticatePlayer(playerId, editToken)
+  if (!authorized) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
   // Get existing default bets (tournamentId IS NULL)
@@ -46,22 +56,15 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const role = await getSession()
-  if (!role) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
-  const { playerId, bets } = (await request.json()) as {
+  const { playerId, bets, editToken } = (await request.json()) as {
     playerId: number
     bets: BetAllocation[]
+    editToken?: string
   }
 
-  // Players can only save their own bets
-  if (!checkIsHost(role)) {
-    const sessionPlayerId = await getSessionPlayerId()
-    if (sessionPlayerId !== playerId) {
-      return NextResponse.json({ error: "Cannot modify other players' bets" }, { status: 403 })
-    }
+  const authorized = await authenticatePlayer(playerId, editToken ?? null)
+  if (!authorized) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
   // Validate bets

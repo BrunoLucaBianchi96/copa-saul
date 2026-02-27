@@ -26,6 +26,20 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
   {
+    id: 'techno-syndrome',
+    name: 'Techno Syndrome',
+    bpm: 134,
+    division: 1,
+    audioFile: '/songs/techno-syndrome.mp3',
+    normalizeVolume: 0.7,
+    audioOffset: 16000,
+    backgroundImage: 'https://cdna.artstation.com/p/assets/images/images/003/714/696/large/pawel-kot-mk2-hd-armory.jpg?1476740914',
+    soundbites: {
+      onGameSelected: { path: '/soundbites/MORTAL KOMBAT! Scream.mp3', offset: 100, volume: 0.2 },
+      onWinnerChosen: { path: '/soundbites/Fatality - Mortal Kombat Sound Effect (HD).mp3', volume: 0.2 },
+    },
+  },
+    {
     id: 'mucha-lucha',
     name: 'Mucha Lucha Theme',
     bpm: 124,
@@ -35,14 +49,13 @@ export const THEMES: Theme[] = [
     backgroundImage: "https://static.wikia.nocookie.net/muchalucha/images/e/e7/S1E11ATitleCard.jpg/",
   },
   {
-    id: 'the-beast-arcane',
-    name: 'The Beast (Arcane)',
-    bpm: 135,
-    division: 1,
-    audioFile: '/songs/the-beast-arcane.mp3',
-    audioOffset: 10000,
+    id: 'running-in-the-90s',
+    name: "Running in the 90's (Initial D)",
+    bpm: 159,
+    division: 2,
+    audioFile: '/songs/running-in-the-90s-initial-d.mp3',
     normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp12409949.jpg',
+    backgroundImage: 'https://wallpapercave.com/wp/wp12381690.jpg'
   },
   {
     id: 'bury-the-light',
@@ -55,24 +68,6 @@ export const THEMES: Theme[] = [
     backgroundImage: 'https://wallpapercave.com/wp/wp5554957.jpg'
   },
   {
-    id: 'running-in-the-90s',
-    name: "Running in the 90's (Initial D)",
-    bpm: 159,
-    division: 2,
-    audioFile: '/songs/running-in-the-90s-initial-d.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp12381690.jpg'
-  },
-  {
-    id: 'take-over',
-    name: 'Take Over (Persona 5 Royal)',
-    bpm: 125,
-    division: 1,
-    audioFile: '/songs/take-over-persona-5.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp15118727.webp'
-  },
-  {
     id: 'crash-bandicoot',
     name: 'Crash Bandicoot Theme',
     bpm: 153,
@@ -80,15 +75,6 @@ export const THEMES: Theme[] = [
     audioFile: '/songs/crash-bandicoot-main.mp3',
     normalizeVolume: 1,
     backgroundImage: 'https://wallpapercave.com/wp/wp10708932.jpg'
-  },
-  {
-    id: 'marvel-vs-capcom',
-    name: "Captain America's Theme (MvC)",
-    bpm: 190,
-    division: 1,
-    audioFile: '/songs/marvel-vs-capcom-captain-americas-theme.mp3',
-    normalizeVolume: 1.2,
-    backgroundImage: 'https://wallpapercave.com/wp/wp8157803.jpg',
   },
   {
     id: 'matrix',
@@ -112,18 +98,22 @@ export const THEMES: Theme[] = [
     },
   },
   {
-    id: 'techno-syndrome',
-    name: 'Techno Syndrome',
-    bpm: 134,
+    id: 'take-over',
+    name: 'Take Over (Persona 5 Royal)',
+    bpm: 125,
     division: 1,
-    audioFile: '/songs/techno-syndrome.mp3',
-    normalizeVolume: 0.7,
-    audioOffset: 16000,
-    backgroundImage: 'https://cdna.artstation.com/p/assets/images/images/003/714/696/large/pawel-kot-mk2-hd-armory.jpg?1476740914',
-    soundbites: {
-      onGameSelected: { path: '/soundbites/MORTAL KOMBAT! Scream.mp3', offset: 100, volume: 0.2 },
-      onWinnerChosen: { path: '/soundbites/Fatality - Mortal Kombat Sound Effect (HD).mp3', volume: 0.2 },
-    },
+    audioFile: '/songs/take-over-persona-5.mp3',
+    normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp15118727.webp'
+  },
+  {
+    id: 'marvel-vs-capcom',
+    name: "Captain America's Theme (MvC)",
+    bpm: 190,
+    division: 1,
+    audioFile: '/songs/marvel-vs-capcom-captain-americas-theme.mp3',
+    normalizeVolume: 1.2,
+    backgroundImage: 'https://wallpapercave.com/wp/wp8157803.jpg',
   },
   {
     id: 'melee-character-select',
@@ -147,15 +137,12 @@ export const THEMES: Theme[] = [
     },
   },
   {
-    id: 'ultimate-battle',
-    name: 'Ultimate Battle (Dragon Ball Super)',
-    bpm: 170,
+    id: 'gta-4',
+    name: 'Soviet Connection (GTA IV)',
+    bpm: 72,
     division: 1,
-    audioFile: '/songs/ultimate-battle.mp3',
+    audioFile: '/songs/gta-4.mp3',
     normalizeVolume: 1,
-    audioOffset: 2000,
-    backgroundImage: 'https://pbs.twimg.com/media/FgVivkzVQAEkuTK.jpg',
-    backgroundSize: 'repeat',
   },
   {
     id: 'perfect-cell-theme',
@@ -199,6 +186,16 @@ export const THEMES: Theme[] = [
     backgroundImage: 'https://images6.alphacoders.com/388/thumb-1920-388347.jpg',
   },
   {
+    id: 'the-beast-arcane',
+    name: 'The Beast (Arcane)',
+    bpm: 135,
+    division: 1,
+    audioFile: '/songs/the-beast-arcane.mp3',
+    audioOffset: 10000,
+    normalizeVolume: 1,
+    backgroundImage: 'https://wallpapercave.com/wp/wp12409949.jpg',
+  },
+  {
     id: 'elden-ring',
     name: 'Elden Ring Main Theme',
     bpm: 75,
@@ -218,14 +215,6 @@ export const THEMES: Theme[] = [
     backgroundImage: 'https://wallpapercave.com/wp/wp15821690.png',
   },
   {
-    id: 'gta-4',
-    name: 'Soviet Connection (GTA IV)',
-    bpm: 72,
-    division: 1,
-    audioFile: '/songs/gta-4.mp3',
-    normalizeVolume: 1,
-  },
-  {
     id: 'wii-sports',
     name: 'Wii Sports Theme',
     bpm: 120,
@@ -242,6 +231,17 @@ export const THEMES: Theme[] = [
     audioFile: '/songs/Scarface-push-it-to-the-limit.mp3',
     normalizeVolume: 1,
     backgroundImage: 'https://wallpapercave.com/wp/wp2479343.jpg',
+  },
+  {
+    id: 'dbz-theme',
+    name: 'DBZ battle theme',
+    bpm: 170,
+    division: 1,
+    audioFile: '/songs/dbz-theme.mp3',
+    normalizeVolume: 1,
+    audioOffset: 2000,
+    backgroundImage: 'https://images.wallpapersden.com/image/download/kame-house-dragon-ball-z_a2llbmaUmZqaraWkpJRoZWhnrWZsZWs.jpg',
+    backgroundSize: 'repeat',
   },
   // Priority themes — kept at the end so the fallback logic doesn't assign them
   // to non-priority players before priority rules get a chance to fire.

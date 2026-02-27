@@ -47,6 +47,12 @@ export function GlobalNavbar() {
         >
           {tBets('myBetsNav')}
         </Link>
+        <Link
+          href="/games"
+          className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
+        >
+          {tGames('games')}
+        </Link>
         {tournamentId && (
           <>
             <Link
@@ -60,12 +66,6 @@ export function GlobalNavbar() {
               className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
             >
               {tRoster('roster')}
-            </Link>
-            <Link
-              href={`/tournaments/${tournamentId}/games`}
-              className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
-            >
-              {tGames('games')}
             </Link>
           </>
         )}

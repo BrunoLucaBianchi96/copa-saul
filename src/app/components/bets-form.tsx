@@ -18,9 +18,10 @@ interface BetsFormProps {
   isHost: boolean
   tournamentId?: number
   readOnly?: boolean
+  editToken?: string
 }
 
-export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readOnly }: BetsFormProps) {
+export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readOnly, editToken }: BetsFormProps) {
   const t = useTranslations('bets')
   const tCommon = useTranslations('common')
   const tErrors = useTranslations('errors')
@@ -51,7 +52,9 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
     if (!selectedPlayerId) return
     setFetching(true)
     setSaved(false)
-    fetch(`${apiUrl}?playerId=${selectedPlayerId}`)
+    const params = new URLSearchParams({ playerId: String(selectedPlayerId) })
+    if (editToken) params.set('editToken', editToken)
+    fetch(`${apiUrl}?${params}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.bets) {
@@ -69,7 +72,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
         }
       })
       .finally(() => setFetching(false))
-  }, [selectedPlayerId, apiUrl])
+  }, [selectedPlayerId, apiUrl, editToken])
 
   async function saveBets() {
     if (!selectedPlayerId || !isValid || readOnly) return
@@ -82,6 +85,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
         body: JSON.stringify({
           playerId: selectedPlayerId,
           bets: GAMES.map((g) => ({ gameId: g.id, bet: bets[g.id] })),
+          ...(editToken ? { editToken } : {}),
         }),
       })
       if (res.ok) {
@@ -197,7 +201,6 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
                   <ul className="text-sm text-darcula-text-muted list-disc list-inside space-y-1">
                     <li>{t('infoAllocation1', { total: TOTAL_BET_POINTS })}</li>
                     <li>{t('infoAllocation2', { min: MIN_BET_PER_GAME, max: MAX_BET_PER_GAME })}</li>
-                    <li>{t('infoAllocation3')}</li>
                   </ul>
                 </section>
 
@@ -212,17 +215,17 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
                 </section>
 
                 <section>
+                  <h3 className="font-semibold text-darcula-blue mb-2">{t('infoStrategyTitle')}</h3>
+                  <p className="text-sm text-darcula-text-muted">{t('infoStrategyDesc')}</p>
+                </section>
+
+                <section>
                   <h3 className="font-semibold text-darcula-blue mb-2">{t('infoExampleTitle')}</h3>
                   <div className="text-sm text-darcula-text-muted space-y-2 bg-darcula-elevated rounded p-3">
                     <p>{t('infoExample1')}</p>
                     <p>{t('infoExample2')}</p>
                     <p>{t('infoExample3')}</p>
                   </div>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold text-darcula-blue mb-2">{t('infoStrategyTitle')}</h3>
-                  <p className="text-sm text-darcula-text-muted">{t('infoStrategyDesc')}</p>
                 </section>
               </div>
             ) : (
