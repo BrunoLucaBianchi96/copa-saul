@@ -31,7 +31,8 @@
     "noTournaments": "No tournaments yet. Create one to get started!",
     "leaderboard": "Leaderboard",
     "noPlayersRegistered": "No players registered yet.",
-    "editLinks": "Edit Links"
+    "editLinks": "Edit Links",
+    "retired": "retired"
   },
   "tournament": {
     "backToHome": "Back to Home",
@@ -158,7 +159,10 @@
     "roster": "Roster",
     "backToTournament": "Back to Tournament",
     "participants": "participants",
-    "noPlayers": "No players in this tournament yet."
+    "noPlayers": "No players in this tournament yet.",
+    "retire": "Retire",
+    "unretire": "Un-retire",
+    "retired": "Retired"
   },
   "games": {
     "games": "Games",

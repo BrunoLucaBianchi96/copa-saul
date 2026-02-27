@@ -171,15 +171,34 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   // Check if we've completed all regular rounds — always enter finals
   if (nextRound > t.rounds) {
-    const standings = await getStandings(tournamentId)
-    const top4 = standings.slice(0, 4)
-    const top4Ids = top4.map((p) => p.playerId)
+    const standings = await getStandings(tournamentId, { excludeRetired: true })
+    const activePlayers = standings.length
 
-    // Semifinal: 1st vs 2nd, 3rd vs 4th
-    const pairings = [
-      { player1Id: top4[0].playerId, player2Id: top4[1].playerId },
-      { player1Id: top4[2].playerId, player2Id: top4[3].playerId },
-    ]
+    if (activePlayers < 2) {
+      return NextResponse.json(
+        { error: 'Not enough active players for finals (need at least 2)' },
+        { status: 400 }
+      )
+    }
+
+    let pairings: { player1Id: number; player2Id: number }[]
+    let finalistIds: number[]
+
+    if (activePlayers < 4) {
+      // Not enough for semifinals — go straight to a single final match (top 2)
+      const top2 = standings.slice(0, 2)
+      finalistIds = top2.map((p) => p.playerId)
+      pairings = [{ player1Id: top2[0].playerId, player2Id: top2[1].playerId }]
+    } else {
+      // Full semifinals: 1st vs 2nd, 3rd vs 4th
+      const top4 = standings.slice(0, 4)
+      finalistIds = top4.map((p) => p.playerId)
+      pairings = [
+        { player1Id: top4[0].playerId, player2Id: top4[1].playerId },
+        { player1Id: top4[2].playerId, player2Id: top4[3].playerId },
+      ]
+    }
+
     await createMatches(tournamentId, nextRound, pairings)
 
     await db
@@ -187,8 +206,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
       .set({
         status: 'overtime',
         currentRound: nextRound,
-        overtimeRound: 1,
-        overtimePlayers: JSON.stringify(top4Ids),
+        overtimeRound: activePlayers < 4 ? 2 : 1,
+        overtimePlayers: JSON.stringify(finalistIds),
       })
       .where(eq(tournaments.id, tournamentId))
 

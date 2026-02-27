@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import { matches, tournamentPlayers, players } from '@/db/schema'
-import { eq, and, or } from 'drizzle-orm'
+import { eq, and, or, gte, isNull } from 'drizzle-orm'
 
 interface PlayerStanding {
   playerId: number
@@ -36,7 +36,15 @@ async function getPlayerOpponents(tournamentId: number, playerId: number): Promi
 export type { PlayerStanding }
 
 // Get current standings
-export async function getStandings(tournamentId: number): Promise<PlayerStanding[]> {
+export async function getStandings(
+  tournamentId: number,
+  opts?: { excludeRetired?: boolean }
+): Promise<PlayerStanding[]> {
+  const conditions = [eq(tournamentPlayers.tournamentId, tournamentId)]
+  if (opts?.excludeRetired) {
+    conditions.push(eq(tournamentPlayers.retired, false))
+  }
+
   const tPlayers = await db
     .select({
       playerId: tournamentPlayers.playerId,
@@ -45,7 +53,7 @@ export async function getStandings(tournamentId: number): Promise<PlayerStanding
     })
     .from(tournamentPlayers)
     .innerJoin(players, eq(tournamentPlayers.playerId, players.id))
-    .where(eq(tournamentPlayers.tournamentId, tournamentId))
+    .where(and(...conditions))
 
   const standings: PlayerStanding[] = []
   for (const p of tPlayers) {
@@ -68,11 +76,32 @@ function countEncounters(player: PlayerStanding, opponentId: number): number {
 }
 
 // Pure function — no DB dependency, testable
+// recentByePlayerIds: players who had a bye in the last 3 rounds (ineligible for another bye)
 export function generatePairingsFromStandings(
-  standings: PlayerStanding[]
+  standings: PlayerStanding[],
+  recentByePlayerIds: number[] = []
 ): { player1Id: number; player2Id: number | null }[] {
   const pairings: { player1Id: number; player2Id: number | null }[] = []
   const paired = new Set<number>()
+
+  // If odd number of players, pre-assign the bye to the lowest-ranked eligible player
+  if (standings.length % 2 === 1) {
+    const recentByeSet = new Set(recentByePlayerIds)
+    // Walk from bottom of standings upward, pick first player without a recent bye
+    let byePlayer: PlayerStanding | null = null
+    for (let i = standings.length - 1; i >= 0; i--) {
+      if (!recentByeSet.has(standings[i].playerId)) {
+        byePlayer = standings[i]
+        break
+      }
+    }
+    // Fallback: if everyone had a recent bye, give it to the last player anyway
+    if (!byePlayer) {
+      byePlayer = standings[standings.length - 1]
+    }
+    pairings.push({ player1Id: byePlayer.playerId, player2Id: null })
+    paired.add(byePlayer.playerId)
+  }
 
   const CANDIDATE_WINDOW = 3
 
@@ -91,7 +120,7 @@ export function generatePairingsFromStandings(
     const window = candidates.slice(0, CANDIDATE_WINDOW)
 
     if (window.length === 0) {
-      // No opponents available — bye
+      // Should not happen since we pre-assigned the bye, but safety fallback
       pairings.push({ player1Id: player.playerId, player2Id: null })
       paired.add(player.playerId)
       continue
@@ -125,7 +154,22 @@ export async function generatePairings(
   tournamentId: number,
   round: number
 ): Promise<{ player1Id: number; player2Id: number | null }[]> {
-  const standings = await getStandings(tournamentId)
-  return generatePairingsFromStandings(standings)
+  const standings = await getStandings(tournamentId, { excludeRetired: true })
+
+  // Find players who had a bye in the last 3 rounds
+  const lookbackFrom = Math.max(1, round - 3)
+  const recentByes = await db
+    .select({ player1Id: matches.player1Id })
+    .from(matches)
+    .where(
+      and(
+        eq(matches.tournamentId, tournamentId),
+        gte(matches.round, lookbackFrom),
+        isNull(matches.player2Id)
+      )
+    )
+  const recentByePlayerIds = recentByes.map((b) => b.player1Id)
+
+  return generatePairingsFromStandings(standings, recentByePlayerIds)
 }
 

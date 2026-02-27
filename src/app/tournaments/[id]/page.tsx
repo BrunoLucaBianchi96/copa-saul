@@ -25,6 +25,7 @@ async function getStandings(tournamentId: number) {
       playerName: players.name,
       playerAvatar: players.avatarUrl,
       points: tournamentPlayers.points,
+      retired: tournamentPlayers.retired,
     })
     .from(tournamentPlayers)
     .innerJoin(players, eq(tournamentPlayers.playerId, players.id))

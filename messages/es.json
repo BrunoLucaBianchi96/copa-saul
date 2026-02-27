@@ -31,7 +31,8 @@
     "noTournaments": "¡Aún no hay torneos. Crea uno para comenzar!",
     "leaderboard": "Clasificación",
     "noPlayersRegistered": "Aún no hay jugadores registrados.",
-    "editLinks": "Links de Edición"
+    "editLinks": "Links de Edición",
+    "retired": "retirado"
   },
   "tournament": {
     "backToHome": "Volver al Inicio",
@@ -158,7 +159,10 @@
     "roster": "Plantel",
     "backToTournament": "Volver al Torneo",
     "participants": "participantes",
-    "noPlayers": "Aún no hay jugadores en este torneo."
+    "noPlayers": "Aún no hay jugadores en este torneo.",
+    "retire": "Retirar",
+    "unretire": "Reincorporar",
+    "retired": "Retirado"
   },
   "games": {
     "games": "Juegos",

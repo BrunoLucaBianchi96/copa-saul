@@ -11,6 +11,7 @@ interface Player {
   playerName: string
   playerAvatar: string | null
   points: number
+  retired: boolean
 }
 
 interface TournamentActionsProps {

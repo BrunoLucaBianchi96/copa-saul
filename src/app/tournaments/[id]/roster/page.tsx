@@ -24,6 +24,7 @@ async function getRosterPlayers(tournamentId: number) {
       editToken: players.editToken,
       createdAt: players.createdAt,
       deletedAt: players.deletedAt,
+      retired: tournamentPlayers.retired,
     })
     .from(tournamentPlayers)
     .innerJoin(players, eq(tournamentPlayers.playerId, players.id))
@@ -75,6 +76,7 @@ export default async function RosterPage({ params }: { params: { id: string } })
     player: p,
     displayName: formatDisplayName(p.name, p.nickname),
     gradientColors: GRADIENT_COLORS[i % GRADIENT_COLORS.length],
+    retired: p.retired,
   }))
 
   return (
@@ -97,7 +99,12 @@ export default async function RosterPage({ params }: { params: { id: string } })
       {rosterPlayers.length === 0 ? (
         <p className="text-darcula-text-muted">{t('noPlayers')}</p>
       ) : (
-        <RosterGrid players={playersWithMeta} isHost={isHost} />
+        <RosterGrid
+          players={playersWithMeta}
+          isHost={isHost}
+          tournamentId={id}
+          tournamentStatus={tournament.status}
+        />
       )}
     </main>
   )

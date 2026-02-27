@@ -9,6 +9,7 @@ interface Player {
   playerName: string
   playerAvatar: string | null
   points: number
+  retired: boolean
 }
 
 interface LeaderboardProps {
@@ -60,12 +61,17 @@ export function Leaderboard({ standings }: LeaderboardProps) {
           </thead>
           <tbody>
             {standings.map((s, i) => (
-              <tr key={s.playerId} className="border-b border-darcula-border last:border-0">
+              <tr key={s.playerId} className={`border-b border-darcula-border last:border-0 ${s.retired ? 'opacity-50' : ''}`}>
                 <td className="py-2 text-darcula-text-muted">{i + 1}</td>
                 <td className="py-2">
                   <div className="flex items-center gap-2">
                     <Avatar src={s.playerAvatar} name={s.playerName} size="sm" />
-                    <span className="text-darcula-text">{s.playerName}</span>
+                    <span className={s.retired ? 'line-through text-darcula-text-muted' : 'text-darcula-text'}>
+                      {s.playerName}
+                    </span>
+                    {s.retired && (
+                      <span className="text-darcula-red text-xs">({t('retired')})</span>
+                    )}
                   </div>
                 </td>
                 <td className="py-2 text-right font-medium text-darcula-text-bright">{s.points}</td>

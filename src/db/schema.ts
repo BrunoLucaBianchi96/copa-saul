@@ -27,6 +27,7 @@ export const tournamentPlayers = sqliteTable('tournament_players', {
   playerId: integer('player_id').notNull().references(() => players.id),
   points: integer('points').notNull().default(0),
   buchholz: integer('buchholz').notNull().default(0), // Tiebreaker
+  retired: integer('retired', { mode: 'boolean' }).notNull().default(false),
 })
 
 export const matches = sqliteTable('matches', {
