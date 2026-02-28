@@ -162,7 +162,10 @@
     "noPlayers": "Aún no hay jugadores en este torneo.",
     "retire": "Retirar",
     "unretire": "Reincorporar",
-    "retired": "Retirado"
+    "retired": "Retirado",
+    "addPlayer": "Agregar Jugador",
+    "selectPlayerToAdd": "Seleccioná un jugador",
+    "playerJoined": "Jugador agregado!"
   },
   "games": {
     "games": "Juegos",

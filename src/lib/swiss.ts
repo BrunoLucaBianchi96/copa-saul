@@ -170,6 +170,24 @@ export async function generatePairings(
     )
   const recentByePlayerIds = recentByes.map((b) => b.player1Id)
 
+  // Protect players with zero matches (e.g. late joiners) from getting a bye
+  const allTournamentMatches = await db
+    .select({ player1Id: matches.player1Id, player2Id: matches.player2Id })
+    .from(matches)
+    .where(eq(matches.tournamentId, tournamentId))
+
+  const playersWithMatchSet = new Set<number>()
+  for (const m of allTournamentMatches) {
+    playersWithMatchSet.add(m.player1Id)
+    if (m.player2Id) playersWithMatchSet.add(m.player2Id)
+  }
+
+  for (const s of standings) {
+    if (!playersWithMatchSet.has(s.playerId) && !recentByePlayerIds.includes(s.playerId)) {
+      recentByePlayerIds.push(s.playerId)
+    }
+  }
+
   return generatePairingsFromStandings(standings, recentByePlayerIds)
 }
 

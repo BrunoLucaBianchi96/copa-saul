@@ -64,8 +64,10 @@ export function useGamepad({
   }>({ dir: null, startTime: 0, lastFireTime: 0 })
 
   const rafRef = useRef<number>(0)
+  const pausedRef = useRef(false)
 
   const poll = useCallback(() => {
+    if (pausedRef.current) return
     const gamepads = navigator.getGamepads()
     const gp = gamepads[0]
 
@@ -165,9 +167,41 @@ export function useGamepad({
     // Start polling
     rafRef.current = requestAnimationFrame(poll)
 
+    // Pause polling when page is hidden/blurred (e.g. opening a game)
+    const pausePolling = () => {
+      pausedRef.current = true
+      cancelAnimationFrame(rafRef.current)
+      prevButtonsRef.current = new Set()
+      dirRepeatRef.current = { dir: null, startTime: 0, lastFireTime: 0 }
+    }
+
+    const resumePolling = () => {
+      if (!pausedRef.current) return
+      pausedRef.current = false
+      rafRef.current = requestAnimationFrame(poll)
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) pausePolling()
+      else resumePolling()
+    }
+
+    const handleWindowBlur = () => pausePolling()
+
+    const handleWindowFocus = () => {
+      if (!document.hidden) resumePolling()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('blur', handleWindowBlur)
+    window.addEventListener('focus', handleWindowFocus)
+
     return () => {
       window.removeEventListener('gamepadconnected', handleConnected)
       window.removeEventListener('gamepaddisconnected', handleDisconnected)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('blur', handleWindowBlur)
+      window.removeEventListener('focus', handleWindowFocus)
       cancelAnimationFrame(rafRef.current)
     }
   }, [enabled, poll])

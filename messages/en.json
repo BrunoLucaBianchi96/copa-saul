@@ -162,7 +162,10 @@
     "noPlayers": "No players in this tournament yet.",
     "retire": "Retire",
     "unretire": "Un-retire",
-    "retired": "Retired"
+    "retired": "Retired",
+    "addPlayer": "Add Player",
+    "selectPlayerToAdd": "Select a player to add",
+    "playerJoined": "Player joined!"
   },
   "games": {
     "games": "Games",

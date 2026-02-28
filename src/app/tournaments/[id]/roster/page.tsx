@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import { tournaments, tournamentPlayers, players } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, and, notInArray, isNull } from 'drizzle-orm'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession, isHost as checkIsHost } from '@/lib/session'
@@ -72,6 +72,20 @@ export default async function RosterPage({ params }: { params: { id: string } })
   const isHost = checkIsHost(role)
   const t = await getTranslations('roster')
 
+  // Query available players for late-join (host only, active tournament)
+  let availablePlayers: { id: number; name: string; avatarUrl: string | null }[] = []
+  if (isHost && tournament.status === 'active') {
+    const rosterPlayerIds = rosterPlayers.map((p) => p.id)
+    const conditions = [isNull(players.deletedAt)]
+    if (rosterPlayerIds.length > 0) {
+      conditions.push(notInArray(players.id, rosterPlayerIds))
+    }
+    availablePlayers = await db
+      .select({ id: players.id, name: players.name, avatarUrl: players.avatarUrl })
+      .from(players)
+      .where(and(...conditions))
+  }
+
   const playersWithMeta = rosterPlayers.map((p, i) => ({
     player: p,
     displayName: formatDisplayName(p.name, p.nickname),
@@ -104,6 +118,7 @@ export default async function RosterPage({ params }: { params: { id: string } })
           isHost={isHost}
           tournamentId={id}
           tournamentStatus={tournament.status}
+          availablePlayers={availablePlayers}
         />
       )}
     </main>
