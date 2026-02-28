@@ -41,6 +41,7 @@ export default async function EditProfilePage({ params }: { params: { token: str
         initialName={player.name}
         initialNickname={player.nickname || ''}
         initialAvatarUrl={player.avatarUrl}
+        hasPassword={!!player.passwordHash}
       />
 
       <h2 className="text-xl font-bold text-darcula-text-bright mt-10 mb-4 text-center">{tBets('myBetsNav')}</h2>

@@ -13,6 +13,7 @@ interface EditProfileFormProps {
   initialName: string
   initialNickname: string
   initialAvatarUrl: string | null
+  hasPassword: boolean
 }
 
 export function EditProfileForm({
@@ -21,10 +22,12 @@ export function EditProfileForm({
   initialName,
   initialNickname,
   initialAvatarUrl,
+  hasPassword: initialHasPassword,
 }: EditProfileFormProps) {
   const router = useRouter()
   const t = useTranslations('editProfile')
   const tPlayer = useTranslations('player')
+  const tCommon = useTranslations('common')
   const tErrors = useTranslations('errors')
   const [name, setName] = useState(initialName)
   const [nickname, setNickname] = useState(initialNickname)
@@ -34,6 +37,15 @@ export function EditProfileForm({
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Password state
+  const [hasPassword, setHasPassword] = useState(initialHasPassword)
+  const [showPasswordForm, setShowPasswordForm] = useState(!initialHasPassword)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [savingPassword, setSavingPassword] = useState(false)
+  const [passwordSaved, setPasswordSaved] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
 
   // Build display name for preview
   const displayName = nickname
@@ -97,6 +109,40 @@ export function EditProfileForm({
       toast.error(tErrors('networkError'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handlePasswordSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setPasswordError('')
+    setPasswordSaved(false)
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError(t('passwordMismatch'))
+      return
+    }
+
+    setSavingPassword(true)
+    try {
+      const res = await fetch(`/api/players/${playerId}/password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ editToken, password: newPassword }),
+      })
+
+      if (res.ok) {
+        setPasswordSaved(true)
+        setHasPassword(true)
+        setShowPasswordForm(false)
+        setNewPassword('')
+        setConfirmPassword('')
+      } else {
+        toast.error(tErrors('failedToSetPassword'))
+      }
+    } catch {
+      toast.error(tErrors('networkError'))
+    } finally {
+      setSavingPassword(false)
     }
   }
 
@@ -209,6 +255,91 @@ export function EditProfileForm({
           <p className="text-center text-darcula-green text-sm">{t('savedSuccessfully')}</p>
         )}
       </form>
+
+      {/* Password section */}
+      <div className="bg-darcula-surface border border-darcula-border rounded-lg p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-darcula-text-bright">{t('passwordSection')}</h3>
+
+        {hasPassword && !showPasswordForm && (
+          <div className="space-y-3">
+            <p className="text-darcula-green text-sm">{t('passwordSet')}</p>
+            <button
+              type="button"
+              onClick={() => setShowPasswordForm(true)}
+              className="text-sm text-darcula-blue hover:text-darcula-blue/80 transition"
+            >
+              {t('changePassword')}
+            </button>
+          </div>
+        )}
+
+        {passwordSaved && !showPasswordForm && (
+          <p className="text-darcula-green text-sm">{t('passwordSaved')}</p>
+        )}
+
+        {showPasswordForm && (
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="newPassword" className="block text-sm text-darcula-text-muted mb-1">
+                {t('newPassword')}
+              </label>
+              <input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-3 py-2 bg-darcula-elevated border border-darcula-border rounded text-darcula-text placeholder-darcula-text-muted focus:outline-none focus:border-darcula-blue"
+                autoComplete="new-password"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm text-darcula-text-muted mb-1">
+                {t('confirmPassword')}
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-3 py-2 bg-darcula-elevated border border-darcula-border rounded text-darcula-text placeholder-darcula-text-muted focus:outline-none focus:border-darcula-blue"
+                autoComplete="new-password"
+              />
+            </div>
+
+            {passwordError && (
+              <p className="text-darcula-red text-sm">{passwordError}</p>
+            )}
+
+            <div className="flex gap-3">
+              {hasPassword && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordForm(false)
+                    setNewPassword('')
+                    setConfirmPassword('')
+                    setPasswordError('')
+                  }}
+                  className="flex-1 px-4 py-2 border border-darcula-border rounded hover:bg-darcula-elevated transition text-darcula-text"
+                >
+                  {tCommon('cancel')}
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={savingPassword || !newPassword || !confirmPassword}
+                className="flex-1 px-4 py-2 bg-darcula-blue text-darcula-bg rounded hover:bg-darcula-blue/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingPassword
+                  ? t('saving')
+                  : hasPassword
+                    ? t('changePassword')
+                    : t('setPassword')}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   )
 }

@@ -816,7 +816,9 @@ export function PickBan({
       return
     }
 
-    const totalDuration = 5000
+    // Add random variance (0, 1, or 2 extra steps) so the final game varies
+    const extraSteps = Math.floor(Math.random() * gamesToSelect.length)
+    const totalDuration = 5000 + extraSteps * 500
     const startTime = Date.now()
     let cycleIndex = Math.floor(Math.random() * gamesToSelect.length)
     let timeoutId: NodeJS.Timeout

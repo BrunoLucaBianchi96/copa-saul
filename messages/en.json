@@ -120,7 +120,10 @@
     "tournament": "Tournament",
     "selectYourName": "Select Your Name",
     "noPlayersAvailable": "No players available. Ask the host to add players first.",
-    "playerLoginLocked": "Player login opens Feb 28"
+    "playerLoginLocked": "Player login opens Feb 28",
+    "enterPlayerPassword": "Enter your password",
+    "passwordNotSet": "You haven't set a password yet. Use the profile link Bruno sent you to set one up.",
+    "wrongPassword": "Wrong password. Try again."
   },
   "rules": {
     "tournamentRules": "Tournament Rules",
@@ -275,7 +278,15 @@
     "notFoundDescription": "This edit link is invalid or has expired.",
     "saving": "Saving...",
     "save": "Save Changes",
-    "savedSuccessfully": "Profile updated!"
+    "savedSuccessfully": "Profile updated!",
+    "passwordSection": "Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "setPassword": "Set Password",
+    "changePassword": "Change Password",
+    "passwordSet": "Password is set.",
+    "passwordMismatch": "Passwords don't match.",
+    "passwordSaved": "Password saved!"
   },
   "playerLinks": {
     "title": "Player Edit Links",
@@ -295,6 +306,7 @@
     "failedToSelectGame": "Failed to select game",
     "failedToRecordResult": "Failed to record result",
     "failedToResetMatch": "Failed to reset match",
+    "failedToSetPassword": "Failed to set password",
     "networkError": "Network error - action rolled back"
   }
 }

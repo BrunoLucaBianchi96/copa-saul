@@ -16,7 +16,7 @@ interface LoginFormProps {
   playerLoginLocked?: boolean
 }
 
-type LoginMode = 'select' | 'host' | 'player-select'
+type LoginMode = 'select' | 'host' | 'player-select' | 'player-password'
 
 export function LoginForm({ players, playerLoginLocked }: LoginFormProps) {
   const router = useRouter()
@@ -26,6 +26,7 @@ export function LoginForm({ players, playerLoginLocked }: LoginFormProps) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
+  const [playerPassword, setPlayerPassword] = useState('')
 
   async function login(role: 'host' | 'player', pwd?: string, playerId?: number) {
     setLoading(true)
@@ -41,7 +42,13 @@ export function LoginForm({ players, playerLoginLocked }: LoginFormProps) {
       router.refresh()
     } else {
       const data = await res.json()
-      setError(data.error || 'Login failed')
+      if (data.error === 'password_not_set') {
+        setError(t('passwordNotSet'))
+      } else if (data.error === 'wrong_password') {
+        setError(t('wrongPassword'))
+      } else {
+        setError(data.error || 'Login failed')
+      }
       setLoading(false)
     }
   }
@@ -140,13 +147,79 @@ export function LoginForm({ players, playerLoginLocked }: LoginFormProps) {
             {t('back')}
           </button>
           <button
-            onClick={() => selectedPlayerId && login('player', undefined, selectedPlayerId)}
+            onClick={() => {
+              if (selectedPlayerId) {
+                setMode('player-password')
+                setError('')
+                setPlayerPassword('')
+              }
+            }}
             disabled={loading || !selectedPlayerId}
             className="flex-1 bg-darcula-green text-darcula-bg px-4 py-2 rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
           >
-            {loading ? t('joining') : t('login')}
+            {t('login')}
           </button>
         </div>
+      </div>
+    )
+  }
+
+  if (mode === 'player-password') {
+    const selectedPlayer = players.find((p) => p.id === selectedPlayerId)
+    return (
+      <div className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-8 max-w-md mx-auto">
+        <h2 className="text-2xl font-bold text-darcula-text-bright mb-6 text-center">
+          {t('enterPlayerPassword')}
+        </h2>
+
+        {selectedPlayer && (
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <Avatar src={selectedPlayer.avatarUrl} name={selectedPlayer.name} size="sm" />
+            <span className="text-darcula-text font-medium">{selectedPlayer.name}</span>
+          </div>
+        )}
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            login('player', playerPassword, selectedPlayerId!)
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <input
+              type="password"
+              value={playerPassword}
+              onChange={(e) => setPlayerPassword(e.target.value)}
+              className="w-full bg-darcula-elevated border border-darcula-border rounded px-3 py-2 focus:ring-2 focus:ring-darcula-blue focus:border-darcula-blue text-darcula-text placeholder-darcula-text-muted"
+              placeholder={t('enterPlayerPassword')}
+              autoFocus
+            />
+          </div>
+
+          {error && <p className="text-darcula-red text-sm">{error}</p>}
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setMode('player-select')
+                setPlayerPassword('')
+                setError('')
+              }}
+              className="flex-1 px-4 py-2 border border-darcula-border rounded hover:bg-darcula-elevated transition text-darcula-text"
+            >
+              {t('back')}
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !playerPassword}
+              className="flex-1 bg-darcula-green text-darcula-bg px-4 py-2 rounded hover:bg-darcula-green/80 transition disabled:opacity-50 font-medium"
+            >
+              {loading ? t('joining') : t('login')}
+            </button>
+          </div>
+        </form>
       </div>
     )
   }

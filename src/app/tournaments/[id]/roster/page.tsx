@@ -22,6 +22,7 @@ async function getRosterPlayers(tournamentId: number) {
       nickname: players.nickname,
       avatarUrl: players.avatarUrl,
       editToken: players.editToken,
+      passwordHash: players.passwordHash,
       createdAt: players.createdAt,
       deletedAt: players.deletedAt,
       retired: tournamentPlayers.retired,

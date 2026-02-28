@@ -120,7 +120,10 @@
     "tournament": "Torneo",
     "selectYourName": "Selecciona tu nombre",
     "noPlayersAvailable": "No hay jugadores disponibles. Pedile al anfitrión que agregue jugadores.",
-    "playerLoginLocked": "El login de jugadores abre el 28 de feb"
+    "playerLoginLocked": "El login de jugadores abre el 28 de feb",
+    "enterPlayerPassword": "Ingresá tu contraseña",
+    "passwordNotSet": "Todavía no configuraste una contraseña. Usá el link de perfil que te mandó Bruno.",
+    "wrongPassword": "Contraseña incorrecta. Intentá de nuevo."
   },
   "rules": {
     "tournamentRules": "Reglas del Torneo",
@@ -275,7 +278,15 @@
     "notFoundDescription": "Este link de edición es inválido o ha expirado.",
     "saving": "Guardando...",
     "save": "Guardar Cambios",
-    "savedSuccessfully": "¡Perfil actualizado!"
+    "savedSuccessfully": "¡Perfil actualizado!",
+    "passwordSection": "Contraseña",
+    "newPassword": "Nueva Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "setPassword": "Establecer Contraseña",
+    "changePassword": "Cambiar Contraseña",
+    "passwordSet": "La contraseña está configurada.",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "passwordSaved": "¡Contraseña guardada!"
   },
   "playerLinks": {
     "title": "Links de Edición",
@@ -295,6 +306,7 @@
     "failedToSelectGame": "Error al seleccionar el juego",
     "failedToRecordResult": "Error al registrar el resultado",
     "failedToResetMatch": "Error al reiniciar el partido",
+    "failedToSetPassword": "Error al establecer la contraseña",
     "networkError": "Error de red - acción revertida"
   }
 }
