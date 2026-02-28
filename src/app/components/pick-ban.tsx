@@ -472,7 +472,7 @@ export function PickBan({
   const lastBumperPress = useRef(0)
 
   // useGamepad stores callbacks in refs internally, so these don't need to be stable
-  const handleGamepadButton = (button: string) => {
+  const handleGamepadButton = (button: string, gamepadIndex: number) => {
     if (button === 'cross') {
       if (state.currentPhase === 'complete') {
         if (focusedOpenGame && gameLaunchUrl) {
@@ -481,6 +481,8 @@ export function PickBan({
           handleRecordResult(focusedWinner)
         }
       } else if (focusedGameIndex !== null) {
+        // During ban/pick with 2 controllers: only active player's controller
+        if (connectedCount >= 2 && gamepadIndex !== state.currentPlayer - 1) return
         handleGameClick(GAMES[focusedGameIndex].id)
       }
     } else if (button === 'triangle') {
@@ -505,7 +507,10 @@ export function PickBan({
     }
   }
 
-  const handleGamepadDirection = (dir: GamepadDirection) => {
+  const handleGamepadDirection = (dir: GamepadDirection, gamepadIndex: number) => {
+    // During ban/pick with 2 controllers: only active player's controller can navigate
+    if (state.currentPhase !== 'complete' && connectedCount >= 2 && gamepadIndex !== state.currentPlayer - 1) return
+
     if (state.currentPhase === 'complete') {
       const hasOpenGame = gameLaunchUrl && selectedGame && GAMES.find(g => g.id === selectedGame)?.launchable
       if (dir === 'up' && hasOpenGame) {
@@ -526,7 +531,7 @@ export function PickBan({
     }
   }
 
-  useGamepad({
+  const { connectedCount } = useGamepad({
     onButtonPress: handleGamepadButton,
     onDirection: handleGamepadDirection,
     enabled: gamepadEnabled,

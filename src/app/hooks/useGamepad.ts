@@ -40,8 +40,8 @@ export function claimGamepadForModal() { _modalClaimCount++ }
 export function releaseGamepadForModal() { _modalClaimCount-- }
 
 interface UseGamepadOptions {
-  onButtonPress?: (button: GamepadButton) => void
-  onDirection?: (dir: GamepadDirection) => void
+  onButtonPress?: (button: GamepadButton, gamepadIndex: number) => void
+  onDirection?: (dir: GamepadDirection, gamepadIndex: number) => void
   enabled?: boolean
   /** If true, this hook owns a modal and isn't suppressed by other modals */
   modal?: boolean
@@ -52,8 +52,9 @@ export function useGamepad({
   onDirection,
   enabled = true,
   modal = false,
-}: UseGamepadOptions): { connected: boolean } {
+}: UseGamepadOptions): { connected: boolean; connectedCount: number } {
   const [connected, setConnected] = useState(false)
+  const [connectedCount, setConnectedCount] = useState(0)
 
   // Store callbacks in refs so the polling loop doesn't restart on callback changes
   const onButtonPressRef = useRef(onButtonPress)
@@ -61,15 +62,15 @@ export function useGamepad({
   useEffect(() => { onButtonPressRef.current = onButtonPress }, [onButtonPress])
   useEffect(() => { onDirectionRef.current = onDirection }, [onDirection])
 
-  // Edge-detection: track which buttons were pressed last frame
-  const prevButtonsRef = useRef<Set<number>>(new Set())
+  // Edge-detection: track which buttons were pressed last frame (per gamepad)
+  const prevButtonsRef = useRef<Map<number, Set<number>>>(new Map())
 
-  // Direction repeat state
-  const dirRepeatRef = useRef<{
+  // Direction repeat state (per gamepad)
+  const dirRepeatRef = useRef<Map<number, {
     dir: GamepadDirection | null
     startTime: number
     lastFireTime: number
-  }>({ dir: null, startTime: 0, lastFireTime: 0 })
+  }>>(new Map())
 
   const rafRef = useRef<number>(0)
   const pausedRef = useRef(false)
@@ -81,89 +82,116 @@ export function useGamepad({
     const suppressed = _modalClaimCount > 0 && !modalRef.current
 
     const gamepads = navigator.getGamepads()
-    const gp = gamepads[0]
 
-    if (!gp) {
-      rafRef.current = requestAnimationFrame(poll)
-      return
-    }
+    // Track which gamepad indices are active this frame
+    const activeIndices = new Set<number>()
+    let count = 0
 
-    const now = performance.now()
-    const prevButtons = prevButtonsRef.current
-    const newButtons = new Set<number>()
+    for (let gpIdx = 0; gpIdx < gamepads.length; gpIdx++) {
+      const gp = gamepads[gpIdx]
+      if (!gp) continue
 
-    // --- Buttons (edge detection) ---
-    for (let i = 0; i < gp.buttons.length; i++) {
-      if (gp.buttons[i].pressed) {
-        newButtons.add(i)
+      activeIndices.add(gpIdx)
+      count++
 
-        // Skip d-pad buttons (handled as directions below)
-        if (i >= DPAD_UP && i <= DPAD_RIGHT) continue
+      const now = performance.now()
 
-        // Fire only on initial press (not held), and only if not suppressed
-        if (!suppressed && !prevButtons.has(i)) {
-          const name = BUTTON_MAP[i]
-          if (name) {
-            onButtonPressRef.current?.(name)
+      // Get or create per-gamepad button state
+      if (!prevButtonsRef.current.has(gpIdx)) {
+        prevButtonsRef.current.set(gpIdx, new Set())
+      }
+      const prevButtons = prevButtonsRef.current.get(gpIdx)!
+      const newButtons = new Set<number>()
+
+      // --- Buttons (edge detection) ---
+      for (let i = 0; i < gp.buttons.length; i++) {
+        if (gp.buttons[i].pressed) {
+          newButtons.add(i)
+
+          // Skip d-pad buttons (handled as directions below)
+          if (i >= DPAD_UP && i <= DPAD_RIGHT) continue
+
+          // Fire only on initial press (not held), and only if not suppressed
+          if (!suppressed && !prevButtons.has(i)) {
+            const name = BUTTON_MAP[i]
+            if (name) {
+              onButtonPressRef.current?.(name, gpIdx)
+            }
           }
         }
       }
-    }
-    prevButtonsRef.current = newButtons
+      prevButtonsRef.current.set(gpIdx, newButtons)
 
-    // --- Directions (d-pad + left stick, unified with key repeat) ---
-    let dir: GamepadDirection | null = null
+      // --- Directions (d-pad + left stick, unified with key repeat) ---
+      let dir: GamepadDirection | null = null
 
-    // D-pad
-    if (gp.buttons[DPAD_UP]?.pressed) dir = 'up'
-    else if (gp.buttons[DPAD_DOWN]?.pressed) dir = 'down'
-    else if (gp.buttons[DPAD_LEFT]?.pressed) dir = 'left'
-    else if (gp.buttons[DPAD_RIGHT]?.pressed) dir = 'right'
+      // D-pad
+      if (gp.buttons[DPAD_UP]?.pressed) dir = 'up'
+      else if (gp.buttons[DPAD_DOWN]?.pressed) dir = 'down'
+      else if (gp.buttons[DPAD_LEFT]?.pressed) dir = 'left'
+      else if (gp.buttons[DPAD_RIGHT]?.pressed) dir = 'right'
 
-    // Left stick (only if d-pad isn't active)
-    if (!dir) {
-      const lx = gp.axes[0] ?? 0
-      const ly = gp.axes[1] ?? 0
+      // Left stick (only if d-pad isn't active)
+      if (!dir) {
+        const lx = gp.axes[0] ?? 0
+        const ly = gp.axes[1] ?? 0
 
-      // Pick dominant axis
-      if (Math.abs(lx) > Math.abs(ly)) {
-        if (lx < -STICK_DEADZONE) dir = 'left'
-        else if (lx > STICK_DEADZONE) dir = 'right'
-      } else {
-        if (ly < -STICK_DEADZONE) dir = 'up'
-        else if (ly > STICK_DEADZONE) dir = 'down'
+        // Pick dominant axis
+        if (Math.abs(lx) > Math.abs(ly)) {
+          if (lx < -STICK_DEADZONE) dir = 'left'
+          else if (lx > STICK_DEADZONE) dir = 'right'
+        } else {
+          if (ly < -STICK_DEADZONE) dir = 'up'
+          else if (ly > STICK_DEADZONE) dir = 'down'
+        }
       }
-    }
 
-    const repeat = dirRepeatRef.current
+      // Get or create per-gamepad direction repeat state
+      if (!dirRepeatRef.current.has(gpIdx)) {
+        dirRepeatRef.current.set(gpIdx, { dir: null, startTime: 0, lastFireTime: 0 })
+      }
+      const repeat = dirRepeatRef.current.get(gpIdx)!
 
-    if (suppressed) {
-      // Track direction state but don't fire callbacks
-      repeat.dir = dir
-      repeat.startTime = now
-      repeat.lastFireTime = now
-    } else if (dir) {
-      if (repeat.dir !== dir) {
-        // New direction — fire immediately
-        onDirectionRef.current?.(dir)
+      if (suppressed) {
+        // Track direction state but don't fire callbacks
         repeat.dir = dir
         repeat.startTime = now
         repeat.lastFireTime = now
-      } else {
-        // Same direction held — key repeat logic
-        const held = now - repeat.startTime
-        if (held >= REPEAT_DELAY) {
-          const sinceLast = now - repeat.lastFireTime
-          if (sinceLast >= REPEAT_RATE) {
-            onDirectionRef.current?.(dir)
-            repeat.lastFireTime = now
+      } else if (dir) {
+        if (repeat.dir !== dir) {
+          // New direction — fire immediately
+          onDirectionRef.current?.(dir, gpIdx)
+          repeat.dir = dir
+          repeat.startTime = now
+          repeat.lastFireTime = now
+        } else {
+          // Same direction held — key repeat logic
+          const held = now - repeat.startTime
+          if (held >= REPEAT_DELAY) {
+            const sinceLast = now - repeat.lastFireTime
+            if (sinceLast >= REPEAT_RATE) {
+              onDirectionRef.current?.(dir, gpIdx)
+              repeat.lastFireTime = now
+            }
           }
         }
+      } else {
+        // Released
+        repeat.dir = null
       }
-    } else {
-      // Released
-      repeat.dir = null
     }
+
+    // Clean up state for disconnected gamepads
+    prevButtonsRef.current.forEach((_, idx) => {
+      if (!activeIndices.has(idx)) {
+        prevButtonsRef.current.delete(idx)
+        dirRepeatRef.current.delete(idx)
+      }
+    })
+
+    // Update connected state
+    setConnected(count > 0)
+    setConnectedCount(count)
 
     rafRef.current = requestAnimationFrame(poll)
   }, [])
@@ -171,15 +199,24 @@ export function useGamepad({
   useEffect(() => {
     if (!enabled) return
 
-    const handleConnected = () => setConnected(true)
-    const handleDisconnected = () => setConnected(false)
+    const updateConnectedState = () => {
+      const gamepads = navigator.getGamepads()
+      let count = 0
+      for (const gp of gamepads) {
+        if (gp) count++
+      }
+      setConnected(count > 0)
+      setConnectedCount(count)
+    }
+
+    const handleConnected = () => updateConnectedState()
+    const handleDisconnected = () => updateConnectedState()
 
     window.addEventListener('gamepadconnected', handleConnected)
     window.addEventListener('gamepaddisconnected', handleDisconnected)
 
     // Check if already connected
-    const gamepads = navigator.getGamepads()
-    if (gamepads[0]) setConnected(true)
+    updateConnectedState()
 
     // Start polling
     rafRef.current = requestAnimationFrame(poll)
@@ -188,8 +225,8 @@ export function useGamepad({
     const pausePolling = () => {
       pausedRef.current = true
       cancelAnimationFrame(rafRef.current)
-      prevButtonsRef.current = new Set()
-      dirRepeatRef.current = { dir: null, startTime: 0, lastFireTime: 0 }
+      prevButtonsRef.current = new Map()
+      dirRepeatRef.current = new Map()
     }
 
     const resumePolling = () => {
@@ -223,5 +260,5 @@ export function useGamepad({
     }
   }, [enabled, poll])
 
-  return { connected }
+  return { connected, connectedCount }
 }
