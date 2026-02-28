@@ -74,6 +74,8 @@
   "pickBan": {
     "tapToEnterFullscreen": "Toca para Pantalla Completa",
     "forBestExperience": "Para la mejor experiencia",
+    "enterFullscreen": "Pantalla Completa",
+    "exitFullscreen": "Salir de Pantalla Completa",
     "resetMatch": "Reiniciar Partido",
     "resetting": "Reiniciando...",
     "confirmResetMatch": "¿Estás seguro de que quieres reiniciar este partido? Se borrarán todas las selecciones.",

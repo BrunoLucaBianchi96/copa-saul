@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
+import { ConfirmModal } from './confirm-modal'
+import { NavMenu } from './nav-menu'
 import {
   GAMES,
   GAME_URLS_STORAGE_KEY,
@@ -170,6 +172,11 @@ export function PickBan({
   const tCommon = useTranslations('common')
   const tMatch = useTranslations('match')
   const tErrors = useTranslations('errors')
+  const tHome = useTranslations('home')
+  const tBets = useTranslations('bets')
+  const tGames = useTranslations('games')
+  const tAuth = useTranslations('auth')
+  const tRoster = useTranslations('roster')
   const [actions, setActions] = useState<PickBanAction[]>(initialActions)
   const [selectedGame, setSelectedGame] = useState<string | undefined>(initialSelectedGame)
   const [animatingGame, setAnimatingGame] = useState<string | null>(null)
@@ -177,7 +184,7 @@ export function PickBan({
   const [saving, setSaving] = useState(false)
   const [resetting, setResetting] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
-  const [resetConfirmFocus, setResetConfirmFocus] = useState<'confirm' | 'cancel'>('cancel')
+  const [showNavMenu, setShowNavMenu] = useState(false)
   const [advancing, setAdvancing] = useState(false)
   const [backgroundFlash, setBackgroundFlash] = useState<'ban' | 'pick' | 'select' | null>(null)
   const [localMatchResult, setLocalMatchResult] = useState(matchResult)
@@ -466,14 +473,6 @@ export function PickBan({
 
   // useGamepad stores callbacks in refs internally, so these don't need to be stable
   const handleGamepadButton = (button: string) => {
-    if (showResetConfirm) {
-      if (button === 'cross') {
-        confirmResetRound()
-      } else if (button === 'circle') {
-        setShowResetConfirm(false)
-      }
-      return
-    }
     if (button === 'cross') {
       if (state.currentPhase === 'complete') {
         if (focusedOpenGame && gameLaunchUrl) {
@@ -501,16 +500,12 @@ export function PickBan({
       lastBumperPress.current = now
       setNavigating(true)
       router.push(`/tournaments/${tournamentId}/matches/${nextMatchId}`)
+    } else if (button === 'options') {
+      setShowNavMenu(true)
     }
   }
 
   const handleGamepadDirection = (dir: GamepadDirection) => {
-    if (showResetConfirm) {
-      if (dir === 'left' || dir === 'right') {
-        setResetConfirmFocus((prev) => prev === 'cancel' ? 'confirm' : 'cancel')
-      }
-      return
-    }
     if (state.currentPhase === 'complete') {
       const hasOpenGame = gameLaunchUrl && selectedGame && GAMES.find(g => g.id === selectedGame)?.launchable
       if (dir === 'up' && hasOpenGame) {
@@ -946,7 +941,6 @@ export function PickBan({
   }
 
   function handleResetRound() {
-    setResetConfirmFocus('cancel')
     setShowResetConfirm(true)
   }
 
@@ -1213,33 +1207,29 @@ export function PickBan({
 
       {/* Reset match confirm modal */}
       {showResetConfirm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
-          <div className="bg-darcula-surface border border-darcula-border rounded-lg p-6 max-w-sm mx-4 text-center">
-            <p className="text-darcula-text mb-6">{t('confirmResetMatch')}</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowResetConfirm(false)}
-                className={`flex-1 px-4 py-2 rounded border transition ${
-                  resetConfirmFocus === 'cancel'
-                    ? 'border-darcula-blue bg-darcula-blue/20 text-darcula-text-bright'
-                    : 'border-darcula-border bg-darcula-elevated text-darcula-text hover:bg-darcula-border'
-                }`}
-              >
-                {tCommon('cancel')}
-              </button>
-              <button
-                onClick={confirmResetRound}
-                className={`flex-1 px-4 py-2 rounded border transition ${
-                  resetConfirmFocus === 'confirm'
-                    ? 'border-darcula-red bg-darcula-red/20 text-darcula-red font-medium'
-                    : 'border-darcula-border bg-darcula-elevated text-darcula-text hover:bg-darcula-border'
-                }`}
-              >
-                {t('resetMatch')}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          message={t('confirmResetMatch')}
+          confirmLabel={t('resetMatch')}
+          cancelLabel={tCommon('cancel')}
+          onConfirm={confirmResetRound}
+          onCancel={() => setShowResetConfirm(false)}
+        />
+      )}
+
+      {/* Nav menu (Options button) */}
+      {showNavMenu && (
+        <NavMenu
+          items={[
+            { label: tHome('appTitle'), href: '/' },
+            { label: tBets('myBetsNav'), href: '/bets' },
+            { label: tGames('games'), href: '/games' },
+            { label: tAuth('tournament'), href: `/tournaments/${tournamentId}` },
+            { label: tRoster('roster'), href: `/tournaments/${tournamentId}/roster` },
+            { label: isFullscreen ? t('exitFullscreen') : t('enterFullscreen'), onAction: handleFullscreenToggle },
+            { label: t('resetMatch'), onAction: handleResetRound, variant: 'danger' },
+          ]}
+          onClose={() => setShowNavMenu(false)}
+        />
       )}
 
       {/* Match info - mobile (shown only on small/medium screens) */}

@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import type { Player } from '@/db/schema'
 import { Avatar } from './avatar'
+import { ConfirmModal } from './confirm-modal'
 import { EditPlayerModal } from './edit-player-modal'
 
 interface PlayerItemProps {
@@ -17,17 +18,19 @@ export function PlayerItem({ player, isHost }: PlayerItemProps) {
   const router = useRouter()
   const t = useTranslations('player')
   const tErrors = useTranslations('errors')
+  const tCommon = useTranslations('common')
   const [deleting, setDeleting] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  async function handleDelete(e: React.MouseEvent) {
+  function handleDelete(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
+    setShowDeleteConfirm(true)
+  }
 
-    if (!confirm(t('confirmDeletePlayer', { name: player.name }))) {
-      return
-    }
-
+  async function confirmDelete() {
+    setShowDeleteConfirm(false)
     setDeleting(true)
     const res = await fetch(`/api/players/${player.id}`, { method: 'DELETE' })
     if (res.ok) {
@@ -46,6 +49,15 @@ export function PlayerItem({ player, isHost }: PlayerItemProps) {
 
   return (
     <>
+      {showDeleteConfirm && (
+        <ConfirmModal
+          message={t('confirmDeletePlayer', { name: player.name })}
+          confirmLabel={tCommon('delete')}
+          cancelLabel={tCommon('cancel')}
+          onConfirm={confirmDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
       <div className="flex items-center gap-2">
         <div
           onClick={handleClick}

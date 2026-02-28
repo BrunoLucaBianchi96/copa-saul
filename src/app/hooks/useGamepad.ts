@@ -34,16 +34,24 @@ const STICK_DEADZONE = 0.4
 const REPEAT_DELAY = 400  // ms before repeat starts
 const REPEAT_RATE = 150   // ms between repeats
 
+// Modal suppression: when a modal claims gamepad input, other hooks yield
+let _modalClaimCount = 0
+export function claimGamepadForModal() { _modalClaimCount++ }
+export function releaseGamepadForModal() { _modalClaimCount-- }
+
 interface UseGamepadOptions {
   onButtonPress?: (button: GamepadButton) => void
   onDirection?: (dir: GamepadDirection) => void
   enabled?: boolean
+  /** If true, this hook owns a modal and isn't suppressed by other modals */
+  modal?: boolean
 }
 
 export function useGamepad({
   onButtonPress,
   onDirection,
   enabled = true,
+  modal = false,
 }: UseGamepadOptions): { connected: boolean } {
   const [connected, setConnected] = useState(false)
 
@@ -65,9 +73,13 @@ export function useGamepad({
 
   const rafRef = useRef<number>(0)
   const pausedRef = useRef(false)
+  const modalRef = useRef(modal)
 
   const poll = useCallback(() => {
     if (pausedRef.current) return
+    // When a modal claims the gamepad, suppress non-modal hooks
+    const suppressed = _modalClaimCount > 0 && !modalRef.current
+
     const gamepads = navigator.getGamepads()
     const gp = gamepads[0]
 
@@ -88,8 +100,8 @@ export function useGamepad({
         // Skip d-pad buttons (handled as directions below)
         if (i >= DPAD_UP && i <= DPAD_RIGHT) continue
 
-        // Fire only on initial press (not held)
-        if (!prevButtons.has(i)) {
+        // Fire only on initial press (not held), and only if not suppressed
+        if (!suppressed && !prevButtons.has(i)) {
           const name = BUTTON_MAP[i]
           if (name) {
             onButtonPressRef.current?.(name)
@@ -125,7 +137,12 @@ export function useGamepad({
 
     const repeat = dirRepeatRef.current
 
-    if (dir) {
+    if (suppressed) {
+      // Track direction state but don't fire callbacks
+      repeat.dir = dir
+      repeat.startTime = now
+      repeat.lastFireTime = now
+    } else if (dir) {
       if (repeat.dir !== dir) {
         // New direction — fire immediately
         onDirectionRef.current?.(dir)

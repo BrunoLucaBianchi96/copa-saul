@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { GAMES, type Game } from '@/lib/games'
+import { ConfirmModal } from '@/app/components/confirm-modal'
 import { TOTAL_BET_POINTS, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, calculateMatchPoints, generateRandomBets } from '@/lib/scoring-constants'
 import { BetRadarChart } from '@/app/components/bet-radar-chart'
 import { GameDetailModal } from '@/app/components/game-detail-modal'
@@ -40,6 +41,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
   const [saved, setSaved] = useState(false)
   const [detailGame, setDetailGame] = useState<Game | null>(null)
   const [bulkLoading, setBulkLoading] = useState(false)
+  const [pendingBulkAction, setPendingBulkAction] = useState<'reset' | 'random' | null>(null)
 
   const total = Object.values(bets).reduce((sum, b) => sum + b, 0)
   const isValid = total === TOTAL_BET_POINTS && Object.values(bets).every((b) => b >= MIN_BET_PER_GAME && b <= MAX_BET_PER_GAME)
@@ -122,9 +124,14 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
     setSaved(false)
   }
 
-  async function bulkAction(action: 'reset' | 'random') {
-    const msg = action === 'reset' ? t('confirmResetAll') : t('confirmRandomizeAll')
-    if (!confirm(msg)) return
+  function bulkAction(action: 'reset' | 'random') {
+    setPendingBulkAction(action)
+  }
+
+  async function confirmBulkAction() {
+    const action = pendingBulkAction
+    if (!action) return
+    setPendingBulkAction(null)
     setBulkLoading(true)
     setSaved(false)
     try {
@@ -163,7 +170,17 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
   const selectedPlayerName = players.find((p) => p.playerId === selectedPlayerId)?.playerName
 
   return (
-    <div className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-3 sm:p-6">
+    <>
+      {pendingBulkAction && (
+        <ConfirmModal
+          message={pendingBulkAction === 'reset' ? t('confirmResetAll') : t('confirmRandomizeAll')}
+          confirmLabel={pendingBulkAction === 'reset' ? t('resetAllPlayers') : t('randomizeAllPlayers')}
+          cancelLabel={tCommon('cancel')}
+          onConfirm={confirmBulkAction}
+          onCancel={() => setPendingBulkAction(null)}
+        />
+      )}
+      <div className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-3 sm:p-6">
       {/* Info button */}
       <div className="flex justify-end mb-2 sm:mb-4">
         <button
@@ -493,5 +510,6 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
         />
       )}
     </div>
+    </>
   )
 }

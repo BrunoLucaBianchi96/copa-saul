@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import type { Tournament } from '@/db/schema'
+import { ConfirmModal } from './confirm-modal'
 
 interface TournamentItemProps {
   tournament: Tournament
@@ -18,15 +19,16 @@ export function TournamentItem({ tournament, isHost }: TournamentItemProps) {
   const tStatus = useTranslations('status')
   const tErrors = useTranslations('errors')
   const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  async function handleDelete(e: React.MouseEvent) {
+  function handleDelete(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
+    setShowDeleteConfirm(true)
+  }
 
-    if (!confirm(t('confirmDeleteTournament', { name: tournament.name }))) {
-      return
-    }
-
+  async function confirmDelete() {
+    setShowDeleteConfirm(false)
     setDeleting(true)
     const res = await fetch(`/api/tournaments/${tournament.id}`, { method: 'DELETE' })
     if (res.ok) {
@@ -37,8 +39,20 @@ export function TournamentItem({ tournament, isHost }: TournamentItemProps) {
     }
   }
 
+  const tCommon = useTranslations('common')
+
   return (
-    <div className="flex items-stretch gap-2">
+    <>
+      {showDeleteConfirm && (
+        <ConfirmModal
+          message={t('confirmDeleteTournament', { name: tournament.name })}
+          confirmLabel={tCommon('delete')}
+          cancelLabel={tCommon('cancel')}
+          onConfirm={confirmDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
+      <div className="flex items-stretch gap-2">
       <Link
         href={`/tournaments/${tournament.id}`}
         className="flex-1 p-4 bg-darcula-elevated rounded hover:bg-darcula-border transition border border-darcula-border"
@@ -79,5 +93,6 @@ export function TournamentItem({ tournament, isHost }: TournamentItemProps) {
         </button>
       )}
     </div>
+    </>
   )
 }

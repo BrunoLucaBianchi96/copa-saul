@@ -74,6 +74,8 @@
   "pickBan": {
     "tapToEnterFullscreen": "Tap to Enter Fullscreen",
     "forBestExperience": "For the best experience",
+    "enterFullscreen": "Enter Fullscreen",
+    "exitFullscreen": "Exit Fullscreen",
     "resetMatch": "Reset Match",
     "resetting": "Resetting...",
     "confirmResetMatch": "Are you sure you want to reset this match? All picks and bans will be cleared.",
