@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 export default function NewTournament() {
   const router = useRouter()
@@ -42,7 +43,7 @@ export default function NewTournament() {
       router.push(`/tournaments/${id}`)
     } else {
       const data = await res.json()
-      alert(data.error || 'Failed to create tournament')
+      toast.error(data.error || 'Failed to create tournament')
       setLoading(false)
     }
   }

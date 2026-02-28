@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 import type { Tournament } from '@/db/schema'
 
 interface TournamentItemProps {
@@ -31,7 +32,7 @@ export function TournamentItem({ tournament, isHost }: TournamentItemProps) {
     if (res.ok) {
       router.refresh()
     } else {
-      alert(tErrors('failedToDelete'))
+      toast.error(tErrors('failedToDelete'))
       setDeleting(false)
     }
   }

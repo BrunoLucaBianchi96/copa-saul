@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 import type { Tournament } from '@/db/schema'
 import { Avatar } from '@/app/components/avatar'
 
@@ -57,7 +58,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     if (res.ok) {
       router.refresh()
     } else {
-      alert(tErrors('failedToStart'))
+      toast.error(tErrors('failedToStart'))
     }
     setLoading(false)
     setShowPlayerSelect(false)
@@ -75,7 +76,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
         router.refresh()
       }
     } else {
-      alert(tErrors('failedToAdvance'))
+      toast.error(tErrors('failedToAdvance'))
     }
     setLoading(false)
   }
@@ -183,7 +184,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     if (res.ok) {
       router.refresh()
     } else {
-      alert(tErrors('failedToAdvance'))
+      toast.error(tErrors('failedToAdvance'))
     }
     setLoading(false)
   }

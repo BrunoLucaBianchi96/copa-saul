@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 import type { Player } from '@/db/schema'
 import { Avatar } from './avatar'
 
@@ -71,10 +72,10 @@ export function EditPlayerModal({ player, isOpen, onClose }: EditPlayerModalProp
         onClose()
         router.refresh()
       } else {
-        alert(tErrors('failedToUpdatePlayer'))
+        toast.error(tErrors('failedToUpdatePlayer'))
       }
     } catch {
-      alert(tErrors('networkError'))
+      toast.error(tErrors('networkError'))
     } finally {
       setSaving(false)
     }

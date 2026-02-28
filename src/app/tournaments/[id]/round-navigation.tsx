@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, useContext } from 'react'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 import { GamepadFocusContext } from './tournament-gamepad'
 
 interface RoundNavigationProps {
@@ -54,7 +55,7 @@ export function RoundNavigation({
         router.refresh()
       }
     } else {
-      alert(tErrors('failedToAdvance'))
+      toast.error(tErrors('failedToAdvance'))
     }
     setLoading(false)
   }

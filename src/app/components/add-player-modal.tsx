@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 
 interface AddPlayerModalProps {
   isOpen: boolean
@@ -58,10 +59,10 @@ export function AddPlayerModal({ isOpen, onClose }: AddPlayerModalProps) {
         onClose()
         router.refresh()
       } else {
-        alert(tErrors('failedToCreatePlayer'))
+        toast.error(tErrors('failedToCreatePlayer'))
       }
     } catch {
-      alert(tErrors('networkError'))
+      toast.error(tErrors('networkError'))
     } finally {
       setSaving(false)
     }

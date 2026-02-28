@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 import type { Player } from '@/db/schema'
 import { Avatar } from './avatar'
 import { EditPlayerModal } from './edit-player-modal'
@@ -32,7 +33,7 @@ export function PlayerItem({ player, isHost }: PlayerItemProps) {
     if (res.ok) {
       router.refresh()
     } else {
-      alert(tErrors('failedToDeletePlayer'))
+      toast.error(tErrors('failedToDeletePlayer'))
       setDeleting(false)
     }
   }

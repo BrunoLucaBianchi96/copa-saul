@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 import {
   GAMES,
   GAME_URLS_STORAGE_KEY,
@@ -175,6 +176,8 @@ export function PickBan({
   const [flashingGame, setFlashingGame] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [resetConfirmFocus, setResetConfirmFocus] = useState<'confirm' | 'cancel'>('cancel')
   const [advancing, setAdvancing] = useState(false)
   const [backgroundFlash, setBackgroundFlash] = useState<'ban' | 'pick' | 'select' | null>(null)
   const [localMatchResult, setLocalMatchResult] = useState(matchResult)
@@ -463,6 +466,14 @@ export function PickBan({
 
   // useGamepad stores callbacks in refs internally, so these don't need to be stable
   const handleGamepadButton = (button: string) => {
+    if (showResetConfirm) {
+      if (button === 'cross') {
+        confirmResetRound()
+      } else if (button === 'circle') {
+        setShowResetConfirm(false)
+      }
+      return
+    }
     if (button === 'cross') {
       if (state.currentPhase === 'complete') {
         if (focusedOpenGame && gameLaunchUrl) {
@@ -494,6 +505,12 @@ export function PickBan({
   }
 
   const handleGamepadDirection = (dir: GamepadDirection) => {
+    if (showResetConfirm) {
+      if (dir === 'left' || dir === 'right') {
+        setResetConfirmFocus((prev) => prev === 'cancel' ? 'confirm' : 'cancel')
+      }
+      return
+    }
     if (state.currentPhase === 'complete') {
       const hasOpenGame = gameLaunchUrl && selectedGame && GAMES.find(g => g.id === selectedGame)?.launchable
       if (dir === 'up' && hasOpenGame) {
@@ -723,13 +740,13 @@ export function PickBan({
         // Roll back on failure
         optimisticCountRef.current--
         setActions((prev) => prev.filter((a) => a !== newAction))
-        alert(tErrors('failedToSaveAction'))
+        toast.error(tErrors('failedToSaveAction'))
       }
     } catch {
       // Roll back on network error
       optimisticCountRef.current--
       setActions((prev) => prev.filter((a) => a !== newAction))
-      alert(tErrors('networkError'))
+      toast.error(tErrors('networkError'))
     }
   }, [tournamentId, matchId, tErrors])
 
@@ -877,7 +894,7 @@ export function PickBan({
         setSelectedGame(gameId)
         setFlashingGame(null)
       } else {
-        alert(tErrors('failedToSelectGame'))
+        toast.error(tErrors('failedToSelectGame'))
         setFlashingGame(null)
       }
     } finally {
@@ -917,21 +934,24 @@ export function PickBan({
       if (!res.ok) {
         // Roll back on failure
         setLocalMatchResult(previousResult)
-        alert(tErrors('failedToRecordResult'))
+        toast.error(tErrors('failedToRecordResult'))
       } else {
         router.refresh()
       }
     } catch {
       // Roll back on network error
       setLocalMatchResult(previousResult)
-      alert(tErrors('networkError'))
+      toast.error(tErrors('networkError'))
     }
   }
 
-  async function handleResetRound() {
-    if (!confirm(t('confirmResetMatch'))) {
-      return
-    }
+  function handleResetRound() {
+    setResetConfirmFocus('cancel')
+    setShowResetConfirm(true)
+  }
+
+  async function confirmResetRound() {
+    setShowResetConfirm(false)
     setResetting(true)
     try {
       const res = await fetch(`/api/tournaments/${tournamentId}/matches/${matchId}/reset`, {
@@ -950,7 +970,7 @@ export function PickBan({
         currentAnimatingGameRef.current = null
         router.refresh()
       } else {
-        alert(tErrors('failedToResetMatch'))
+        toast.error(tErrors('failedToResetMatch'))
       }
     } finally {
       setResetting(false)
@@ -971,7 +991,7 @@ export function PickBan({
           router.refresh()
         }
       } else {
-        alert(tErrors('failedToAdvance'))
+        toast.error(tErrors('failedToAdvance'))
       }
     } finally {
       setAdvancing(false)
@@ -1190,6 +1210,37 @@ export function PickBan({
           )}
         </div>
       </nav>
+
+      {/* Reset match confirm modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
+          <div className="bg-darcula-surface border border-darcula-border rounded-lg p-6 max-w-sm mx-4 text-center">
+            <p className="text-darcula-text mb-6">{t('confirmResetMatch')}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className={`flex-1 px-4 py-2 rounded border transition ${
+                  resetConfirmFocus === 'cancel'
+                    ? 'border-darcula-blue bg-darcula-blue/20 text-darcula-text-bright'
+                    : 'border-darcula-border bg-darcula-elevated text-darcula-text hover:bg-darcula-border'
+                }`}
+              >
+                {tCommon('cancel')}
+              </button>
+              <button
+                onClick={confirmResetRound}
+                className={`flex-1 px-4 py-2 rounded border transition ${
+                  resetConfirmFocus === 'confirm'
+                    ? 'border-darcula-red bg-darcula-red/20 text-darcula-red font-medium'
+                    : 'border-darcula-border bg-darcula-elevated text-darcula-text hover:bg-darcula-border'
+                }`}
+              >
+                {t('resetMatch')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Match info - mobile (shown only on small/medium screens) */}
       <div className="lg:hidden relative z-10 text-center px-4 pb-2">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 import { GAMES, type Game } from '@/lib/games'
 import { TOTAL_BET_POINTS, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, calculateMatchPoints, generateRandomBets } from '@/lib/scoring-constants'
 import { BetRadarChart } from '@/app/components/bet-radar-chart'
@@ -92,7 +93,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
         setSaved(true)
       } else {
         const data = await res.json()
-        alert(data.error || tErrors('failedToSaveAction'))
+        toast.error(data.error || tErrors('failedToSaveAction'))
       }
     } finally {
       setLoading(false)
@@ -149,10 +150,10 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
             setBets(betMap)
           }
         }
-        alert(action === 'reset' ? t('allPlayersBetsReset') : t('allPlayersBetsRandomized'))
+        toast.success(action === 'reset' ? t('allPlayersBetsReset') : t('allPlayersBetsRandomized'))
       } else {
         const data = await res.json()
-        alert(data.error || tErrors('failedToSaveAction'))
+        toast.error(data.error || tErrors('failedToSaveAction'))
       }
     } finally {
       setBulkLoading(false)

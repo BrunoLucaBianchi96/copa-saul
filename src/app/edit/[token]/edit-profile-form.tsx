@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 import { PlayerCard } from '@/app/components/player-card'
 import { Avatar } from '@/app/components/avatar'
 
@@ -90,10 +91,10 @@ export function EditProfileForm({
         setSaved(true)
         router.refresh()
       } else {
-        alert(tErrors('failedToUpdatePlayer'))
+        toast.error(tErrors('failedToUpdatePlayer'))
       }
     } catch {
-      alert(tErrors('networkError'))
+      toast.error(tErrors('networkError'))
     } finally {
       setSaving(false)
     }
