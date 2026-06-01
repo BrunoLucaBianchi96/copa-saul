@@ -91,7 +91,9 @@
     "backToTournament": "Back to Tournament",
     "openGame": "Open Game",
     "noLaunchUrl": "No launch URL configured.",
-    "configureInSetup": "Configure in Setup"
+    "configureInSetup": "Configure in Setup",
+    "agreedToast": "Both players chose {game}!",
+    "preferredBy": "Preferred by {name}"
   },
   "result": {
     "theWinnerIs": "The winner is",

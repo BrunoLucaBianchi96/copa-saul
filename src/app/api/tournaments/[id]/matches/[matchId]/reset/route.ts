@@ -50,6 +50,8 @@ export async function POST(
       winnerId: null,
       pickBanHistory: null,
       selectedGame: null,
+      player1PreferredGame: null,
+      player2PreferredGame: null,
       pickBanComplete: false,
       pointsAwarded: null,
     })

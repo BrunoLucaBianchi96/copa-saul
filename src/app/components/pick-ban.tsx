@@ -34,6 +34,8 @@ interface PickBanProps {
   tournamentId: number
   initialActions: PickBanAction[]
   initialSelectedGame?: string
+  initialPlayer1PreferredGame?: string | null
+  initialPlayer2PreferredGame?: string | null
   isHost: boolean
   matchResult: string
   roundNumber: number
@@ -152,6 +154,8 @@ export function PickBan({
   tournamentId,
   initialActions,
   initialSelectedGame,
+  initialPlayer1PreferredGame,
+  initialPlayer2PreferredGame,
   isHost,
   matchResult,
   roundNumber,
@@ -179,6 +183,8 @@ export function PickBan({
   const tRoster = useTranslations('roster')
   const [actions, setActions] = useState<PickBanAction[]>(initialActions)
   const [selectedGame, setSelectedGame] = useState<string | undefined>(initialSelectedGame)
+  const [player1PreferredGame, setPlayer1PreferredGame] = useState<string | null>(initialPlayer1PreferredGame ?? null)
+  const [player2PreferredGame, setPlayer2PreferredGame] = useState<string | null>(initialPlayer2PreferredGame ?? null)
   const [animatingGame, setAnimatingGame] = useState<string | null>(null)
   const [flashingGame, setFlashingGame] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -465,7 +471,7 @@ export function PickBan({
   const animationDurations = getAnimationDurations(theme)
 
   // --- Gamepad support ---
-  const { focusedIndex: focusedGameIndex, navigate: navigateWheel, reset: resetWheelFocus } = useWheelNavigation(GAMES.length)
+  const { getFocus, navigate: navigateWheel, reset: resetWheelFocus } = useWheelNavigation(GAMES.length)
 
   // Gamepad is always active (navigation buttons work anytime), except during auto-selection animation
   const gamepadEnabled = state.currentPhase !== 'selecting'
@@ -480,13 +486,20 @@ export function PickBan({
         } else if (focusedWinner && canSelectWinner) {
           handleRecordResult(focusedWinner)
         }
-      } else if (focusedGameIndex !== null) {
-        // During ban/pick with 2 controllers: only active player's controller
+      } else {
+        // During ban/pick with 2 controllers: only the active player's controller acts
         if (connectedCount >= 2 && gamepadIndex !== state.currentPlayer - 1) return
-        handleGameClick(GAMES[focusedGameIndex].id)
+        const idx = getFocus(gamepadIndex)
+        if (idx !== null) handleGameClick(GAMES[idx].id)
       }
     } else if (button === 'triangle') {
       handleFullscreenToggle()
+    } else if (button === 'square') {
+      // Mark the pressing player's preferred game (gamepad 0 → player 1, gamepad 1 → player 2)
+      if (state.currentPhase === 'complete' || state.currentPhase === 'selecting') return
+      if (gamepadIndex > 1) return
+      const idx = getFocus(gamepadIndex)
+      if (idx !== null) setPreference((gamepadIndex + 1) as 1 | 2, GAMES[idx].id)
     } else if (button === 'circle') {
       setNavigating(true)
       router.push(`/tournaments/${tournamentId}`)
@@ -508,9 +521,6 @@ export function PickBan({
   }
 
   const handleGamepadDirection = (dir: GamepadDirection, gamepadIndex: number) => {
-    // During ban/pick with 2 controllers: only active player's controller can navigate
-    if (state.currentPhase !== 'complete' && connectedCount >= 2 && gamepadIndex !== state.currentPlayer - 1) return
-
     if (state.currentPhase === 'complete') {
       const hasOpenGame = gameLaunchUrl && selectedGame && GAMES.find(g => g.id === selectedGame)?.launchable
       if (dir === 'up' && hasOpenGame) {
@@ -527,7 +537,9 @@ export function PickBan({
         setFocusedWinner('player2')
       }
     } else {
-      navigateWheel(dir)
+      // Each controller drives its own wheel cursor, even off its turn
+      if (gamepadIndex > 1) return
+      navigateWheel(dir, gamepadIndex)
     }
   }
 
@@ -640,10 +652,20 @@ export function PickBan({
   const handleStateUpdate = useCallback((serverState: MatchState) => {
     const serverActionCount = serverState.pickBanHistory.length
 
-    // Detect reset: server has 0 actions but we have some locally
-    if (serverActionCount === 0 && actions.length > 0) {
+    // Detect reset: server has been fully cleared but we still have local state.
+    // (Checking prefs/selectedGame too handles agreements reached with few/no bans.)
+    const serverEmpty =
+      serverActionCount === 0 &&
+      !serverState.selectedGame &&
+      !serverState.player1PreferredGame &&
+      !serverState.player2PreferredGame
+    const localHasState =
+      actions.length > 0 || !!selectedGame || !!player1PreferredGame || !!player2PreferredGame
+    if (serverEmpty && localHasState) {
       setActions([])
       setSelectedGame(undefined)
+      setPlayer1PreferredGame(null)
+      setPlayer2PreferredGame(null)
       setAnimatingGame(null)
       setFlashingGame(null)
       setBackgroundFlash(null)
@@ -670,6 +692,14 @@ export function PickBan({
       setSelectedGame(serverState.selectedGame)
     }
 
+    // Update preferred games from server
+    if (serverState.player1PreferredGame !== player1PreferredGame) {
+      setPlayer1PreferredGame(serverState.player1PreferredGame)
+    }
+    if (serverState.player2PreferredGame !== player2PreferredGame) {
+      setPlayer2PreferredGame(serverState.player2PreferredGame)
+    }
+
     // Update result if changed
     if (serverState.result !== localMatchResult) {
       setLocalMatchResult(serverState.result)
@@ -677,7 +707,7 @@ export function PickBan({
         router.refresh()
       }
     }
-  }, [actions, selectedGame, localMatchResult, router])
+  }, [actions, selectedGame, player1PreferredGame, player2PreferredGame, localMatchResult, router])
 
   useMatchStream({
     tournamentId,
@@ -754,6 +784,62 @@ export function PickBan({
     setBackgroundFlash(type)
     setTimeout(() => setBackgroundFlash(null), type === 'select' ? 900 : 800)
   }
+
+  // Celebrate a mutually-agreed game: flash the tile, play the soundbite, toast.
+  const celebrateAgreement = useCallback((gameId: string) => {
+    setSelectedGame(gameId)
+    setFlashingGame(gameId)
+    setTimeout(() => setFlashingGame(null), 900)
+    triggerBackgroundFlash('select')
+    playSoundbite('onGameSelected')
+    toast.success(t('agreedToast', { game: GAMES.find((g) => g.id === gameId)?.name ?? '' }))
+  }, [playSoundbite, t])
+
+  // Mark one player's preferred game (toggles off if re-selected). When it matches the
+  // other player's preference, the game is agreed and chosen immediately.
+  const setPreference = useCallback(async (player: 1 | 2, gameId: string) => {
+    const setter = player === 1 ? setPlayer1PreferredGame : setPlayer2PreferredGame
+    const prevValue = player === 1 ? player1PreferredGame : player2PreferredGame
+    const otherValue = player === 1 ? player2PreferredGame : player1PreferredGame
+    const next = prevValue === gameId ? null : gameId
+
+    // Optimistic update
+    setter(next)
+    if (next && next === otherValue) celebrateAgreement(next)
+
+    try {
+      const res = await fetch(`/api/tournaments/${tournamentId}/matches/${matchId}/pick-ban`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preference: { player, gameId } }),
+      })
+      if (!res.ok) {
+        setter(prevValue)
+        toast.error(tErrors('failedToSaveAction'))
+      }
+    } catch {
+      setter(prevValue)
+      toast.error(tErrors('networkError'))
+    }
+  }, [tournamentId, matchId, player1PreferredGame, player2PreferredGame, celebrateAgreement, tErrors])
+
+  // Both players agree on a game at once (ctrl+shift+click) — chosen immediately.
+  const setBothPreferences = useCallback(async (gameId: string) => {
+    setPlayer1PreferredGame(gameId)
+    setPlayer2PreferredGame(gameId)
+    celebrateAgreement(gameId)
+
+    try {
+      const res = await fetch(`/api/tournaments/${tournamentId}/matches/${matchId}/pick-ban`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preference: { gameId, both: true } }),
+      })
+      if (!res.ok) toast.error(tErrors('failedToSaveAction'))
+    } catch {
+      toast.error(tErrors('networkError'))
+    }
+  }, [tournamentId, matchId, celebrateAgreement, tErrors])
 
   function handleGameClick(gameId: string) {
     if (!isInteractive || saving) return
@@ -1356,13 +1442,19 @@ export function PickBan({
           const isFlashing = flashingGame === game.id
           const isSelected = state.currentPhase === 'complete' && game.id === state.selectedGame
           const isMatchGame = localMatchResult !== 'pending' && game.id === selectedGame
-          const isGamepadFocused = focusedGameIndex === idx
+          // Wheel cursors: a single controller uses the neutral yellow ring; with two
+          // controllers each player gets their own colored ring.
+          const twoCursors = connectedCount >= 2
+          const isGamepadFocused = !twoCursors && getFocus(0) === idx
+          const isP1Cursor = twoCursors && getFocus(0) === idx
+          const isP2Cursor = twoCursors && getFocus(1) === idx
+          const p1Prefers = player1PreferredGame === game.id
+          const p2Prefers = player2PreferredGame === game.id
 
           return (
             <button
               key={game.id}
               onClick={() => handleGameClick(game.id)}
-              disabled={!canClick}
               className={`
                 absolute w-28 h-28 rounded-lg flex flex-col items-center justify-center
                 text-sm font-bold text-center transition-all duration-200
@@ -1382,8 +1474,18 @@ export function PickBan({
                 }
                 ${canClick ? 'hover:scale-110 hover:border-dashed hover:border-darcula-text cursor-pointer' : 'cursor-default'}
                 ${isGamepadFocused ? 'gamepad-focus' : ''}
+                ${isP1Cursor ? 'gamepad-focus-p1' : ''}
+                ${isP2Cursor ? 'gamepad-focus-p2' : ''}
               `}
               style={{ left: x, top: y }}
+              onClickCapture={(e) => {
+                // Modifier-clicks set preferred games instead of banning/picking:
+                // ctrl → player 1, shift → player 2, ctrl+shift → both (instant agreement)
+                if (state.currentPhase === 'complete' || state.currentPhase === 'selecting') return
+                if (e.ctrlKey && e.shiftKey) { e.preventDefault(); e.stopPropagation(); setBothPreferences(game.id) }
+                else if (e.ctrlKey) { e.preventDefault(); e.stopPropagation(); setPreference(1, game.id) }
+                else if (e.shiftKey) { e.preventDefault(); e.stopPropagation(); setPreference(2, game.id) }
+              }}
             >
               {/* Background image */}
               {game.imageUrl && (
@@ -1425,6 +1527,24 @@ export function PickBan({
               {status === 'protected' && (
                 <span className="absolute -top-2 -right-2 w-6 h-6 bg-darcula-blue rounded-full flex items-center justify-center text-white text-sm">
                   ★
+                </span>
+              )}
+
+              {/* Preferred-game markers (player 1 blue, player 2 orange) */}
+              {p1Prefers && (
+                <span
+                  className="absolute -bottom-2 -left-2 w-6 h-6 bg-darcula-blue rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-darcula-bg z-[3]"
+                  title={t('preferredBy', { name: player1Name })}
+                >
+                  1
+                </span>
+              )}
+              {p2Prefers && (
+                <span
+                  className="absolute -bottom-2 -right-2 w-6 h-6 bg-darcula-orange rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-darcula-bg z-[3]"
+                  title={t('preferredBy', { name: player2Name })}
+                >
+                  2
                 </span>
               )}
 

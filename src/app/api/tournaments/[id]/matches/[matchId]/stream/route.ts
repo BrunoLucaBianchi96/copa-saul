@@ -33,7 +33,7 @@ export async function GET(
   let lastStateHash = ''
 
   function buildStateHash(m: typeof match[0]): string {
-    return `${m.pickBanHistory ?? ''}|${m.selectedGame ?? ''}|${m.result}|${m.pointsAwarded ?? ''}`
+    return `${m.pickBanHistory ?? ''}|${m.selectedGame ?? ''}|${m.result}|${m.pointsAwarded ?? ''}|${m.player1PreferredGame ?? ''}|${m.player2PreferredGame ?? ''}`
   }
 
   function buildPayload(m: typeof match[0]) {
@@ -42,6 +42,8 @@ export async function GET(
       selectedGame: m.selectedGame,
       result: m.result,
       pointsAwarded: m.pointsAwarded,
+      player1PreferredGame: m.player1PreferredGame,
+      player2PreferredGame: m.player2PreferredGame,
     }
   }
 

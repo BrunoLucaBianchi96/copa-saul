@@ -65,6 +65,61 @@ export async function POST(
     return NextResponse.json({ success: true, history: updatedHistory })
   }
 
+  // Handle preferred-game selection. Each player marks the game they want; when both
+  // point at the same game it is chosen immediately, ending pick-ban early.
+  if (body.preference) {
+    const { player, gameId, both } = body.preference as {
+      player?: 1 | 2
+      gameId: string | null
+      both?: boolean
+    }
+
+    // Both players agree on one game at once (ctrl+shift+click) — host only.
+    if (both) {
+      if (!isHost) {
+        return NextResponse.json({ error: 'Host access required' }, { status: 403 })
+      }
+      await db
+        .update(matches)
+        .set({
+          player1PreferredGame: gameId,
+          player2PreferredGame: gameId,
+          selectedGame: gameId ?? undefined,
+          pickBanComplete: gameId ? true : undefined,
+        })
+        .where(eq(matches.id, matchId))
+      return NextResponse.json({ success: true, agreedGame: gameId })
+    }
+
+    if (player !== 1 && player !== 2) {
+      return NextResponse.json({ error: 'Invalid player' }, { status: 400 })
+    }
+
+    // Host can set either player's preference; a player can set only their own.
+    const targetPlayerId = player === 1 ? match[0].player1Id : match[0].player2Id
+    if (!isHost && sessionPlayerId !== targetPlayerId) {
+      return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
+    }
+
+    // Toggle off if the same game is re-sent, otherwise set it.
+    const currentPref = player === 1 ? match[0].player1PreferredGame : match[0].player2PreferredGame
+    const next = currentPref === gameId ? null : gameId
+
+    const p1 = player === 1 ? next : match[0].player1PreferredGame
+    const p2 = player === 2 ? next : match[0].player2PreferredGame
+    const agreed = p1 && p2 && p1 === p2 ? p1 : null
+
+    await db
+      .update(matches)
+      .set({
+        ...(player === 1 ? { player1PreferredGame: next } : { player2PreferredGame: next }),
+        ...(agreed ? { selectedGame: agreed, pickBanComplete: true } : {}),
+      })
+      .where(eq(matches.id, matchId))
+
+    return NextResponse.json({ success: true, preferred: next, agreedGame: agreed })
+  }
+
   // Handle game selection — host only (animation runs on host device)
   if (body.selectGame) {
     if (!isHost) {

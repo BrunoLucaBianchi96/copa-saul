@@ -167,6 +167,8 @@ export default async function MatchPage({
       player2Id={player2.id}
       initialActions={pickBanHistory}
       initialSelectedGame={match.selectedGame || undefined}
+      initialPlayer1PreferredGame={match.player1PreferredGame}
+      initialPlayer2PreferredGame={match.player2PreferredGame}
       isHost={isHost}
       matchResult={match.result}
       roundNumber={match.round}

@@ -8,6 +8,8 @@ export interface MatchState {
   selectedGame: string | null
   result: string
   pointsAwarded: number | null
+  player1PreferredGame: string | null
+  player2PreferredGame: string | null
 }
 
 interface UseMatchStreamOptions {

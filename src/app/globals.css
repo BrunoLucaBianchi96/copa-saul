@@ -155,3 +155,23 @@
   outline-offset: 2px;
   animation: gamepadGlow 1.2s ease-in-out infinite;
 }
+
+/* Per-player cursor rings (shown when 2+ controllers are connected) */
+@keyframes gamepadGlowP1 {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(104, 151, 187, 0.6); }
+  50% { box-shadow: 0 0 16px 4px rgba(104, 151, 187, 0.95); }
+}
+@keyframes gamepadGlowP2 {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(204, 120, 50, 0.6); }
+  50% { box-shadow: 0 0 16px 4px rgba(204, 120, 50, 0.95); }
+}
+.gamepad-focus-p1 {
+  outline: 3px solid #6897BB;
+  outline-offset: 2px;
+  animation: gamepadGlowP1 1.2s ease-in-out infinite;
+}
+.gamepad-focus-p2 {
+  outline: 3px solid #CC7832;
+  outline-offset: 2px;
+  animation: gamepadGlowP2 1.2s ease-in-out infinite;
+}

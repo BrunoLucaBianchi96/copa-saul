@@ -10,8 +10,12 @@ const TWO_PI = 2 * Math.PI
  * that is most aligned with that direction from the currently focused game,
  * using dot-product / cosine similarity.
  */
+/**
+ * Tracks an independent focus index per cursor id (one per connected controller),
+ * so each player can navigate the wheel simultaneously, even off their turn.
+ */
 export function useWheelNavigation(numGames: number) {
-  const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
+  const [focusByCursor, setFocusByCursor] = useState<Record<number, number | null>>({})
 
   // Precompute positions on the unit circle (same layout as pick-ban.tsx)
   // angle = idx * 2PI / n - PI/2  (starts at top, goes clockwise)
@@ -24,54 +28,61 @@ export function useWheelNavigation(numGames: number) {
   )
 
   const navigate = useCallback(
-    (dir: GamepadDirection) => {
-      if (focusedIndex === null) {
-        // First input → focus top game (index 0)
-        setFocusedIndex(0)
-        return
-      }
-
-      // Direction vector
-      const dirVec: [number, number] =
-        dir === 'up'    ? [0, -1] :
-        dir === 'down'  ? [0, 1] :
-        dir === 'left'  ? [-1, 0] :
-                          [1, 0]
-
-      const [cx, cy] = getPosition(focusedIndex)
-
-      let bestIdx = focusedIndex
-      let bestScore = -Infinity
-
-      for (let i = 0; i < numGames; i++) {
-        if (i === focusedIndex) continue
-
-        const [px, py] = getPosition(i)
-        const dx = px - cx
-        const dy = py - cy
-
-        // Dot product with direction vector (cosine similarity, unnormalized)
-        const dot = dx * dirVec[0] + dy * dirVec[1]
-
-        // Only consider candidates roughly in the pressed direction
-        if (dot <= 0) continue
-
-        // Normalize by distance to avoid bias toward far-away items
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        const score = dot / dist
-
-        if (score > bestScore) {
-          bestScore = score
-          bestIdx = i
+    (dir: GamepadDirection, cursorId = 0) => {
+      setFocusByCursor((prev) => {
+        const current = prev[cursorId] ?? null
+        if (current === null) {
+          // First input → focus top game (index 0)
+          return { ...prev, [cursorId]: 0 }
         }
-      }
 
-      setFocusedIndex(bestIdx)
+        // Direction vector
+        const dirVec: [number, number] =
+          dir === 'up'    ? [0, -1] :
+          dir === 'down'  ? [0, 1] :
+          dir === 'left'  ? [-1, 0] :
+                            [1, 0]
+
+        const [cx, cy] = getPosition(current)
+
+        let bestIdx = current
+        let bestScore = -Infinity
+
+        for (let i = 0; i < numGames; i++) {
+          if (i === current) continue
+
+          const [px, py] = getPosition(i)
+          const dx = px - cx
+          const dy = py - cy
+
+          // Dot product with direction vector (cosine similarity, unnormalized)
+          const dot = dx * dirVec[0] + dy * dirVec[1]
+
+          // Only consider candidates roughly in the pressed direction
+          if (dot <= 0) continue
+
+          // Normalize by distance to avoid bias toward far-away items
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          const score = dot / dist
+
+          if (score > bestScore) {
+            bestScore = score
+            bestIdx = i
+          }
+        }
+
+        return { ...prev, [cursorId]: bestIdx }
+      })
     },
-    [focusedIndex, numGames, getPosition],
+    [numGames, getPosition],
   )
 
-  const reset = useCallback(() => setFocusedIndex(null), [])
+  const reset = useCallback(() => setFocusByCursor({}), [])
 
-  return { focusedIndex, navigate, reset, setFocusedIndex }
+  const getFocus = useCallback(
+    (cursorId = 0): number | null => focusByCursor[cursorId] ?? null,
+    [focusByCursor],
+  )
+
+  return { focusByCursor, getFocus, navigate, reset }
 }

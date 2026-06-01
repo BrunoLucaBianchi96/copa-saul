@@ -208,6 +208,18 @@ export function getGameStates(actions: PickBanAction[]): Map<string, GameState> 
 
 // Calculate initial state or state from history
 export function calculatePickBanState(actions: PickBanAction[], selectedGame?: string): PickBanState {
+  // A selected game (e.g. reached via mutual preference agreement) short-circuits
+  // the rest of the ceremony — the match is complete regardless of action count.
+  if (selectedGame) {
+    return {
+      actions,
+      currentPhase: 'complete',
+      currentPlayer: 1,
+      ban2Remaining: 0,
+      selectedGame,
+    }
+  }
+
   if (actions.length === 0) {
     return {
       actions: [],
@@ -262,17 +274,7 @@ export function calculatePickBanState(actions: PickBanAction[], selectedGame?: s
     }
   }
 
-  // All actions complete
-  if (selectedGame) {
-    return {
-      actions,
-      currentPhase: 'complete',
-      currentPlayer: 1,
-      ban2Remaining: 0,
-      selectedGame,
-    }
-  }
-
+  // All actions complete but no game selected yet → random selection phase
   return {
     actions,
     currentPhase: 'selecting',

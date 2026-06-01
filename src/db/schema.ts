@@ -42,6 +42,8 @@ export const matches = sqliteTable('matches', {
   // Pick-ban phase data
   pickBanHistory: text('pick_ban_history'), // JSON array of actions
   selectedGame: text('selected_game'), // The game chosen after pick-ban
+  player1PreferredGame: text('player1_preferred_game'), // game id player 1 wants, or null
+  player2PreferredGame: text('player2_preferred_game'), // game id player 2 wants, or null
   pickBanComplete: integer('pick_ban_complete', { mode: 'boolean' }).default(false),
   backgroundMusicId: text('background_music_id'), // Theme ID for the match
   pointsAwarded: integer('points_awarded'), // Points awarded to winner, used by reset
