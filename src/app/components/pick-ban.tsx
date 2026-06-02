@@ -25,6 +25,25 @@ import { BalatroBackground } from './balatro-background'
 import { BalatroCardRain } from './balatro-card-rain'
 import { PlayerCard, BountyBadge, formatPlayerName, getInitials } from './player-card'
 
+/**
+ * Points a player would win per game if they played and won it against this
+ * opponent — i.e. their match winnings (bounty bonus excluded). Surfacing this
+ * on the radar instead of raw bets entices underdog play: betting low against a
+ * high opponent yields the larger payout when you win the upset.
+ */
+function buildPotentialWinnings(
+  myBets: Record<string, number>,
+  opponentBets: Record<string, number>,
+): Record<string, number> {
+  const result: Record<string, number> = {}
+  for (const game of GAMES) {
+    const myBet = myBets[game.id] ?? DEFAULT_BET
+    const opponentBet = opponentBets[game.id] ?? DEFAULT_BET
+    result[game.id] = calculateMatchPoints(myBet, opponentBet)
+  }
+  return result
+}
+
 interface PickBanProps {
   player1Name: string
   player2Name: string
@@ -1423,8 +1442,8 @@ export function PickBan({
         <div className="absolute inset-0 pointer-events-none">
           <BetRadarChart
             datasets={[
-              { bets: player1Bets, fill: 'rgba(104, 151, 187, 0.25)', stroke: 'rgba(104, 151, 187, 0.6)' },
-              { bets: player2Bets, fill: 'rgba(106, 135, 89, 0.25)', stroke: 'rgba(106, 135, 89, 0.6)' },
+              { values: buildPotentialWinnings(player1Bets, player2Bets), fill: 'rgba(104, 151, 187, 0.25)', stroke: 'rgba(104, 151, 187, 0.6)' },
+              { values: buildPotentialWinnings(player2Bets, player1Bets), fill: 'rgba(106, 135, 89, 0.25)', stroke: 'rgba(106, 135, 89, 0.6)' },
             ]}
           />
         </div>

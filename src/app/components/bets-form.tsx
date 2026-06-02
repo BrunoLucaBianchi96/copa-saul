@@ -343,7 +343,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
           <div className="w-[500px] h-[500px] max-w-full mx-auto mb-6">
             <BetRadarChart
               datasets={[{
-                bets,
+                values: bets,
                 fill: 'rgba(104, 151, 187, 0.3)',
                 stroke: 'rgba(104, 151, 187, 0.8)',
               }]}

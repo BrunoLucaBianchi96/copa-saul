@@ -4,7 +4,9 @@ import { GAMES } from '@/lib/games'
 import { MIN_BET_PER_GAME, MAX_BET_PER_GAME } from '@/lib/scoring-constants'
 
 interface BetDataset {
-  bets: Record<string, number>
+  // Value to plot per game id. May be raw bets (bet-allocation view) or
+  // potential winnings (match view) — anything on the 20..80 point scale.
+  values: Record<string, number>
   fill: string
   stroke: string
 }
@@ -37,12 +39,14 @@ function getPoint(idx: number, scale: number) {
 const MAX_R = RADIUS * WEB_SCALE
 const MIN_R = MAX_R * (MIN_BET_PER_GAME / MAX_BET_PER_GAME)
 
-function getBetPath(bets: Record<string, number>) {
-  // Outer ring: bet values scaled proportionally (clockwise)
+function getValuePath(values: Record<string, number>) {
+  // Outer ring: values scaled proportionally (clockwise). Values can slightly
+  // exceed MAX_BET_PER_GAME (e.g. a favorite's potential winnings), so clamp
+  // the radius to the web boundary.
   const outer = GAMES.map((game, idx) => {
-    const bet = bets[game.id] || MIN_BET_PER_GAME
+    const value = values[game.id] || MIN_BET_PER_GAME
     const angle = getAngle(idx)
-    const r = MAX_R * (bet / MAX_BET_PER_GAME)
+    const r = MAX_R * Math.min(value / MAX_BET_PER_GAME, 1)
     return { x: CENTER_X + r * Math.cos(angle), y: CENTER_Y + r * Math.sin(angle) }
   })
   // Inner ring: minimum radius (counter-clockwise for hole)
@@ -105,11 +109,11 @@ export function BetRadarChart({ datasets, showLabels = false }: BetRadarChartPro
         strokeWidth="1"
         strokeDasharray="4 3"
       />
-      {/* Bet data polygons (donut shape) */}
+      {/* Value polygons (donut shape) */}
       {datasets.map((dataset, i) => (
         <path
           key={i}
-          d={getBetPath(dataset.bets)}
+          d={getValuePath(dataset.values)}
           fill={dataset.fill}
           stroke={dataset.stroke}
           strokeWidth="2"
