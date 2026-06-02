@@ -7,6 +7,23 @@ export const DEFAULT_BET = MIN_BET_PER_GAME
 export const BYE_POINTS = TOTAL_BET_POINTS / NUM_GAMES
 export const OVERDOG_THRESHOLD = 15
 
+// --- Bounty system ---
+// A player must finish in the top 4 of the standings in this many rounds before
+// any bounty accrues. Accrual starts on the Nth top-4 finish.
+export const BOUNTY_MIN_TOP4_ROUNDS = 3
+// Bounty increment per top-4 finish, keyed by 0-based standing position:
+// index 0 = 1st place, 1 = 2nd, 2 = 3rd, 3 = 4th.
+export const BOUNTY_RATE_BY_PLACEMENT = [15, 13, 10, 7] as const
+
+/**
+ * Increment added to a player's bounty for a top-4 finish at the given
+ * 0-based standing position. Returns 0 for positions outside the top 4.
+ * Pure function — safe for both client and server.
+ */
+export function bountyIncrementForPlacement(placementIndex: number): number {
+  return BOUNTY_RATE_BY_PLACEMENT[placementIndex] ?? 0
+}
+
 export interface BetAllocation {
   gameId: string
   bet: number

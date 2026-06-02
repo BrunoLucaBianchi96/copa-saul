@@ -64,6 +64,12 @@ export function RulesInfoButton() {
                 </ul>
               </section>
 
+              {/* Bounties */}
+              <section>
+                <h3 className="font-semibold text-darcula-blue mb-2">{t('bountyTitle')}</h3>
+                <p className="text-sm text-darcula-text-muted">{t('bountyDescription')}</p>
+              </section>
+
               {/* Tiebreaker */}
               <section>
                 <h3 className="font-semibold text-darcula-blue mb-2">{t('tiebreakerTitle')}</h3>

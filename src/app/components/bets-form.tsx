@@ -238,6 +238,11 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
                 </section>
 
                 <section>
+                  <h3 className="font-semibold text-darcula-blue mb-2">{t('infoBountyTitle')}</h3>
+                  <p className="text-sm text-darcula-text-muted">{t('infoBountyDesc')}</p>
+                </section>
+
+                <section>
                   <h3 className="font-semibold text-darcula-blue mb-2">{t('infoExampleTitle')}</h3>
                   <div className="text-sm text-darcula-text-muted space-y-2 bg-darcula-elevated rounded p-3">
                     <p>{t('infoExample1')}</p>

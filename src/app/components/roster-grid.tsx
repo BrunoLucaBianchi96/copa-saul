@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import type { Player } from '@/db/schema'
-import { PlayerCard } from './player-card'
+import { PlayerCard, BountyBadge } from './player-card'
 import { EditPlayerModal } from './edit-player-modal'
 
 interface AvailablePlayer {
@@ -19,6 +19,7 @@ interface RosterGridProps {
     displayName: string
     gradientColors: string
     retired: boolean
+    bounty?: number
   }[]
   isHost: boolean
   tournamentId?: number
@@ -95,6 +96,7 @@ export function RosterGrid({ players, isHost, tournamentId, tournamentStatus, av
                 {t('retired')}
               </span>
             )}
+            {p.bounty ? <BountyBadge amount={p.bounty} /> : null}
             {canToggleRetire && (
               <button
                 onClick={(e) => toggleRetire(e, p.player.id)}

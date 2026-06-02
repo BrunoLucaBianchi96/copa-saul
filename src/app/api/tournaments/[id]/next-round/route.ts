@@ -8,7 +8,7 @@ import {
 } from '@/lib/swiss'
 import { requireHost } from '@/lib/session'
 import { getThemeForMatch } from '@/lib/themes'
-import { BYE_POINTS } from '@/lib/scoring'
+import { BYE_POINTS, BOUNTY_MIN_TOP4_ROUNDS, bountyIncrementForPlacement } from '@/lib/scoring'
 
 async function createMatches(
   tournamentId: number,
@@ -80,6 +80,40 @@ async function createMatches(
   }
 }
 
+// Accrue bounties for the round that just completed. Players in the top 4 of the
+// standings have their top-4 round count incremented; once a player has been top-4
+// in BOUNTY_MIN_TOP4_ROUNDS rounds, each subsequent (and that qualifying) top-4
+// finish adds an amount based on their current standing position.
+async function accrueRoundBounties(tournamentId: number) {
+  const standings = await getStandings(tournamentId, { excludeRetired: true })
+  const topFour = standings.slice(0, 4)
+
+  for (let i = 0; i < topFour.length; i++) {
+    const tp = await db
+      .select()
+      .from(tournamentPlayers)
+      .where(
+        and(
+          eq(tournamentPlayers.tournamentId, tournamentId),
+          eq(tournamentPlayers.playerId, topFour[i].playerId)
+        )
+      )
+    if (!tp[0]) continue
+
+    const newTopFourRounds = tp[0].topFourRounds + 1
+    const bountyGain =
+      newTopFourRounds >= BOUNTY_MIN_TOP4_ROUNDS ? bountyIncrementForPlacement(i) : 0
+
+    await db
+      .update(tournamentPlayers)
+      .set({
+        topFourRounds: newTopFourRounds,
+        bounty: tp[0].bounty + bountyGain,
+      })
+      .where(eq(tournamentPlayers.id, tp[0].id))
+  }
+}
+
 async function getFirstNonByeMatchId(tournamentId: number, round: number): Promise<number | null> {
   const roundMatches = await db
     .select({ id: matches.id, player2Id: matches.player2Id })
@@ -128,6 +162,13 @@ export async function POST(request: Request, { params }: { params: { id: string 
   }
 
   const t = tournament[0]
+
+  // Accrue bounties for the just-completed round (regular play only — not the
+  // finals/overtime bracket). Runs once per advance, since the pending-match
+  // guard above prevents re-running for an already-advanced round.
+  if (t.status === 'active') {
+    await accrueRoundBounties(tournamentId)
+  }
 
   // Handle finals mode
   if (t.status === 'overtime') {

@@ -141,6 +141,8 @@
     "scoringEqual": "Equal bets: winner gets bet amount",
     "scoringUnderdog": "Underdog wins: winner gets the loser's higher bet",
     "scoringFavorite": "Favorite wins: full points if difference ≤ 15, diminishing returns beyond that",
+    "bountyTitle": "Bounties",
+    "bountyDescription": "Players who keep finishing near the top of the leaderboard become high-value targets and pick up a bounty. Beat someone carrying a bounty and you'll earn bonus points on top of your winnings — the more they've dominated, the bigger the reward.",
     "tiebreakerTitle": "Finals",
     "tiebreakerDescription": "After all regular rounds, the top 4 players enter the finals. The semifinal has 2 matches (1st vs 2nd, 3rd vs 4th), and the final is a single match between the top 2 from the updated standings."
   },
@@ -250,6 +252,9 @@
     "infoExample3": "If you win: gap is 30 (past the 15 pt threshold), so you get 20 + √(15×30) ≈ 41 pts instead of 50. Diminishing returns!",
     "infoStrategyTitle": "Strategy",
     "infoStrategyDesc": "Winning as the underdog is the key to climbing the leaderboard — you steal the favorite's full bet. To maximize your score, use your bans on games where you'd score low, so you're more likely to play games where you can upset your opponent. Betting high on your best games helps, but going all-in has diminishing returns if you win as the favorite.",
+    "infoBountyTitle": "Bounties",
+    "infoBountyDesc": "Players who keep finishing near the top of the leaderboard become high-value targets and pick up a bounty (shown with a 💰 above their card). Beat someone carrying a bounty and you'll earn bonus points on top of your winnings — the more they've dominated, the bigger the reward.",
+    "bountyShout": "Bounty!",
     "matchupExamplesButton": "See Matchup Examples",
     "matchupExamplesTitle": "Matchup Examples",
     "matchup_noob": "Low bet",

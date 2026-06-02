@@ -141,6 +141,8 @@
     "scoringEqual": "Apuestas iguales: el ganador recibe el monto apostado",
     "scoringUnderdog": "Gana el desfavorecido: recibe la apuesta mayor del perdedor",
     "scoringFavorite": "Gana el favorito: puntos completos si la diferencia es menor a 20. Si la diferencia es mayor, se otorga un propocional",
+    "bountyTitle": "Recompensas",
+    "bountyDescription": "Los jugadores que se mantienen cerca de la cima de la tabla se convierten en objetivos de alto valor y acumulan una recompensa. Vencé a alguien que tenga una recompensa y ganarás puntos extra además de tu botín — cuanto más han dominado, mayor es la recompensa.",
     "tiebreakerTitle": "Finales",
     "tiebreakerDescription": "Después de todas las rondas regulares, los 4 mejores jugadores pasan a las finales. La semifinal tiene 2 partidos (1ro vs 2do, 3ro vs 4to), y la final es un único partido entre los 2 mejores de la clasificación actualizada."
   },
@@ -250,6 +252,9 @@
     "infoExample3": "Si ganás vos: la diferencia es 30 (pasa el umbral de 15 pts), así que recibís 20 + √(15×30) ≈ 41 pts en vez de 50. ¡Rendimientos decrecientes!",
     "infoStrategyTitle": "Estrategia",
     "infoStrategyDesc": "Ganar como débil es la clave para subir en la tabla — te robás la apuesta completa del favorito. Para maximizar tu puntaje, usá tus bans en juegos donde sacarías pocos puntos, así es más probable que juegues partidos donde podés dar la sorpresa. Apostar alto en tus mejores juegos ayuda, pero ir all-in tiene rendimientos decrecientes si ganás como favorito.",
+    "infoBountyTitle": "Recompensas",
+    "infoBountyDesc": "Los jugadores que se mantienen cerca de la cima de la tabla se convierten en objetivos de alto valor y acumulan una recompensa (mostrada con un 💰 sobre su carta). Vencé a alguien que tenga una recompensa y ganarás puntos extra además de tu botín — cuanto más han dominado, mayor es la recompensa.",
+    "bountyShout": "Recompensa!",
     "matchupExamplesButton": "Ver Ejemplos de Partidos",
     "matchupExamplesTitle": "Ejemplos de Partidos",
     "matchup_noob": "Apuesta baja",

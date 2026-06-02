@@ -26,6 +26,7 @@ async function getRosterPlayers(tournamentId: number) {
       createdAt: players.createdAt,
       deletedAt: players.deletedAt,
       retired: tournamentPlayers.retired,
+      bounty: tournamentPlayers.bounty,
     })
     .from(tournamentPlayers)
     .innerJoin(players, eq(tournamentPlayers.playerId, players.id))
@@ -92,6 +93,7 @@ export default async function RosterPage({ params }: { params: { id: string } })
     displayName: formatDisplayName(p.name, p.nickname),
     gradientColors: GRADIENT_COLORS[i % GRADIENT_COLORS.length],
     retired: p.retired,
+    bounty: p.bounty,
   }))
 
   return (

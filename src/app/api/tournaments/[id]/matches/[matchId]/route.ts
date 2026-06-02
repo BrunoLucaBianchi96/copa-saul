@@ -51,6 +51,22 @@ export async function PATCH(
       // Fallback if no game selected (shouldn't happen in normal flow)
       pointsToAward = DEFAULT_BET
     }
+
+    // Bounty: beating a player carrying a bounty grants their bounty as bonus
+    // points. Folded into pointsToAward so the reset route reverses it too.
+    // The loser's bounty itself persists (it reflects their leaderboard standing).
+    const loser = await db
+      .select()
+      .from(tournamentPlayers)
+      .where(
+        and(
+          eq(tournamentPlayers.tournamentId, tournamentId),
+          eq(tournamentPlayers.playerId, loserId)
+        )
+      )
+    if (loser[0]?.bounty && loser[0].bounty > 0) {
+      pointsToAward += loser[0].bounty
+    }
   }
 
   // Update match with result and points awarded

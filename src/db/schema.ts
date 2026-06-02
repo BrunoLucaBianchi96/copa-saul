@@ -29,6 +29,8 @@ export const tournamentPlayers = sqliteTable('tournament_players', {
   points: integer('points').notNull().default(0),
   buchholz: integer('buchholz').notNull().default(0), // Tiebreaker
   retired: integer('retired', { mode: 'boolean' }).notNull().default(false),
+  topFourRounds: integer('top_four_rounds').notNull().default(0), // # of completed rounds finished in top 4
+  bounty: integer('bounty').notNull().default(0), // accumulated bounty points
 })
 
 export const matches = sqliteTable('matches', {

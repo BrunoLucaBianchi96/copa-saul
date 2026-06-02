@@ -1,5 +1,5 @@
 import { db } from '@/db'
-import { matches, players, tournaments } from '@/db/schema'
+import { matches, players, tournaments, tournamentPlayers } from '@/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 import { notFound, redirect } from 'next/navigation'
 import { getSession, isHost as checkIsHost, getSessionPlayerId } from '@/lib/session'
@@ -23,6 +23,19 @@ async function getTournament(tournamentId: number) {
 async function getPlayer(playerId: number) {
   const result = await db.select().from(players).where(eq(players.id, playerId))
   return result[0] || null
+}
+
+async function getPlayerBounty(tournamentId: number, playerId: number): Promise<number> {
+  const result = await db
+    .select({ bounty: tournamentPlayers.bounty })
+    .from(tournamentPlayers)
+    .where(
+      and(
+        eq(tournamentPlayers.tournamentId, tournamentId),
+        eq(tournamentPlayers.playerId, playerId)
+      )
+    )
+  return result[0]?.bounty ?? 0
 }
 
 function betsToRecord(bets: { gameId: string; bet: number }[]): Record<string, number> {
@@ -134,10 +147,12 @@ export default async function MatchPage({
   const canAdvanceRound = isHost && isOnCurrentRound && allMatchesComplete && nextMatchId === null
     && (tournament.status === 'overtime' || tournament.currentRound < tournament.rounds)
 
-  // Get player bets for radar chart overlay
-  const [p1Bets, p2Bets] = await Promise.all([
+  // Get player bets for radar chart overlay, and bounties for the bounty badge
+  const [p1Bets, p2Bets, player1Bounty, player2Bounty] = await Promise.all([
     getPlayerBets(tournamentId, player1.id),
     getPlayerBets(tournamentId, player2.id),
+    getPlayerBounty(tournamentId, player1.id),
+    getPlayerBounty(tournamentId, player2.id),
   ])
   const player1Bets = betsToRecord(p1Bets)
   const player2Bets = betsToRecord(p2Bets)
@@ -180,6 +195,8 @@ export default async function MatchPage({
       canAdvanceRound={canAdvanceRound}
       player1Bets={player1Bets}
       player2Bets={player2Bets}
+      player1Bounty={player1Bounty}
+      player2Bounty={player2Bounty}
       sessionPlayerId={sessionPlayerId}
     />
   )

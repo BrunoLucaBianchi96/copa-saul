@@ -23,7 +23,7 @@ import { GTA4LoadingBackground } from './gta4-loading-background'
 import { MatrixBackground } from './matrix-background'
 import { BalatroBackground } from './balatro-background'
 import { BalatroCardRain } from './balatro-card-rain'
-import { PlayerCard, formatPlayerName, getInitials } from './player-card'
+import { PlayerCard, BountyBadge, formatPlayerName, getInitials } from './player-card'
 
 interface PickBanProps {
   player1Name: string
@@ -49,6 +49,8 @@ interface PickBanProps {
   canAdvanceRound: boolean
   player1Bets: Record<string, number>
   player2Bets: Record<string, number>
+  player1Bounty?: number
+  player2Bounty?: number
   sessionPlayerId: number | null
 }
 
@@ -169,6 +171,8 @@ export function PickBan({
   canAdvanceRound,
   player1Bets,
   player2Bets,
+  player1Bounty,
+  player2Bounty,
   sessionPlayerId,
 }: PickBanProps) {
   const router = useRouter()
@@ -208,7 +212,7 @@ export function PickBan({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const optimisticCountRef = useRef(initialActions.length)
   const [wheelScale, setWheelScale] = useState(1)
-  const [floatingPoints, setFloatingPoints] = useState<{ player: 1 | 2; points: number } | null>(null)
+  const [floatingPoints, setFloatingPoints] = useState<{ player: 1 | 2; points: number; bounty: number } | null>(null)
   const [focusedWinner, setFocusedWinner] = useState<'player1' | 'player2' | null>(null)
   const [focusedOpenGame, setFocusedOpenGame] = useState(false)
   const [gameLaunchUrl, setGameLaunchUrl] = useState<string | null>(null)
@@ -1002,7 +1006,9 @@ export function PickBan({
       const winnerBet = winnerBets[selectedGame] ?? DEFAULT_BET
       const loserBet = loserBets[selectedGame] ?? DEFAULT_BET
       const pts = calculateMatchPoints(winnerBet, loserBet)
-      setFloatingPoints({ player: result === 'player1' ? 1 : 2, points: pts })
+      // Bounty bonus = the defeated opponent's bounty
+      const bounty = (result === 'player1' ? player2Bounty : player1Bounty) ?? 0
+      setFloatingPoints({ player: result === 'player1' ? 1 : 2, points: pts, bounty })
       setTimeout(() => setFloatingPoints(null), 2000)
     }
 
@@ -1566,11 +1572,22 @@ export function PickBan({
       {/* Footer with portraits and match info */}
       <div className="relative z-10 w-full flex items-end justify-center gap-4 px-4 py-4 pointer-events-none">
         <div className="relative">
+          {player1Bounty ? <BountyBadge amount={player1Bounty} /> : null}
           {floatingPoints?.player === 1 && (
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none floating-points">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none floating-points flex flex-col items-center leading-tight">
               <span className="text-darcula-green font-black text-2xl sm:text-3xl lg:text-4xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] whitespace-nowrap">
-                +{floatingPoints.points}pts!
+                +{floatingPoints.points}pts{floatingPoints.bounty > 0 ? '' : '!'}
               </span>
+              {floatingPoints.bounty > 0 && (
+                <>
+                  <span className="text-darcula-yellow font-black text-lg sm:text-xl lg:text-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                    {tBets('bountyShout')}
+                  </span>
+                  <span className="text-darcula-yellow font-black text-2xl sm:text-3xl lg:text-4xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                    +{floatingPoints.bounty}pts
+                  </span>
+                </>
+              )}
             </div>
           )}
           <PlayerPortrait
@@ -1615,11 +1632,22 @@ export function PickBan({
         </div>
 
         <div className="relative">
+          {player2Bounty ? <BountyBadge amount={player2Bounty} /> : null}
           {floatingPoints?.player === 2 && (
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none floating-points">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none floating-points flex flex-col items-center leading-tight">
               <span className="text-darcula-green font-black text-2xl sm:text-3xl lg:text-4xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] whitespace-nowrap">
-                +{floatingPoints.points}pts!
+                +{floatingPoints.points}pts{floatingPoints.bounty > 0 ? '' : '!'}
               </span>
+              {floatingPoints.bounty > 0 && (
+                <>
+                  <span className="text-darcula-yellow font-black text-lg sm:text-xl lg:text-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                    {tBets('bountyShout')}
+                  </span>
+                  <span className="text-darcula-yellow font-black text-2xl sm:text-3xl lg:text-4xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                    +{floatingPoints.bounty}pts
+                  </span>
+                </>
+              )}
             </div>
           )}
           <PlayerPortrait
