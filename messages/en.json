@@ -61,6 +61,11 @@
     "deleteTournament": "Delete tournament",
     "confirmDeleteTournament": "Are you sure you want to delete \"{name}\"? This action cannot be undone."
   },
+  "dashboard": {
+    "live": "LIVE",
+    "connecting": "Connecting...",
+    "gamesPlayed": "Games Played"
+  },
   "match": {
     "bye": "BYE",
     "draw": "Draw",

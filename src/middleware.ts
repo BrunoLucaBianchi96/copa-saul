@@ -25,6 +25,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Public spectator dashboard and its live stream — viewable without a login
+  if (
+    /^\/tournaments\/\d+\/dashboard$/.test(pathname) ||
+    /^\/api\/tournaments\/\d+\/dashboard\/stream$/.test(pathname)
+  ) {
+    return NextResponse.next()
+  }
+
   // Check for session cookie
   const session = request.cookies.get('copa-saul-session')
   if (!session?.value || (session.value !== 'host' && session.value !== 'player' && !session.value.startsWith('player:'))) {

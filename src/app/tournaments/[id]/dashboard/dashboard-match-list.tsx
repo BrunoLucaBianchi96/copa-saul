@@ -1,47 +1,29 @@
 'use client'
 
-import { useContext } from 'react'
-import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { GAMES } from '@/lib/games'
-import { GamepadFocusContext } from './tournament-gamepad'
-import { useMatchStatus } from './use-match-status'
+import { useMatchStatus } from '../use-match-status'
+import { type DashboardMatch } from '@/lib/dashboard'
 
-interface Match {
-  id: number
-  round: number
-  player1Id: number
-  player2Id: number | null
-  result: string
-  player1Name: string
-  player2Name: string | null
-  selectedGame?: string | null
-  pickBanHistory?: string | null
-  pointsAwarded?: number | null
+interface DashboardMatchListProps {
+  matches: DashboardMatch[]
 }
 
-interface MatchListProps {
-  matches: Match[]
-  tournamentId: number
-}
-
-export function MatchList({ matches, tournamentId }: MatchListProps) {
+// Read-only twin of MatchList — same visuals, no links/gamepad. Used on the
+// spectator dashboard where matches update live but aren't interactive.
+export function DashboardMatchList({ matches }: DashboardMatchListProps) {
   const t = useTranslations('match')
   const tCommon = useTranslations('common')
   const getMatchStatus = useMatchStatus()
-  const { focusedMatchIndex, setNavigating } = useContext(GamepadFocusContext)
 
   if (matches.length === 0) {
     return <p className="text-darcula-text-muted">{t('pending')}</p>
   }
 
-  // Track navigable index (non-bye matches only)
-  let navigableIdx = -1
-
   return (
     <div className="space-y-3">
       {matches.map((match) => {
-        // BYE matches are not clickable
+        // BYE matches
         if (match.player2Id === null) {
           return (
             <div
@@ -53,17 +35,13 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
           )
         }
 
-        navigableIdx++
-        const isFocused = focusedMatchIndex === navigableIdx
         const status = getMatchStatus(match)
         const isComplete = match.result !== 'pending'
 
         return (
-          <Link
+          <div
             key={match.id}
-            href={`/tournaments/${tournamentId}/matches/${match.id}`}
-            onClick={() => setNavigating(true)}
-            className={`block border border-darcula-border rounded p-4 bg-darcula-elevated hover:bg-darcula-surface hover:border-darcula-text-muted transition-colors ${isFocused ? 'gamepad-focus' : ''}`}
+            className="block border border-darcula-border rounded p-4 bg-darcula-elevated"
           >
             <div className="flex justify-between items-center">
               <span
@@ -104,7 +82,7 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
                 <span className="text-darcula-orange">{status}</span>
               )}
             </div>
-          </Link>
+          </div>
         )
       })}
     </div>

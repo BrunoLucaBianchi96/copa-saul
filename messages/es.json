@@ -61,6 +61,11 @@
     "deleteTournament": "Eliminar torneo",
     "confirmDeleteTournament": "¿Estás seguro de que quieres eliminar \"{name}\"? Esta acción no se puede deshacer."
   },
+  "dashboard": {
+    "live": "EN VIVO",
+    "connecting": "Conectando...",
+    "gamesPlayed": "Juegos Jugados"
+  },
   "match": {
     "bye": "LIBRE",
     "draw": "Empate",
