@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { tournaments, matches, tournamentPlayers, players } from '@/db/schema'
-import { eq, and, asc, inArray } from 'drizzle-orm'
+import { eq, and, asc, inArray, notInArray } from 'drizzle-orm'
 import {
   generatePairings,
   getStandings,
@@ -87,6 +87,22 @@ async function createMatches(
 async function accrueRoundBounties(tournamentId: number) {
   const standings = await getStandings(tournamentId, { excludeRetired: true })
   const topFour = standings.slice(0, 4)
+  const topFourIds = topFour.map((p) => p.playerId)
+
+  // Bounty is only kept while a player stays in the top 4. Anyone who has
+  // dropped out loses both their accumulated bounty and their top-4 streak, so
+  // re-entering means re-earning the BOUNTY_MIN_TOP4_ROUNDS gate from scratch.
+  await db
+    .update(tournamentPlayers)
+    .set({ bounty: 0, topFourRounds: 0 })
+    .where(
+      topFourIds.length > 0
+        ? and(
+            eq(tournamentPlayers.tournamentId, tournamentId),
+            notInArray(tournamentPlayers.playerId, topFourIds)
+          )
+        : eq(tournamentPlayers.tournamentId, tournamentId)
+    )
 
   for (let i = 0; i < topFour.length; i++) {
     const tp = await db
