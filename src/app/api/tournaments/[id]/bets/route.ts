@@ -5,6 +5,19 @@ import { eq, and, isNull } from 'drizzle-orm'
 import { getGamesForTournament } from '@/lib/games-db'
 import { getSession, getSessionPlayerId, isHost as checkIsHost } from '@/lib/session'
 import { validateBets, rosterKey, EVEN_BET, DEFAULT_BET, type BetAllocation } from '@/lib/scoring'
+import type { Tournament } from '@/db/schema'
+
+/**
+ * Bets can be edited before the tournament starts and through the first round —
+ * round-1 matches read the snapshot at result time, so edits still take effect.
+ * Locked from round 2 onward (and in overtime / once completed).
+ */
+function betsEditable(tournament: Tournament): boolean {
+  return (
+    tournament.status === 'pending' ||
+    (tournament.status === 'active' && tournament.currentRound <= 1)
+  )
+}
 
 /** Host, the player themselves (by session), or a matching edit token. */
 async function authenticatePlayer(playerId: number, editToken: string | null): Promise<boolean> {
@@ -99,8 +112,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   if (!tournament) {
     return NextResponse.json({ error: 'Tournament not found' }, { status: 404 })
   }
-  if (tournament.status !== 'pending') {
-    return NextResponse.json({ error: 'Bets are locked once the tournament has started' }, { status: 409 })
+  if (!betsEditable(tournament)) {
+    return NextResponse.json({ error: 'Bets are locked after the first round' }, { status: 409 })
   }
 
   const games = await getGamesForTournament(tournamentId)
@@ -110,7 +123,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: validation.error }, { status: 400 })
   }
 
-  // Replace the player's bets for this roster (shared across same-roster tournaments).
+  // Always update the shared per-roster bets (the player's default for this
+  // roster, reused by same-roster tournaments).
   const key = rosterKey(gameIds)
   await db
     .delete(rosterBets)
@@ -118,6 +132,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   await db.insert(rosterBets).values(
     bets.map((bet) => ({ playerId, rosterKey: key, gameId: bet.gameId, bet: bet.bet }))
   )
+
+  // If the tournament has already started (first round), also overwrite its
+  // frozen snapshot so round-1 scoring uses the edited bets.
+  if (tournament.status !== 'pending') {
+    await db
+      .delete(playerBets)
+      .where(and(eq(playerBets.tournamentId, tournamentId), eq(playerBets.playerId, playerId)))
+    await db.insert(playerBets).values(
+      bets.map((bet) => ({ tournamentId, playerId, gameId: bet.gameId, bet: bet.bet }))
+    )
+  }
 
   return NextResponse.json({ success: true })
 }

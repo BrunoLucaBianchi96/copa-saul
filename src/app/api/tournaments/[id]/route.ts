@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { tournaments, matches, tournamentPlayers, playerBets } from '@/db/schema'
+import { tournaments, matches, tournamentPlayers, playerBets, tournamentGames } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { requireHost } from '@/lib/session'
 
@@ -35,7 +35,10 @@ export async function DELETE(
   // 3. Delete all tournament players
   await db.delete(tournamentPlayers).where(eq(tournamentPlayers.tournamentId, tournamentId))
 
-  // 4. Delete the tournament itself
+  // 4. Delete the tournament's game roster
+  await db.delete(tournamentGames).where(eq(tournamentGames.tournamentId, tournamentId))
+
+  // 5. Delete the tournament itself
   await db.delete(tournaments).where(eq(tournaments.id, tournamentId))
 
   return NextResponse.json({ success: true })

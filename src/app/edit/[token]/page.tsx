@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import { players, tournaments, tournamentPlayers } from '@/db/schema'
-import { eq, isNull, and } from 'drizzle-orm'
+import { eq, isNull, and, or, lte } from 'drizzle-orm'
 import { getTranslations } from 'next-intl/server'
 import { EditProfileForm } from './edit-profile-form'
 import { BetsForm } from '@/app/components/bets-form'
@@ -16,13 +16,22 @@ async function getPlayerByToken(token: string) {
   return result[0] ?? null
 }
 
-// The player's tournaments that are still open for betting (status 'pending').
-async function getPendingTournaments(playerId: number) {
+// The player's tournaments still open for betting: not yet started, or in their
+// first round (matches the server-side edit window in /api/.../bets).
+async function getEditableTournaments(playerId: number) {
   return db
     .select({ id: tournaments.id, name: tournaments.name })
     .from(tournamentPlayers)
     .innerJoin(tournaments, eq(tournamentPlayers.tournamentId, tournaments.id))
-    .where(and(eq(tournamentPlayers.playerId, playerId), eq(tournaments.status, 'pending')))
+    .where(
+      and(
+        eq(tournamentPlayers.playerId, playerId),
+        or(
+          eq(tournaments.status, 'pending'),
+          and(eq(tournaments.status, 'active'), lte(tournaments.currentRound, 1)),
+        ),
+      ),
+    )
 }
 
 export default async function EditProfilePage({ params }: { params: { token: string } }) {
@@ -40,9 +49,9 @@ export default async function EditProfilePage({ params }: { params: { token: str
     )
   }
 
-  const pendingTournaments = await getPendingTournaments(player.id)
+  const editableTournaments = await getEditableTournaments(player.id)
   const tournamentGames = await Promise.all(
-    pendingTournaments.map((tournament) => getGamesForTournament(tournament.id))
+    editableTournaments.map((tournament) => getGamesForTournament(tournament.id))
   )
 
   return (
@@ -58,10 +67,10 @@ export default async function EditProfilePage({ params }: { params: { token: str
       />
 
       {/* Bets are per-roster now, so the player sets them per open tournament. */}
-      {pendingTournaments.length === 0 ? (
+      {editableTournaments.length === 0 ? (
         <p className="text-darcula-text-muted text-center mt-10">{t('noBetsTournaments')}</p>
       ) : (
-        pendingTournaments.map((tournament, idx) => (
+        editableTournaments.map((tournament, idx) => (
           <section key={tournament.id} className="mt-10">
             <h2 className="text-xl font-bold text-darcula-text-bright mb-4 text-center">
               {t('betsForTournament', { name: tournament.name })}

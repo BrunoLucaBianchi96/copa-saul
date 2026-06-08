@@ -61,7 +61,11 @@ export default async function BetsPage({
 
   const t = await getTranslations('bets')
 
-  const isPending = tournament.status === 'pending'
+  // Editable before the tournament starts and through the first round; locked
+  // from round 2 onward (matches POST /bets server-side rule).
+  const canEdit =
+    tournament.status === 'pending' ||
+    (tournament.status === 'active' && tournament.currentRound <= 1)
   // Bets are always scoped to the tournament's own roster (set at creation), so
   // pre- and post-start use the same game set.
   const games = await getGamesForTournament(id)
@@ -78,8 +82,8 @@ export default async function BetsPage({
         </p>
       </div>
 
-      {isPending ? (
-        /* Pre-start: edit the shared per-roster bets for this tournament */
+      {canEdit ? (
+        /* Pre-start or first round: editable bets */
         <BetsForm
           games={games}
           tournamentId={id}
@@ -89,7 +93,7 @@ export default async function BetsPage({
           editToken={editToken}
         />
       ) : (
-        /* Post-start: read-only view of the frozen snapshot */
+        /* Round 2+ : read-only view of the frozen snapshot */
         <BetsForm
           games={games}
           tournamentId={id}
