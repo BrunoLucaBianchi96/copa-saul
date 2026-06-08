@@ -11,8 +11,12 @@ export function LogoutButton() {
 
   async function handleLogout() {
     setLoading(true)
-    await fetch('/api/auth/logout', { method: 'POST' })
-    router.refresh()
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      router.refresh()
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

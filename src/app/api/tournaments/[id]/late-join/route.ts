@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { tournaments, matches, tournamentPlayers, players, playerBets } from '@/db/schema'
+import { tournaments, matches, tournamentPlayers, players, playerBets, rosterBets } from '@/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 import { requireHost } from '@/lib/session'
 import { getThemeForMatch } from '@/lib/themes'
-import { BYE_POINTS, DEFAULT_BET } from '@/lib/scoring'
+import { BYE_POINTS, EVEN_BET, rosterKey } from '@/lib/scoring'
 import { getGamesForTournament } from '@/lib/games-db'
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -63,19 +63,20 @@ export async function POST(request: Request, { params }: { params: { id: string 
     points: 0,
   })
 
-  // Snapshot player's default bets into tournament-scoped rows
-  const defaultBets = await db
-    .select()
-    .from(playerBets)
-    .where(and(isNull(playerBets.tournamentId), eq(playerBets.playerId, playerId)))
-
-  const betMap = new Map(defaultBets.map((b) => [b.gameId, b.bet]))
+  // Freeze a snapshot of the player's per-roster bets into tournament-scoped rows
   const tournamentGameList = await getGamesForTournament(tournamentId)
+  const key = rosterKey(tournamentGameList.map((g) => g.id))
+  const playerRosterBets = await db
+    .select()
+    .from(rosterBets)
+    .where(and(eq(rosterBets.playerId, playerId), eq(rosterBets.rosterKey, key)))
+
+  const betMap = new Map(playerRosterBets.map((b) => [b.gameId, b.bet]))
   const betRows = tournamentGameList.map((game) => ({
     tournamentId,
     playerId,
     gameId: game.id,
-    bet: betMap.get(game.id) ?? DEFAULT_BET,
+    bet: betMap.get(game.id) ?? EVEN_BET,
   }))
   await db.insert(playerBets).values(betRows)
 

@@ -69,12 +69,6 @@ export default async function Home() {
               {t('editLinks')}
             </Link>
           )}
-          <Link
-            href="/bets"
-            className="text-sm px-3 py-1 rounded bg-darcula-elevated text-darcula-text hover:bg-darcula-border transition"
-          >
-            {t('myBets')}
-          </Link>
           <span className={`text-sm px-3 py-1 rounded ${isHost(role) ? 'bg-darcula-blue/20 text-darcula-blue' : 'bg-darcula-elevated text-darcula-text'}`}>
             {isHost(role) ? tCommon('host') : playerName || tCommon('player')}
           </span>

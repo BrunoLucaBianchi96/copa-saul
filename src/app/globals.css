@@ -156,22 +156,37 @@
   animation: gamepadGlow 1.2s ease-in-out infinite;
 }
 
-/* Per-player cursor rings (shown when 2+ controllers are connected) */
+/* Per-player cursor rings (shown when 2+ controllers are connected).
+   Each player's ring matches their color (P1 blue, P2 green). The cursor
+   belonging to the player whose turn it is glows brighter and pulses so it's
+   easy to tell whose turn it is; the off-turn cursor stays dim and static. */
 @keyframes gamepadGlowP1 {
-  0%, 100% { box-shadow: 0 0 8px 2px rgba(104, 151, 187, 0.6); }
-  50% { box-shadow: 0 0 16px 4px rgba(104, 151, 187, 0.95); }
+  0%, 100% { box-shadow: 0 0 12px 3px rgba(104, 151, 187, 0.7); }
+  50% { box-shadow: 0 0 24px 7px rgba(104, 151, 187, 1); }
 }
 @keyframes gamepadGlowP2 {
-  0%, 100% { box-shadow: 0 0 8px 2px rgba(204, 120, 50, 0.6); }
-  50% { box-shadow: 0 0 16px 4px rgba(204, 120, 50, 0.95); }
+  0%, 100% { box-shadow: 0 0 12px 3px rgba(106, 175, 89, 0.7); }
+  50% { box-shadow: 0 0 24px 7px rgba(106, 175, 89, 1); }
 }
+/* Off-turn (dim, static) */
 .gamepad-focus-p1 {
-  outline: 3px solid #6897BB;
+  outline: 3px solid rgba(104, 151, 187, 0.55);
+  outline-offset: 2px;
+  box-shadow: 0 0 6px 1px rgba(104, 151, 187, 0.3);
+}
+.gamepad-focus-p2 {
+  outline: 3px solid rgba(106, 175, 89, 0.55);
+  outline-offset: 2px;
+  box-shadow: 0 0 6px 1px rgba(106, 175, 89, 0.3);
+}
+/* Active turn (bright, pulsing) */
+.gamepad-focus-p1-active {
+  outline: 4px solid #6897BB;
   outline-offset: 2px;
   animation: gamepadGlowP1 1.2s ease-in-out infinite;
 }
-.gamepad-focus-p2 {
-  outline: 3px solid #CC7832;
+.gamepad-focus-p2-active {
+  outline: 4px solid #6AAF59;
   outline-offset: 2px;
   animation: gamepadGlowP2 1.2s ease-in-out infinite;
 }

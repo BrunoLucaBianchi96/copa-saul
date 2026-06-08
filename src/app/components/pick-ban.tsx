@@ -1396,8 +1396,8 @@ export function PickBan({
         <NavMenu
           items={[
             { label: tHome('appTitle'), href: '/' },
-            { label: tBets('myBetsNav'), href: '/bets' },
-            { label: tGames('games'), href: '/games' },
+            { label: tBets('myBetsNav'), href: `/tournaments/${tournamentId}/bets` },
+            { label: tGames('games'), href: `/tournaments/${tournamentId}/games` },
             { label: tAuth('tournament'), href: `/tournaments/${tournamentId}` },
             { label: tRoster('roster'), href: `/tournaments/${tournamentId}/roster` },
             { label: isFullscreen ? t('exitFullscreen') : t('enterFullscreen'), onAction: handleFullscreenToggle },
@@ -1526,11 +1526,14 @@ export function PickBan({
           const isSelected = state.currentPhase === 'complete' && game.id === state.selectedGame
           const isMatchGame = localMatchResult !== 'pending' && game.id === selectedGame
           // Wheel cursors: a single controller uses the neutral yellow ring; with two
-          // controllers each player gets their own colored ring.
+          // controllers each player gets their own colored ring (P1 blue, P2 green).
+          // The active player's cursor glows brighter so it's clear whose turn it is.
           const twoCursors = connectedCount >= 2
           const isGamepadFocused = !twoCursors && getFocus(0) === idx
           const isP1Cursor = twoCursors && getFocus(0) === idx
           const isP2Cursor = twoCursors && getFocus(1) === idx
+          const p1CursorActive = isActivePhase && state.currentPlayer === 1
+          const p2CursorActive = isActivePhase && state.currentPlayer === 2
           const p1Prefers = player1PreferredGame === game.id
           const p2Prefers = player2PreferredGame === game.id
 
@@ -1557,8 +1560,8 @@ export function PickBan({
                 }
                 ${canClick ? 'hover:scale-110 hover:border-dashed hover:border-darcula-text cursor-pointer' : 'cursor-default'}
                 ${isGamepadFocused ? 'gamepad-focus' : ''}
-                ${isP1Cursor ? 'gamepad-focus-p1' : ''}
-                ${isP2Cursor ? 'gamepad-focus-p2' : ''}
+                ${isP1Cursor ? (p1CursorActive ? 'gamepad-focus-p1-active' : 'gamepad-focus-p1') : ''}
+                ${isP2Cursor ? (p2CursorActive ? 'gamepad-focus-p2-active' : 'gamepad-focus-p2') : ''}
               `}
               style={{ left: x, top: y }}
               onClickCapture={(e) => {

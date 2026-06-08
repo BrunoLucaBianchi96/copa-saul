@@ -51,12 +51,28 @@ export const matches = sqliteTable('matches', {
   pointsAwarded: integer('points_awarded'), // Points awarded to winner, used by reset
 })
 
+// Frozen bet snapshot for a started tournament. Written at tournament start /
+// late-join from the player's rosterBets, and read by scoring during the
+// tournament so a running tournament is immune to later edits of the shared
+// per-roster bets. tournamentId is always set on rows we write now.
 export const playerBets = sqliteTable('player_bets', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   tournamentId: integer('tournament_id').references(() => tournaments.id),
   playerId: integer('player_id').notNull().references(() => players.id),
   gameId: text('game_id').notNull(),
   bet: integer('bet').notNull().default(20),
+})
+
+// Editable, reusable bets keyed by a "game collection" rather than a tournament.
+// rosterKey is the tournament's gameIds sorted and joined with ',' — so any two
+// tournaments with an identical roster share one bet set and the player only
+// re-bets when the roster actually changes.
+export const rosterBets = sqliteTable('roster_bets', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  playerId: integer('player_id').notNull().references(() => players.id),
+  rosterKey: text('roster_key').notNull(),
+  gameId: text('game_id').notNull(),
+  bet: integer('bet').notNull().default(40),
 })
 
 // Games are keyed by a human-readable slug (TEXT primary key). The slug matches
@@ -97,5 +113,6 @@ export type Tournament = typeof tournaments.$inferSelect
 export type TournamentPlayer = typeof tournamentPlayers.$inferSelect
 export type Match = typeof matches.$inferSelect
 export type PlayerBet = typeof playerBets.$inferSelect
+export type RosterBet = typeof rosterBets.$inferSelect
 export type GameRow = typeof games.$inferSelect
 export type TournamentGame = typeof tournamentGames.$inferSelect

@@ -1,11 +1,30 @@
 // --- Bet system balance knobs ---
-export const NUM_GAMES = 7
-export const TOTAL_BET_POINTS = 280
+// The point budget scales with roster size: a player gets POINTS_PER_GAME per
+// game to spread, so different-sized rosters stay balanced and feasible.
+export const POINTS_PER_GAME = 40
 export const MIN_BET_PER_GAME = 20
 export const MAX_BET_PER_GAME = 80
-export const DEFAULT_BET = MIN_BET_PER_GAME
-export const BYE_POINTS = TOTAL_BET_POINTS / NUM_GAMES
+// Even-split default (== POINTS_PER_GAME): a fresh roster starts here, and it's
+// the fallback when a snapshot row is missing a game.
+export const EVEN_BET = POINTS_PER_GAME
+export const DEFAULT_BET = EVEN_BET
+// A bye is worth one game's average value.
+export const BYE_POINTS = POINTS_PER_GAME
 export const OVERDOG_THRESHOLD = 15
+
+/** Total points a player must allocate across a roster of `gameCount` games. */
+export function betBudget(gameCount: number): number {
+  return gameCount * POINTS_PER_GAME
+}
+
+/**
+ * Canonical identity of a "game collection": the gameIds sorted and joined.
+ * Two tournaments with the same roster share the same key (and thus bets).
+ * Pure function — safe for both client and server.
+ */
+export function rosterKey(gameIds: string[]): string {
+  return [...gameIds].sort().join(',')
+}
 
 // --- Bounty system ---
 // A player must finish in the top 4 of the standings in this many rounds before
@@ -36,7 +55,7 @@ export interface BetAllocation {
 export function generateRandomBets(gameIds: string[]): BetAllocation[] {
   const result: Record<string, number> = {}
   for (const id of gameIds) result[id] = MIN_BET_PER_GAME
-  let remaining = TOTAL_BET_POINTS - MIN_BET_PER_GAME * gameIds.length
+  let remaining = betBudget(gameIds.length) - MIN_BET_PER_GAME * gameIds.length
   while (remaining > 0) {
     const eligible = gameIds.filter((id) => result[id] < MAX_BET_PER_GAME)
     if (eligible.length === 0) break

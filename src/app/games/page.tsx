@@ -1,18 +1,19 @@
+import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { getActiveGames, getManageableGames } from '@/lib/games-db'
+import { getManageableGames } from '@/lib/games-db'
 import { getSession, isHost as checkIsHost } from '@/lib/session'
 import { GamesGrid } from './games-grid'
 
 export const dynamic = 'force-dynamic'
 
+// Global game management — host only. Players view a tournament's roster at
+// /tournaments/[id]/games instead.
 export default async function GamesPage() {
   const t = await getTranslations('games')
-  const role = await getSession()
-  const isHost = checkIsHost(role)
+  if (!checkIsHost(await getSession())) redirect('/')
 
-  // Hosts see the full roster (incl. inactive) so they can edit any game;
-  // everyone else sees only active games.
-  const games = isHost ? await getManageableGames() : await getActiveGames()
+  // Full roster (incl. inactive) so the host can edit any game.
+  const games = await getManageableGames()
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -25,11 +26,7 @@ export default async function GamesPage() {
         </p>
       </div>
 
-      {games.length === 0 && !isHost ? (
-        <p className="text-darcula-text-muted">{t('noGames')}</p>
-      ) : (
-        <GamesGrid games={games} isHost={isHost} />
-      )}
+      <GamesGrid games={games} isHost />
     </main>
   )
 }

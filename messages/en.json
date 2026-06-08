@@ -227,12 +227,13 @@
   },
   "bets": {
     "title": "Set Bets",
+    "nav": "Bets",
     "myBetsTitle": "My Bets",
     "myBetsNav": "My Bets",
     "backToHome": "Back to Home",
     "backToTournament": "Back to Tournament",
     "readOnlySnapshot": "These bets are frozen for this tournament and cannot be changed.",
-    "allocatePoints": "Allocate your {total} points across 7 games",
+    "allocatePoints": "Allocate your {total} points across the games",
     "selectPlayer": "Select player",
     "settingBetsFor": "Setting bets for:",
     "loading": "Loading bets...",
@@ -249,7 +250,7 @@
     "savedSuccessfully": "Bets saved successfully!",
     "howItWorks": "How Bets Work",
     "infoAllocationTitle": "Point Allocation",
-    "infoAllocation1": "You have {total} points to distribute across 7 games",
+    "infoAllocation1": "You have {total} points to distribute across the games",
     "infoAllocation2": "Each game must have between {min} and {max} points",
     "infoScoringTitle": "How Points Are Awarded",
     "infoScoringDesc": "When you win a match, the points you earn depend on both players' bets:",
@@ -303,7 +304,9 @@
     "changePassword": "Change Password",
     "passwordSet": "Password is set.",
     "passwordMismatch": "Passwords don't match.",
-    "passwordSaved": "Password saved!"
+    "passwordSaved": "Password saved!",
+    "betsForTournament": "Bets for {name}",
+    "noBetsTournaments": "No tournaments are open for betting right now."
   },
   "playerLinks": {
     "title": "Player Edit Links",

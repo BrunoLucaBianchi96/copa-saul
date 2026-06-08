@@ -144,7 +144,7 @@ export function TournamentActions({ tournament, isHost, players }: TournamentAct
     return (
       <div className="flex gap-2 items-center">
         <a
-          href="/bets"
+          href={`/tournaments/${tournament.id}/bets`}
           className="px-4 py-2 border border-darcula-border text-darcula-text rounded hover:bg-darcula-elevated transition text-sm"
         >
           {t('setBets')}

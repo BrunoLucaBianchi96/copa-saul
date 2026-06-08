@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { tournaments, matches, tournamentPlayers, players, playerBets } from '@/db/schema'
-import { eq, and, inArray, isNull } from 'drizzle-orm'
+import { tournaments, matches, tournamentPlayers, players, playerBets, rosterBets } from '@/db/schema'
+import { eq, and, inArray } from 'drizzle-orm'
 import { generatePairings } from '@/lib/swiss'
 import { requireHost } from '@/lib/session'
 import { getThemeForMatch } from '@/lib/themes'
-import { BYE_POINTS, DEFAULT_BET } from '@/lib/scoring'
+import { BYE_POINTS, EVEN_BET, rosterKey } from '@/lib/scoring'
 import { getGamesForTournament } from '@/lib/games-db'
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -121,35 +121,34 @@ export async function POST(request: Request, { params }: { params: { id: string 
     ),
   ])
 
-  // Snapshot each player's default bets into tournament-scoped rows
+  // Freeze a snapshot of each player's per-roster bets into tournament-scoped rows
   const remainingPlayers = await db
     .select({ playerId: tournamentPlayers.playerId })
     .from(tournamentPlayers)
     .where(eq(tournamentPlayers.tournamentId, tournamentId))
 
-  // Read all players' default bets in parallel
-  const allDefaultBets = await Promise.all(
+  // Snapshot is taken against the tournament's own game roster
+  const tournamentGameList = await getGamesForTournament(tournamentId)
+  const key = rosterKey(tournamentGameList.map((g) => g.id))
+
+  // Read all players' bets for this roster in parallel
+  const allRosterBets = await Promise.all(
     remainingPlayers.map(({ playerId }) =>
       db
         .select()
-        .from(playerBets)
-        .where(
-          and(isNull(playerBets.tournamentId), eq(playerBets.playerId, playerId))
-        )
+        .from(rosterBets)
+        .where(and(eq(rosterBets.playerId, playerId), eq(rosterBets.rosterKey, key)))
     )
   )
 
-  // Snapshot is taken against the tournament's own game roster
-  const tournamentGameList = await getGamesForTournament(tournamentId)
-
   // Build all bet snapshot rows in memory, then bulk insert
   const allBetRows = remainingPlayers.flatMap(({ playerId }, idx) => {
-    const betMap = new Map(allDefaultBets[idx].map((b) => [b.gameId, b.bet]))
+    const betMap = new Map(allRosterBets[idx].map((b) => [b.gameId, b.bet]))
     return tournamentGameList.map((game) => ({
       tournamentId,
       playerId,
       gameId: game.id,
-      bet: betMap.get(game.id) ?? DEFAULT_BET,
+      bet: betMap.get(game.id) ?? EVEN_BET,
     }))
   })
 

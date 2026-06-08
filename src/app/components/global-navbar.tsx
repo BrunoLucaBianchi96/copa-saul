@@ -12,14 +12,14 @@ const EXCLUDED_PATTERNS = [
   /^\/gta-4-loading-test$/,
 ]
 
-export function GlobalNavbar() {
+export function GlobalNavbar({ isHost = false }: { isHost?: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
   const t = useTranslations('auth')
   const tHome = useTranslations('home')
-  const tBets = useTranslations('bets')
   const tRoster = useTranslations('roster')
   const tGames = useTranslations('games')
+  const tBets = useTranslations('bets')
   const tDashboard = useTranslations('dashboard')
   const [loggingOut, setLoggingOut] = useState(false)
 
@@ -32,8 +32,15 @@ export function GlobalNavbar() {
 
   async function handleLogout() {
     setLoggingOut(true)
-    await fetch('/api/auth/logout', { method: 'POST' })
-    router.refresh()
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      router.refresh()
+    } finally {
+      // The navbar lives in the root layout, so it persists across
+      // router.refresh() without remounting — reset the state ourselves or
+      // it stays stuck on "Logging out..." forever (even after re-login).
+      setLoggingOut(false)
+    }
   }
 
   return (
@@ -42,18 +49,23 @@ export function GlobalNavbar() {
         <Link href="/" className="text-darcula-text-bright font-bold text-lg hover:text-darcula-blue transition-colors">
           {tHome('appTitle')}
         </Link>
-        <Link
-          href="/bets"
-          className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
-        >
-          {tBets('myBetsNav')}
-        </Link>
-        <Link
-          href="/games"
-          className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
-        >
-          {tGames('games')}
-        </Link>
+        {/* Games: hosts manage the global roster (/games); players view the
+            current tournament's roster. A player outside a tournament has none. */}
+        {isHost ? (
+          <Link
+            href="/games"
+            className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
+          >
+            {tGames('games')}
+          </Link>
+        ) : tournamentId ? (
+          <Link
+            href={`/tournaments/${tournamentId}/games`}
+            className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
+          >
+            {tGames('games')}
+          </Link>
+        ) : null}
         {tournamentId && (
           <>
             <Link
@@ -61,6 +73,12 @@ export function GlobalNavbar() {
               className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
             >
               {t('tournament')}
+            </Link>
+            <Link
+              href={`/tournaments/${tournamentId}/bets`}
+              className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
+            >
+              {tBets('nav')}
             </Link>
             <Link
               href={`/tournaments/${tournamentId}/roster`}

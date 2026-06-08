@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { type Game } from '@/lib/games'
 import { ConfirmModal } from '@/app/components/confirm-modal'
-import { TOTAL_BET_POINTS, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, calculateMatchPoints, generateRandomBets } from '@/lib/scoring-constants'
+import { POINTS_PER_GAME, EVEN_BET, MIN_BET_PER_GAME, MAX_BET_PER_GAME, calculateMatchPoints, generateRandomBets } from '@/lib/scoring-constants'
 import { BetRadarChart } from '@/app/components/bet-radar-chart'
 import { GameDetailModal } from '@/app/components/game-detail-modal'
 
@@ -35,7 +35,7 @@ export function BetsForm({ games, players, sessionPlayerId, isHost, tournamentId
     sessionPlayerId ?? (isHost && players.length > 0 ? players[0].playerId : null)
   )
   const [bets, setBets] = useState<Record<string, number>>(
-    Object.fromEntries(games.map((g) => [g.id, DEFAULT_BET]))
+    Object.fromEntries(games.map((g) => [g.id, EVEN_BET]))
   )
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(false)
@@ -44,13 +44,13 @@ export function BetsForm({ games, players, sessionPlayerId, isHost, tournamentId
   const [bulkLoading, setBulkLoading] = useState(false)
   const [pendingBulkAction, setPendingBulkAction] = useState<'reset' | 'random' | null>(null)
 
+  // Point budget scales with roster size (POINTS_PER_GAME per game).
+  const budget = games.length * POINTS_PER_GAME
   const total = Object.values(bets).reduce((sum, b) => sum + b, 0)
-  const isValid = total === TOTAL_BET_POINTS && Object.values(bets).every((b) => b >= MIN_BET_PER_GAME && b <= MAX_BET_PER_GAME)
+  const isValid = total === budget && Object.values(bets).every((b) => b >= MIN_BET_PER_GAME && b <= MAX_BET_PER_GAME)
 
-  // Determine API endpoint based on context
-  const apiUrl = tournamentId
-    ? `/api/tournaments/${tournamentId}/bets`
-    : '/api/bets'
+  // Bets are always tournament-scoped now.
+  const apiUrl = `/api/tournaments/${tournamentId}/bets`
 
   useEffect(() => {
     if (!selectedPlayerId) return
@@ -69,7 +69,7 @@ export function BetsForm({ games, players, sessionPlayerId, isHost, tournamentId
           // Fill in defaults for any missing games
           for (const game of games) {
             if (!(game.id in betMap)) {
-              betMap[game.id] = DEFAULT_BET
+              betMap[game.id] = EVEN_BET
             }
           }
           setBets(betMap)
@@ -109,8 +109,7 @@ export function BetsForm({ games, players, sessionPlayerId, isHost, tournamentId
   }
 
   function setEvenBet() {
-    const evenBet = Math.floor(TOTAL_BET_POINTS / games.length)
-    setBets(Object.fromEntries(games.map((g) => [g.id, evenBet])))
+    setBets(Object.fromEntries(games.map((g) => [g.id, EVEN_BET])))
     setSaved(false)
   }
 
@@ -136,7 +135,7 @@ export function BetsForm({ games, players, sessionPlayerId, isHost, tournamentId
     setBulkLoading(true)
     setSaved(false)
     try {
-      const res = await fetch('/api/bets/bulk', {
+      const res = await fetch(`/api/tournaments/${tournamentId}/bets/bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -153,7 +152,7 @@ export function BetsForm({ games, players, sessionPlayerId, isHost, tournamentId
             const betMap: Record<string, number> = {}
             for (const b of data.bets) betMap[b.gameId] = b.bet
             for (const game of games) {
-              if (!(game.id in betMap)) betMap[game.id] = DEFAULT_BET
+              if (!(game.id in betMap)) betMap[game.id] = EVEN_BET
             }
             setBets(betMap)
           }
@@ -218,7 +217,7 @@ export function BetsForm({ games, players, sessionPlayerId, isHost, tournamentId
                 <section>
                   <h3 className="font-semibold text-darcula-blue mb-2">{t('infoAllocationTitle')}</h3>
                   <ul className="text-sm text-darcula-text-muted list-disc list-inside space-y-1">
-                    <li>{t('infoAllocation1', { total: TOTAL_BET_POINTS })}</li>
+                    <li>{t('infoAllocation1', { total: budget })}</li>
                     <li>{t('infoAllocation2', { min: MIN_BET_PER_GAME, max: MAX_BET_PER_GAME })}</li>
                   </ul>
                 </section>
@@ -405,7 +404,7 @@ export function BetsForm({ games, players, sessionPlayerId, isHost, tournamentId
                     />
                     <button
                       onClick={() => updateBet(game.id, Math.min(MAX_BET_PER_GAME, bets[game.id] + 5))}
-                      disabled={bets[game.id] >= MAX_BET_PER_GAME || total >= TOTAL_BET_POINTS}
+                      disabled={bets[game.id] >= MAX_BET_PER_GAME || total >= budget}
                       className="w-8 h-8 rounded bg-darcula-bg border border-darcula-border text-darcula-text hover:bg-darcula-border transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       +
@@ -420,12 +419,12 @@ export function BetsForm({ games, players, sessionPlayerId, isHost, tournamentId
           <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
             <div className="text-base sm:text-lg font-medium">
               <span className="text-darcula-text-muted">{t('total')}: </span>
-              <span className={total === TOTAL_BET_POINTS ? 'text-darcula-green' : 'text-darcula-red'}>
-                {total} / {TOTAL_BET_POINTS}
+              <span className={total === budget ? 'text-darcula-green' : 'text-darcula-red'}>
+                {total} / {budget}
               </span>
-              {!readOnly && total !== TOTAL_BET_POINTS && (
+              {!readOnly && total !== budget && (
                 <span className="text-sm text-darcula-text-muted ml-2">
-                  ({total < TOTAL_BET_POINTS ? `${TOTAL_BET_POINTS - total} ${t('remaining')}` : `${total - TOTAL_BET_POINTS} ${t('over')}`})
+                  ({total < budget ? `${budget - total} ${t('remaining')}` : `${total - budget} ${t('over')}`})
                 </span>
               )}
             </div>

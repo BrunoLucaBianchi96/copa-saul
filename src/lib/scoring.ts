@@ -4,8 +4,8 @@ import { eq, and } from 'drizzle-orm'
 
 // Re-export constants and pure functions from client-safe module
 export {
-  NUM_GAMES,
-  TOTAL_BET_POINTS,
+  POINTS_PER_GAME,
+  EVEN_BET,
   MIN_BET_PER_GAME,
   MAX_BET_PER_GAME,
   DEFAULT_BET,
@@ -13,19 +13,21 @@ export {
   OVERDOG_THRESHOLD,
   BOUNTY_MIN_TOP4_ROUNDS,
   BOUNTY_RATE_BY_PLACEMENT,
+  betBudget,
+  rosterKey,
   bountyIncrementForPlacement,
   calculateMatchPoints,
   generateRandomBets,
   type BetAllocation,
 } from './scoring-constants'
 
-import { TOTAL_BET_POINTS, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, type BetAllocation } from './scoring-constants'
+import { betBudget, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, type BetAllocation } from './scoring-constants'
 
 /**
  * Validate that a set of bets is legal against a tournament's game roster:
  * - Exactly one entry per game in the roster
  * - Each bet within [MIN_BET_PER_GAME, MAX_BET_PER_GAME]
- * - Total === TOTAL_BET_POINTS
+ * - Total === betBudget(gameIds.length)
  * - All gameIds belong to the roster
  */
 export function validateBets(
@@ -58,8 +60,9 @@ export function validateBets(
     total += bet.bet
   }
 
-  if (total !== TOTAL_BET_POINTS) {
-    return { valid: false, error: `Total must be ${TOTAL_BET_POINTS}, got ${total}` }
+  const budget = betBudget(gameIds.length)
+  if (total !== budget) {
+    return { valid: false, error: `Total must be ${budget}, got ${total}` }
   }
 
   return { valid: true }
