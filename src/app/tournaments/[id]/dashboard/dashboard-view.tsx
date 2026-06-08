@@ -77,7 +77,7 @@ export function DashboardView({ tournamentId, initial }: DashboardViewProps) {
                   ? t('roundMatches', { number: tournament.currentRound })
                   : t('matches')}
             </h2>
-            <DashboardMatchList matches={state.matches} />
+            <DashboardMatchList matches={state.matches} games={state.games} />
           </section>
 
           <section className="bg-darcula-surface rounded-lg shadow-lg border border-darcula-border p-6">
@@ -85,7 +85,7 @@ export function DashboardView({ tournamentId, initial }: DashboardViewProps) {
               {tDashboard('gamesPlayed')}
             </h2>
             <div className="max-w-md mx-auto">
-              <GamesRadarChart counts={state.gamesPlayed} />
+              <GamesRadarChart games={state.games} counts={state.gamesPlayed} />
             </div>
           </section>
         </div>

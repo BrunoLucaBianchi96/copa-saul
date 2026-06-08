@@ -1,20 +1,21 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { GAMES } from '@/lib/games'
+import type { Game } from '@/lib/games'
 import { useMatchStatus } from '../use-match-status'
 import { type DashboardMatch } from '@/lib/dashboard'
 
 interface DashboardMatchListProps {
   matches: DashboardMatch[]
+  games: Game[]
 }
 
 // Read-only twin of MatchList — same visuals, no links/gamepad. Used on the
 // spectator dashboard where matches update live but aren't interactive.
-export function DashboardMatchList({ matches }: DashboardMatchListProps) {
+export function DashboardMatchList({ matches, games }: DashboardMatchListProps) {
   const t = useTranslations('match')
   const tCommon = useTranslations('common')
-  const getMatchStatus = useMatchStatus()
+  const getMatchStatus = useMatchStatus(games)
 
   if (matches.length === 0) {
     return <p className="text-darcula-text-muted">{t('pending')}</p>
@@ -62,7 +63,7 @@ export function DashboardMatchList({ matches }: DashboardMatchListProps) {
                 <>
                   {match.selectedGame && (
                     <span className="mr-2">
-                      {GAMES.find((g) => g.id === match.selectedGame)?.name} &bull;
+                      {games.find((g) => g.id === match.selectedGame)?.name} &bull;
                     </span>
                   )}
                   <span>

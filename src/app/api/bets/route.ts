@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { players, playerBets } from '@/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
-import { GAMES } from '@/lib/games'
+import { getActiveGames } from '@/lib/games-db'
 import { getSession, getSessionPlayerId, isHost as checkIsHost } from '@/lib/session'
 import { validateBets, DEFAULT_BET, type BetAllocation } from '@/lib/scoring'
 
@@ -47,7 +47,8 @@ export async function GET(request: Request) {
 
   const betMap = new Map(bets.map((b) => [b.gameId, b.bet]))
 
-  const result: BetAllocation[] = GAMES.map((game) => ({
+  const games = await getActiveGames()
+  const result: BetAllocation[] = games.map((game) => ({
     gameId: game.id,
     bet: betMap.get(game.id) ?? DEFAULT_BET,
   }))
@@ -67,8 +68,9 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  // Validate bets
-  const validation = validateBets(bets)
+  // Validate bets against the current active game roster
+  const games = await getActiveGames()
+  const validation = validateBets(bets, games.map((g) => g.id))
   if (!validation.valid) {
     return NextResponse.json({ error: validation.error }, { status: 400 })
   }

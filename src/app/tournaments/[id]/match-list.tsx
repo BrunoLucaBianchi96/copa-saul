@@ -3,7 +3,7 @@
 import { useContext } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { GAMES } from '@/lib/games'
+import type { Game } from '@/lib/games'
 import { GamepadFocusContext } from './tournament-gamepad'
 import { useMatchStatus } from './use-match-status'
 
@@ -23,12 +23,13 @@ interface Match {
 interface MatchListProps {
   matches: Match[]
   tournamentId: number
+  games: Game[]
 }
 
-export function MatchList({ matches, tournamentId }: MatchListProps) {
+export function MatchList({ matches, tournamentId, games }: MatchListProps) {
   const t = useTranslations('match')
   const tCommon = useTranslations('common')
-  const getMatchStatus = useMatchStatus()
+  const getMatchStatus = useMatchStatus(games)
   const { focusedMatchIndex, setNavigating } = useContext(GamepadFocusContext)
 
   if (matches.length === 0) {
@@ -84,7 +85,7 @@ export function MatchList({ matches, tournamentId }: MatchListProps) {
                 <>
                   {match.selectedGame && (
                     <span className="mr-2">
-                      {GAMES.find((g) => g.id === match.selectedGame)?.name} &bull;
+                      {games.find((g) => g.id === match.selectedGame)?.name} &bull;
                     </span>
                   )}
                   <span>

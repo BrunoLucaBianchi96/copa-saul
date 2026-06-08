@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { playerBets } from '@/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
-import { GAMES } from '@/lib/games'
+import { getActiveGames } from '@/lib/games-db'
 import { requireHost } from '@/lib/session'
 import { MIN_BET_PER_GAME, generateRandomBets } from '@/lib/scoring-constants'
 
@@ -24,6 +24,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'playerIds required' }, { status: 400 })
   }
 
+  const games = await getActiveGames()
+  const gameIds = games.map((g) => g.id)
+
   for (const playerId of playerIds) {
     // Delete existing global bets
     await db
@@ -33,8 +36,8 @@ export async function POST(request: Request) {
     // Generate new bets
     const bets =
       action === 'reset'
-        ? GAMES.map((g) => ({ gameId: g.id, bet: MIN_BET_PER_GAME }))
-        : generateRandomBets()
+        ? gameIds.map((id) => ({ gameId: id, bet: MIN_BET_PER_GAME }))
+        : generateRandomBets(gameIds)
 
     for (const bet of bets) {
       await db.insert(playerBets).values({

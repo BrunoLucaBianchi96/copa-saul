@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { GAMES, calculatePickBanState, type PickBanAction } from '@/lib/games'
+import { calculatePickBanState, type PickBanAction, type Game } from '@/lib/games'
 
 // Minimal shape needed to derive a match's human-readable status. Both the
 // interactive match list and the read-only dashboard list satisfy this.
@@ -13,7 +13,7 @@ export interface MatchStatusInput {
   pickBanHistory?: string | null
 }
 
-export function useMatchStatus() {
+export function useMatchStatus(games: Game[]) {
   const t = useTranslations('match')
 
   return function getMatchStatus(match: MatchStatusInput): string {
@@ -40,7 +40,7 @@ export function useMatchStatus() {
       case 'selecting':
         return t('selectingGame')
       case 'complete': {
-        const game = GAMES.find((g) => g.id === match.selectedGame)
+        const game = games.find((g) => g.id === match.selectedGame)
         return game ? `${t('playing')} ${game.name}` : t('playing')
       }
       default:

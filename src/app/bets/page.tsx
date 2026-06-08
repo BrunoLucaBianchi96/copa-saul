@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getSession, isHost as checkIsHost, getSessionPlayerId } from '@/lib/session'
 import { getTranslations } from 'next-intl/server'
 import { BetsForm } from '@/app/components/bets-form'
+import { getActiveGames } from '@/lib/games-db'
 import { TOTAL_BET_POINTS } from '@/lib/scoring-constants'
 
 export const dynamic = 'force-dynamic'
@@ -27,6 +28,7 @@ export default async function BetsPage() {
   const isHost = checkIsHost(role)
   const sessionPlayerId = await getSessionPlayerId()
   const playersList = await getPlayers()
+  const games = await getActiveGames()
 
   const t = await getTranslations('bets')
 
@@ -43,6 +45,7 @@ export default async function BetsPage() {
       </div>
 
       <BetsForm
+        games={games}
         players={playersList}
         sessionPlayerId={sessionPlayerId}
         isHost={isHost}

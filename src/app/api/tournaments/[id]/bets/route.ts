@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { playerBets } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { GAMES } from '@/lib/games'
+import { getGamesForTournament } from '@/lib/games-db'
 import { getSession, getSessionPlayerId, isHost as checkIsHost } from '@/lib/session'
 import { DEFAULT_BET, type BetAllocation } from '@/lib/scoring'
 
@@ -38,7 +38,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
   const betMap = new Map(bets.map((b) => [b.gameId, b.bet]))
 
-  const result: BetAllocation[] = GAMES.map((game) => ({
+  const games = await getGamesForTournament(tournamentId)
+  const result: BetAllocation[] = games.map((game) => ({
     gameId: game.id,
     bet: betMap.get(game.id) ?? DEFAULT_BET,
   }))

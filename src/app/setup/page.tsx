@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/session'
 import { getTranslations } from 'next-intl/server'
-import { GAMES } from '@/lib/games'
+import { getActiveGames } from '@/lib/games-db'
 import { SetupForm } from './setup-form'
 
 export const dynamic = 'force-dynamic'
@@ -12,7 +12,8 @@ export default async function SetupPage() {
   if (!role) redirect('/')
 
   const t = await getTranslations('setup')
-  const launchableGames = GAMES.filter(g => g.launchable)
+  const games = await getActiveGames()
+  const launchableGames = games.filter(g => g.launchable)
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">

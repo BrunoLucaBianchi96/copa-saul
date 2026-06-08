@@ -1,6 +1,6 @@
 'use client'
 
-import { GAMES } from '@/lib/games'
+import type { Game } from '@/lib/games'
 import { MIN_BET_PER_GAME, MAX_BET_PER_GAME } from '@/lib/scoring-constants'
 
 interface BetDataset {
@@ -12,11 +12,12 @@ interface BetDataset {
 }
 
 interface BetRadarChartProps {
+  // Axes of the radar: one per game in the tournament's roster, in order.
+  games: Game[]
   datasets: BetDataset[]
   showLabels?: boolean
 }
 
-const NUM_GAMES = GAMES.length
 const RADIUS = 240
 const CENTER_X = 300
 const CENTER_Y = 260
@@ -24,52 +25,54 @@ const WEB_SCALE = 0.6
 const LABEL_SCALE = 0.78
 const SUBDIVISIONS = [0.2, 0.3, 0.4, 0.5]
 
-function getAngle(idx: number) {
-  return (idx * 2 * Math.PI) / NUM_GAMES - Math.PI / 2
-}
-
-function getPoint(idx: number, scale: number) {
-  const angle = getAngle(idx)
-  return {
-    x: CENTER_X + RADIUS * scale * Math.cos(angle),
-    y: CENTER_Y + RADIUS * scale * Math.sin(angle),
-  }
-}
-
 const MAX_R = RADIUS * WEB_SCALE
 const MIN_R = MAX_R * (MIN_BET_PER_GAME / MAX_BET_PER_GAME)
 
-function getValuePath(values: Record<string, number>) {
-  // Outer ring: values scaled proportionally (clockwise). Values can slightly
-  // exceed MAX_BET_PER_GAME (e.g. a favorite's potential winnings), so clamp
-  // the radius to the web boundary.
-  const outer = GAMES.map((game, idx) => {
-    const value = values[game.id] || MIN_BET_PER_GAME
+export function BetRadarChart({ games, datasets, showLabels = false }: BetRadarChartProps) {
+  const numGames = games.length
+
+  function getAngle(idx: number) {
+    return (idx * 2 * Math.PI) / numGames - Math.PI / 2
+  }
+
+  function getPoint(idx: number, scale: number) {
     const angle = getAngle(idx)
-    const r = MAX_R * Math.min(value / MAX_BET_PER_GAME, 1)
-    return { x: CENTER_X + r * Math.cos(angle), y: CENTER_Y + r * Math.sin(angle) }
-  })
-  // Inner ring: minimum radius (counter-clockwise for hole)
-  const inner = GAMES.map((_, idx) => {
+    return {
+      x: CENTER_X + RADIUS * scale * Math.cos(angle),
+      y: CENTER_Y + RADIUS * scale * Math.sin(angle),
+    }
+  }
+
+  function getValuePath(values: Record<string, number>) {
+    // Outer ring: values scaled proportionally (clockwise). Values can slightly
+    // exceed MAX_BET_PER_GAME (e.g. a favorite's potential winnings), so clamp
+    // the radius to the web boundary.
+    const outer = games.map((game, idx) => {
+      const value = values[game.id] || MIN_BET_PER_GAME
+      const angle = getAngle(idx)
+      const r = MAX_R * Math.min(value / MAX_BET_PER_GAME, 1)
+      return { x: CENTER_X + r * Math.cos(angle), y: CENTER_Y + r * Math.sin(angle) }
+    })
+    // Inner ring: minimum radius (counter-clockwise for hole)
+    const inner = games.map((_, idx) => {
+      const angle = getAngle(idx)
+      return { x: CENTER_X + MIN_R * Math.cos(angle), y: CENTER_Y + MIN_R * Math.sin(angle) }
+    }).reverse()
+
+    const outerPath = outer.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
+    const innerPath = inner.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
+    return `${outerPath} ${innerPath}`
+  }
+
+  const outerPoints = games.map((_, idx) => getPoint(idx, WEB_SCALE))
+  const minBetPoints = games.map((_, idx) => {
     const angle = getAngle(idx)
     return { x: CENTER_X + MIN_R * Math.cos(angle), y: CENTER_Y + MIN_R * Math.sin(angle) }
-  }).reverse()
+  })
+  const subdivisionRings = SUBDIVISIONS.map((scale) =>
+    games.map((_, idx) => getPoint(idx, scale))
+  )
 
-  const outerPath = outer.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
-  const innerPath = inner.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
-  return `${outerPath} ${innerPath}`
-}
-
-const outerPoints = GAMES.map((_, idx) => getPoint(idx, WEB_SCALE))
-const minBetPoints = GAMES.map((_, idx) => {
-  const angle = getAngle(idx)
-  return { x: CENTER_X + MIN_R * Math.cos(angle), y: CENTER_Y + MIN_R * Math.sin(angle) }
-})
-const subdivisionRings = SUBDIVISIONS.map((scale) =>
-  GAMES.map((_, idx) => getPoint(idx, scale))
-)
-
-export function BetRadarChart({ datasets, showLabels = false }: BetRadarChartProps) {
   return (
     <svg viewBox={`0 0 ${CENTER_X * 2} ${CENTER_Y * 2}`} className="w-full h-full">
       {/* Outer polygon with background */}
@@ -121,7 +124,7 @@ export function BetRadarChart({ datasets, showLabels = false }: BetRadarChartPro
         />
       ))}
       {/* Game name labels */}
-      {showLabels && GAMES.map((game, idx) => {
+      {showLabels && games.map((game, idx) => {
         const p = getPoint(idx, LABEL_SCALE)
         return (
           <text

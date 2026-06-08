@@ -4,7 +4,7 @@ import { eq, desc, and, isNotNull } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/session'
 import { ResultDisplay } from './result-display'
-import { GAMES } from '@/lib/games'
+import { getGamesForTournament } from '@/lib/games-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +28,7 @@ async function getStandings(tournamentId: number) {
 }
 
 async function getMatchStats(tournamentId: number, winnerId: number) {
+  const tournamentGameList = await getGamesForTournament(tournamentId)
   // Get all completed matches with a selected game
   const completedMatches = await db
     .select({
@@ -98,7 +99,7 @@ async function getMatchStats(tournamentId: number, winnerId: number) {
   // Convert IDs to game names
   const getGameName = (id: string | null) => {
     if (!id) return null
-    return GAMES.find((g) => g.id === id)?.name || id
+    return tournamentGameList.find((g) => g.id === id)?.name || id
   }
 
   return {

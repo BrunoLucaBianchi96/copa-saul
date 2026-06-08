@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { GAMES, type Game } from '@/lib/games'
+import { type Game } from '@/lib/games'
 import { ConfirmModal } from '@/app/components/confirm-modal'
 import { TOTAL_BET_POINTS, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, calculateMatchPoints, generateRandomBets } from '@/lib/scoring-constants'
 import { BetRadarChart } from '@/app/components/bet-radar-chart'
@@ -15,6 +15,7 @@ interface Player {
 }
 
 interface BetsFormProps {
+  games: Game[]
   players: Player[]
   sessionPlayerId: number | null
   isHost: boolean
@@ -23,7 +24,7 @@ interface BetsFormProps {
   editToken?: string
 }
 
-export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readOnly, editToken }: BetsFormProps) {
+export function BetsForm({ games, players, sessionPlayerId, isHost, tournamentId, readOnly, editToken }: BetsFormProps) {
   const t = useTranslations('bets')
   const tCommon = useTranslations('common')
   const tErrors = useTranslations('errors')
@@ -34,7 +35,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
     sessionPlayerId ?? (isHost && players.length > 0 ? players[0].playerId : null)
   )
   const [bets, setBets] = useState<Record<string, number>>(
-    Object.fromEntries(GAMES.map((g) => [g.id, DEFAULT_BET]))
+    Object.fromEntries(games.map((g) => [g.id, DEFAULT_BET]))
   )
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(false)
@@ -66,7 +67,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
             betMap[b.gameId] = b.bet
           }
           // Fill in defaults for any missing games
-          for (const game of GAMES) {
+          for (const game of games) {
             if (!(game.id in betMap)) {
               betMap[game.id] = DEFAULT_BET
             }
@@ -87,7 +88,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           playerId: selectedPlayerId,
-          bets: GAMES.map((g) => ({ gameId: g.id, bet: bets[g.id] })),
+          bets: games.map((g) => ({ gameId: g.id, bet: bets[g.id] })),
           ...(editToken ? { editToken } : {}),
         }),
       })
@@ -103,18 +104,18 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
   }
 
   function setAllToMinimum() {
-    setBets(Object.fromEntries(GAMES.map((g) => [g.id, MIN_BET_PER_GAME])))
+    setBets(Object.fromEntries(games.map((g) => [g.id, MIN_BET_PER_GAME])))
     setSaved(false)
   }
 
   function setEvenBet() {
-    const evenBet = Math.floor(TOTAL_BET_POINTS / GAMES.length)
-    setBets(Object.fromEntries(GAMES.map((g) => [g.id, evenBet])))
+    const evenBet = Math.floor(TOTAL_BET_POINTS / games.length)
+    setBets(Object.fromEntries(games.map((g) => [g.id, evenBet])))
     setSaved(false)
   }
 
   function setRandomBets() {
-    const randomBets = generateRandomBets()
+    const randomBets = generateRandomBets(games.map((g) => g.id))
     setBets(Object.fromEntries(randomBets.map((b) => [b.gameId, b.bet])))
     setSaved(false)
   }
@@ -151,7 +152,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
           if (data.bets) {
             const betMap: Record<string, number> = {}
             for (const b of data.bets) betMap[b.gameId] = b.bet
-            for (const game of GAMES) {
+            for (const game of games) {
               if (!(game.id in betMap)) betMap[game.id] = DEFAULT_BET
             }
             setBets(betMap)
@@ -342,6 +343,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
           {/* Radar chart */}
           <div className="w-[500px] h-[500px] max-w-full mx-auto mb-6">
             <BetRadarChart
+              games={games}
               datasets={[{
                 values: bets,
                 fill: 'rgba(104, 151, 187, 0.3)',
@@ -353,7 +355,7 @@ export function BetsForm({ players, sessionPlayerId, isHost, tournamentId, readO
 
           {/* Game bet rows */}
           <div className="space-y-2 sm:space-y-3">
-            {GAMES.map((game) => (
+            {games.map((game) => (
               <div
                 key={game.id}
                 className="bg-darcula-elevated rounded-lg p-2 sm:p-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3"

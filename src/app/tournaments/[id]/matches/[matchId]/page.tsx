@@ -7,6 +7,7 @@ import { PickBan } from '@/app/components/pick-ban'
 import { type PickBanAction } from '@/lib/games'
 import { getThemeById, THEMES } from '@/lib/themes'
 import { getPlayerBets } from '@/lib/scoring'
+import { getGamesForTournament } from '@/lib/games-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -147,10 +148,14 @@ export default async function MatchPage({
   const canAdvanceRound = isHost && isOnCurrentRound && allMatchesComplete && nextMatchId === null
     && (tournament.status === 'overtime' || tournament.currentRound < tournament.rounds)
 
+  // The tournament's game roster drives the pick-ban wheel and bet snapshots.
+  const games = await getGamesForTournament(tournamentId)
+  const gameIds = games.map((g) => g.id)
+
   // Get player bets for radar chart overlay, and bounties for the bounty badge
   const [p1Bets, p2Bets, player1Bounty, player2Bounty] = await Promise.all([
-    getPlayerBets(tournamentId, player1.id),
-    getPlayerBets(tournamentId, player2.id),
+    getPlayerBets(tournamentId, player1.id, gameIds),
+    getPlayerBets(tournamentId, player2.id, gameIds),
     getPlayerBounty(tournamentId, player1.id),
     getPlayerBounty(tournamentId, player2.id),
   ])
@@ -172,6 +177,7 @@ export default async function MatchPage({
   return (
     <PickBan
       key={matchId}
+      games={games}
       player1Name={formatDisplayName(player1.name, player1.nickname)}
       player2Name={formatDisplayName(player2.name, player2.nickname)}
       player1Avatar={player1.avatarUrl}

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import type { Game } from '@/lib/games'
 import { parseControlNotation, getControllerIconPath, type ParsedControl } from '@/lib/controller-icons'
 
@@ -31,6 +31,12 @@ interface GameDetailModalProps {
 export function GameDetailModal({ game, gradientColors, onClose }: GameDetailModalProps) {
   const t = useTranslations('games')
   const tCommon = useTranslations('common')
+  const locale = useLocale()
+
+  // Description / how-to-play text now lives on the game object (DB-backed),
+  // selected by the active locale.
+  const description = locale === 'es' ? game.descriptionEs : game.descriptionEn
+  const howToPlay = locale === 'es' ? game.howToPlayEs : game.howToPlayEn
 
   return (
     <div
@@ -80,7 +86,7 @@ export function GameDetailModal({ game, gradientColors, onClose }: GameDetailMod
               {t('descriptionLabel')}
             </h3>
             <p className="text-darcula-text">
-              {t.has(`${game.id}.description`) ? t(`${game.id}.description`) : t('noDescription')}
+              {description || t('noDescription')}
             </p>
           </div>
 
@@ -89,7 +95,7 @@ export function GameDetailModal({ game, gradientColors, onClose }: GameDetailMod
               {t('howToPlayLabel')}
             </h3>
             <p className="text-darcula-text">
-              {t.has(`${game.id}.howToPlay`) ? t(`${game.id}.howToPlay`) : t('noHowToPlay')}
+              {howToPlay || t('noHowToPlay')}
             </p>
           </div>
 

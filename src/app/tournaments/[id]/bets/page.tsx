@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getSession, isHost as checkIsHost, getSessionPlayerId } from '@/lib/session'
 import { getTranslations } from 'next-intl/server'
 import { BetsForm } from '@/app/components/bets-form'
+import { getActiveGames, getGamesForTournament } from '@/lib/games-db'
 import { TOTAL_BET_POINTS } from '@/lib/scoring-constants'
 
 export const dynamic = 'force-dynamic'
@@ -42,6 +43,9 @@ export default async function BetsPage({ params }: { params: { id: string } }) {
   const t = await getTranslations('bets')
 
   const isPending = tournament.status === 'pending'
+  // Pre-start edits the global default bets (active roster); post-start shows
+  // the frozen snapshot against the tournament's own roster.
+  const games = isPending ? await getActiveGames() : await getGamesForTournament(id)
 
   return (
     <main className="container mx-auto px-2 py-4 sm:px-4 sm:py-8 max-w-4xl">
@@ -58,6 +62,7 @@ export default async function BetsPage({ params }: { params: { id: string } }) {
       {isPending ? (
         /* Pre-start: edit global default bets via /api/bets */
         <BetsForm
+          games={games}
           players={tournamentPlayersList}
           sessionPlayerId={sessionPlayerId}
           isHost={isHost}
@@ -65,6 +70,7 @@ export default async function BetsPage({ params }: { params: { id: string } }) {
       ) : (
         /* Post-start: read-only view of the frozen snapshot */
         <BetsForm
+          games={games}
           tournamentId={id}
           players={tournamentPlayersList}
           sessionPlayerId={sessionPlayerId}

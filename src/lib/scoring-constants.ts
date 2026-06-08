@@ -29,34 +29,23 @@ export interface BetAllocation {
   bet: number
 }
 
-/** All 7 game IDs — keep in sync with GAMES in games.ts */
-const GAME_IDS = [
-  'sparking-zero',
-  'taiko-no-tatsujin',
-  'trackmania',
-  'wii-sports-ping-pong',
-  'tricky-towers',
-  'duck-game',
-  'boomerang-fu',
-]
-
 /**
- * Generate a random valid bet allocation.
+ * Generate a random valid bet allocation over the given game ids.
  * Pure function — safe for both client and server.
  */
-export function generateRandomBets(): BetAllocation[] {
+export function generateRandomBets(gameIds: string[]): BetAllocation[] {
   const result: Record<string, number> = {}
-  for (const id of GAME_IDS) result[id] = MIN_BET_PER_GAME
-  let remaining = TOTAL_BET_POINTS - MIN_BET_PER_GAME * GAME_IDS.length
+  for (const id of gameIds) result[id] = MIN_BET_PER_GAME
+  let remaining = TOTAL_BET_POINTS - MIN_BET_PER_GAME * gameIds.length
   while (remaining > 0) {
-    const eligible = GAME_IDS.filter((id) => result[id] < MAX_BET_PER_GAME)
+    const eligible = gameIds.filter((id) => result[id] < MAX_BET_PER_GAME)
     if (eligible.length === 0) break
     const pick = eligible[Math.floor(Math.random() * eligible.length)]
     const add = Math.min(5, remaining, MAX_BET_PER_GAME - result[pick])
     result[pick] += add
     remaining -= add
   }
-  return GAME_IDS.map((id) => ({ gameId: id, bet: result[id] }))
+  return gameIds.map((id) => ({ gameId: id, bet: result[id] }))
 }
 
 /**

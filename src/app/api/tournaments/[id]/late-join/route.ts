@@ -5,7 +5,7 @@ import { eq, and, isNull } from 'drizzle-orm'
 import { requireHost } from '@/lib/session'
 import { getThemeForMatch } from '@/lib/themes'
 import { BYE_POINTS, DEFAULT_BET } from '@/lib/scoring'
-import { GAMES } from '@/lib/games'
+import { getGamesForTournament } from '@/lib/games-db'
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const auth = await requireHost()
@@ -70,7 +70,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
     .where(and(isNull(playerBets.tournamentId), eq(playerBets.playerId, playerId)))
 
   const betMap = new Map(defaultBets.map((b) => [b.gameId, b.bet]))
-  const betRows = GAMES.map((game) => ({
+  const tournamentGameList = await getGamesForTournament(tournamentId)
+  const betRows = tournamentGameList.map((game) => ({
     tournamentId,
     playerId,
     gameId: game.id,

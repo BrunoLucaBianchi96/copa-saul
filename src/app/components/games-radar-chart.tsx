@@ -1,16 +1,17 @@
 'use client'
 
-import { GAMES } from '@/lib/games'
+import type { Game } from '@/lib/games'
 
 // A radar of how many times each game has been played. Shares the SVG geometry
 // of BetRadarChart, but the value scale is the dynamic max play count rather
 // than the fixed 20..80 bet range.
 interface GamesRadarChartProps {
+  // Axes of the radar: one per game in the tournament's roster, in order.
+  games: Game[]
   counts: Record<string, number>
   showLabels?: boolean
 }
 
-const NUM_GAMES = GAMES.length
 const RADIUS = 240
 const CENTER_X = 300
 const CENTER_Y = 260
@@ -20,28 +21,30 @@ const SUBDIVISIONS = [0.25, 0.5, 0.75]
 
 const MAX_R = RADIUS * WEB_SCALE
 
-function getAngle(idx: number) {
-  return (idx * 2 * Math.PI) / NUM_GAMES - Math.PI / 2
-}
+export function GamesRadarChart({ games, counts, showLabels = true }: GamesRadarChartProps) {
+  const numGames = games.length
 
-function getPoint(idx: number, scale: number) {
-  const angle = getAngle(idx)
-  return {
-    x: CENTER_X + RADIUS * scale * Math.cos(angle),
-    y: CENTER_Y + RADIUS * scale * Math.sin(angle),
+  function getAngle(idx: number) {
+    return (idx * 2 * Math.PI) / numGames - Math.PI / 2
   }
-}
 
-const outerPoints = GAMES.map((_, idx) => getPoint(idx, WEB_SCALE))
-const subdivisionRings = SUBDIVISIONS.map((scale) =>
-  GAMES.map((_, idx) => getPoint(idx, scale))
-)
+  function getPoint(idx: number, scale: number) {
+    const angle = getAngle(idx)
+    return {
+      x: CENTER_X + RADIUS * scale * Math.cos(angle),
+      y: CENTER_Y + RADIUS * scale * Math.sin(angle),
+    }
+  }
 
-export function GamesRadarChart({ counts, showLabels = true }: GamesRadarChartProps) {
-  const maxCount = Math.max(1, ...GAMES.map((g) => counts[g.id] || 0))
+  const outerPoints = games.map((_, idx) => getPoint(idx, WEB_SCALE))
+  const subdivisionRings = SUBDIVISIONS.map((scale) =>
+    games.map((_, idx) => getPoint(idx, scale))
+  )
+
+  const maxCount = Math.max(1, ...games.map((g) => counts[g.id] || 0))
 
   // Value polygon scaled so the most-played game reaches the web boundary.
-  const valuePoints = GAMES.map((game, idx) => {
+  const valuePoints = games.map((game, idx) => {
     const value = counts[game.id] || 0
     const angle = getAngle(idx)
     const r = MAX_R * (value / maxCount)
@@ -89,7 +92,7 @@ export function GamesRadarChart({ counts, showLabels = true }: GamesRadarChartPr
         style={{ transition: 'all 500ms ease' }}
       />
       {/* Count markers at each played vertex */}
-      {GAMES.map((game, idx) => {
+      {games.map((game, idx) => {
         const value = counts[game.id] || 0
         if (value === 0) return null
         const p = valuePoints[idx]
@@ -97,7 +100,7 @@ export function GamesRadarChart({ counts, showLabels = true }: GamesRadarChartPr
       })}
       {/* Game name + count labels */}
       {showLabels &&
-        GAMES.map((game, idx) => {
+        games.map((game, idx) => {
           const p = getPoint(idx, LABEL_SCALE)
           const value = counts[game.id] || 0
           return (

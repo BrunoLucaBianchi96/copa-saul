@@ -9,6 +9,7 @@ import { RoundNavigation } from './round-navigation'
 import { Leaderboard } from './leaderboard'
 import { TournamentGamepad } from './tournament-gamepad'
 import { getSession, isHost as checkIsHost } from '@/lib/session'
+import { getGamesForTournament } from '@/lib/games-db'
 import { getTranslations } from 'next-intl/server'
 
 export const dynamic = 'force-dynamic'
@@ -88,6 +89,7 @@ export default async function TournamentPage({
   }
 
   const standings = await getStandings(id)
+  const games = await getGamesForTournament(id)
   const isHost = checkIsHost(role)
 
   const t = await getTranslations('tournament')
@@ -191,7 +193,7 @@ export default async function TournamentPage({
             {tournament.currentRound === 0 ? (
               <p className="text-darcula-text-muted">{t('tournamentNotStarted')}</p>
             ) : (
-              <MatchList matches={roundMatches} tournamentId={id} />
+              <MatchList matches={roundMatches} tournamentId={id} games={games} />
             )}
           </TournamentGamepad>
         </section>

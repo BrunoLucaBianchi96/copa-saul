@@ -6,7 +6,7 @@ import { generatePairings } from '@/lib/swiss'
 import { requireHost } from '@/lib/session'
 import { getThemeForMatch } from '@/lib/themes'
 import { BYE_POINTS, DEFAULT_BET } from '@/lib/scoring'
-import { GAMES } from '@/lib/games'
+import { getGamesForTournament } from '@/lib/games-db'
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const auth = await requireHost()
@@ -139,10 +139,13 @@ export async function POST(request: Request, { params }: { params: { id: string 
     )
   )
 
+  // Snapshot is taken against the tournament's own game roster
+  const tournamentGameList = await getGamesForTournament(tournamentId)
+
   // Build all bet snapshot rows in memory, then bulk insert
   const allBetRows = remainingPlayers.flatMap(({ playerId }, idx) => {
     const betMap = new Map(allDefaultBets[idx].map((b) => [b.gameId, b.bet]))
-    return GAMES.map((game) => ({
+    return tournamentGameList.map((game) => ({
       tournamentId,
       playerId,
       gameId: game.id,

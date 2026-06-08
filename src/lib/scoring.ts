@@ -1,7 +1,6 @@
 import { db } from '@/db'
 import { playerBets } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { GAMES } from '@/lib/games'
 
 // Re-export constants and pure functions from client-safe module
 export {
@@ -23,17 +22,20 @@ export {
 import { TOTAL_BET_POINTS, MIN_BET_PER_GAME, MAX_BET_PER_GAME, DEFAULT_BET, type BetAllocation } from './scoring-constants'
 
 /**
- * Validate that a set of bets is legal:
- * - Exactly 7 entries (one per game)
- * - Each bet >= 10
- * - Total === 140
- * - All gameIds are valid
+ * Validate that a set of bets is legal against a tournament's game roster:
+ * - Exactly one entry per game in the roster
+ * - Each bet within [MIN_BET_PER_GAME, MAX_BET_PER_GAME]
+ * - Total === TOTAL_BET_POINTS
+ * - All gameIds belong to the roster
  */
-export function validateBets(bets: BetAllocation[]): { valid: boolean; error?: string } {
-  const validGameIds = new Set(GAMES.map((g) => g.id))
+export function validateBets(
+  bets: BetAllocation[],
+  gameIds: string[]
+): { valid: boolean; error?: string } {
+  const validGameIds = new Set(gameIds)
 
-  if (bets.length !== GAMES.length) {
-    return { valid: false, error: `Must have exactly ${GAMES.length} bets` }
+  if (bets.length !== gameIds.length) {
+    return { valid: false, error: `Must have exactly ${gameIds.length} bets` }
   }
 
   const seenGameIds = new Set<string>()
@@ -86,12 +88,13 @@ export async function getPlayerBetForGame(
 }
 
 /**
- * Get all bets for a player in a tournament.
+ * Get all bets for a player in a tournament, one entry per game in `gameIds`.
  * Returns default bets for any games not explicitly set.
  */
 export async function getPlayerBets(
   tournamentId: number,
-  playerId: number
+  playerId: number,
+  gameIds: string[]
 ): Promise<BetAllocation[]> {
   const bets = await db
     .select()
@@ -102,8 +105,8 @@ export async function getPlayerBets(
 
   const betMap = new Map(bets.map((b) => [b.gameId, b.bet]))
 
-  return GAMES.map((game) => ({
-    gameId: game.id,
-    bet: betMap.get(game.id) ?? DEFAULT_BET,
+  return gameIds.map((gameId) => ({
+    gameId,
+    bet: betMap.get(gameId) ?? DEFAULT_BET,
   }))
 }

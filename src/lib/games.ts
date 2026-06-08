@@ -6,131 +6,25 @@ export interface ControlEntry {
 export interface Game {
   id: string
   name: string
-  description?: string
-  howToPlay?: string
-  imageUrl?: string
-  imageFit?: 'cover' | 'contain'
-  videoUrl?: string
-  videoStart?: number
-  controls?: ControlEntry[]
+  // Description / how-to-play text per locale (moved out of i18n message files
+  // into the database so new games can ship text without editing translations).
+  descriptionEn?: string | null
+  descriptionEs?: string | null
+  howToPlayEn?: string | null
+  howToPlayEs?: string | null
+  imageUrl?: string | null
+  imageFit?: 'cover' | 'contain' | null
+  videoUrl?: string | null
+  videoStart?: number | null
+  controls?: ControlEntry[] | null
   launchable: boolean
-  steamAppId?: number
-  defaultLaunchUrl?: string
+  steamAppId?: number | null
+  defaultLaunchUrl?: string | null
+  sortOrder: number
+  active: boolean
 }
 
 export const GAME_URLS_STORAGE_KEY = 'copa-saul-game-urls'
-
-export const GAMES: Game[] = [
-  {
-    id: 'sparking-zero',
-    name: 'Sparking Zero',
-    launchable: true,
-    defaultLaunchUrl: 'steam://rungameid/',
-    imageUrl: '/avatars/sparking-zero-2.jpg',
-    videoUrl: 'https://www.youtube.com/watch?v=wV-dsMTKgH4',
-    videoStart: 25,
-    "controls": [
-      {
-        "label": "Subir",
-        "buttons": ["PS-L1"]
-      },
-      {
-        "label": "Bajar",
-        "buttons": ["PS-L2"]
-      },
-      {
-        "label": "Blockear",
-        "buttons": ["PS-R1+HOLD"]
-      },
-      {
-        "label": "Cargar Ki",
-        "buttons": ["PS-R2+HOLD"]
-      },
-      {
-        "label": "Poderes",
-        "buttons": ["PS-R2+HOLD", "+", "PS-COLOR-SQUARE/PS-COLOR-TRIANGLE/PS-COLOR-CIRCLE/PS-COLOR-CROSS"]
-      },
-      {
-        "label": "Counterear",
-        "buttons": ["PS-COLOR-CIRCLE+HOLD"]
-      },
-      {
-        "label": "Volar rapido",
-        "buttons": ["PS-R2+HOLD", "+", "PS-COLOR-CROSS"]
-      },
-      {
-        "label": "Dashear al otro",
-        "buttons": ["PS-R2+HOLD", "+", "PS-COLOR-CROSS", "PS-COLOR-CROSS"]
-      },
-      {
-        "label": "Combo (todos los combos son cuadrado una a cuatro veces y despues triangulo)",
-        "buttons": ["PS-COLOR-SQUARE", "PS-COLOR-SQUARE","PS-COLOR-TRIANGLE"]
-      },
-      {
-        "label": "Cambiar de personaje",
-        "buttons": ["PS-DPAD-LEFT+HOLD", "+", "PS-COLOR-SQUARE/PS-COLOR-TRIANGLE/PS-COLOR-CIRCLE/PS-COLOR-CROSS"]
-      },
-      {
-        "label": "Transformaciones y fusiones",
-        "buttons": ["PS-DPAD-UP+HOLD", "+", "PS-COLOR-SQUARE/PS-COLOR-TRIANGLE/PS-COLOR-CIRCLE/PS-COLOR-CROSS"]
-      },
-    ],
-  },
-  {
-    id: 'taiko-no-tatsujin',
-    name: 'Taiko no Tatsujin',
-    launchable: false,
-    imageUrl: '/avatars/taiko.webp',
-    imageFit: 'contain',
-    videoUrl: 'https://www.youtube.com/watch?v=ynP3WcqcUHc',
-    videoStart: 462,
-    controls: [
-      { label: 'Nota roja', buttons: ['WII-1'] },
-      { label: 'Nota azul', buttons: ['WII-2'] },
-      { label: 'Nota globo', buttons: ['WII-1/WII-2'] },
-      { label: 'Nota amarilla', buttons: ['WII-1/WII-2'] },
-    ],
-  },
-  {
-    id: 'trackmania',
-    name: 'Trackmania Turbo',
-    launchable: true,
-    defaultLaunchUrl: 'steam://rungameid/',
-    imageUrl: 'https://image.api.playstation.com/cdn/UP0001/CUSA03008_00/Vxl9PD0n9dSbh9wV9TEKtJJYOP39Mc4R.png',
-    videoUrl: 'https://www.youtube.com/watch?v=MWr369TCMmo',
-    videoStart: 23,
-    controls: [
-      { label: 'Acelerar', buttons: ['PS-R2'] },
-      { label: 'Frenar', buttons: ['PS-L2'] },
-      { label: 'Volver al último checkpoint (mantiene momentum)', buttons: ['PS-COLOR-TRIANGLE'] },
-      { label: 'Reset completo (si te quedás trabado)', buttons: ['PS-COLOR-TRIANGLE', 'PS-COLOR-TRIANGLE'] },
-      { label: '⚠️ Reiniciar carrera - NO TOCAR EN CARRERA', buttons: ['PS-COLOR-CIRCLE'] },
-    ],
-  },
-  { id: 'wii-sports-ping-pong', name: 'Wii Sports Ping Pong', launchable: false, imageUrl: '/avatars/wii-sports.jpg' },
-  { id: 'tricky-towers', name: 'Tricky Towers', launchable: true, defaultLaunchUrl: 'steam://rungameid/', imageUrl: '/avatars/tricky-towers.jpg', videoUrl: 'https://www.youtube.com/watch?v=GyT1S0jeRq0', videoStart: 113 },
-  {
-    id: 'duck-game',
-    name: 'Duck Game',
-    launchable: true,
-    steamAppId: 312530,
-    defaultLaunchUrl: 'steam://rungameid/312530',
-    imageUrl: '/avatars/duck-game.jpeg',
-    videoUrl: 'https://www.youtube.com/watch?v=VZrwIrfr7xk',
-    videoStart: 327,
-    controls: [
-      { label: 'Moverse', buttons: ['PS-LS'] },
-      { label: 'Lengua', buttons: ['PS-RS'] },
-      { label: 'Saltar / Aceptar', buttons: ['PS-COLOR-CROSS'] },
-      { label: 'Cuac', buttons: ['PS-COLOR-CIRCLE'] },
-      { label: 'Disparar', buttons: ['PS-COLOR-SQUARE'] },
-      { label: 'Agarrar', buttons: ['PS-COLOR-TRIANGLE'] },
-      { label: 'Strafe', buttons: ['PS-L1'] },
-      { label: 'Tropezar / Ragdoll', buttons: ['PS-R1'] },
-    ],
-  },
-  { id: 'boomerang-fu', name: 'Boomerang Fu', launchable: true, steamAppId: 965680, defaultLaunchUrl: 'steam://rungameid/965680', imageUrl: '/avatars/boomerang-fu.jpg', videoUrl: 'https://www.youtube.com/watch?v=I1wz1M-n98c', videoStart: 90 },
-]
 
 export type PickBanActionType = 'ban' | 'pick' | 'skip'
 
@@ -161,12 +55,16 @@ export interface PickBanState {
   selectedGame?: string
 }
 
-// Calculate game states from actions
-export function getGameStates(actions: PickBanAction[]): Map<string, GameState> {
+// Calculate game states from actions. `games` seeds the initial available set
+// (the tournament's roster); actions then mutate it.
+export function getGameStates(
+  actions: PickBanAction[],
+  games: { id: string }[]
+): Map<string, GameState> {
   const states = new Map<string, GameState>()
 
   // Initialize all games as available
-  for (const game of GAMES) {
+  for (const game of games) {
     states.set(game.id, { status: 'available', protectedBy: null, bannedBy: null })
   }
 

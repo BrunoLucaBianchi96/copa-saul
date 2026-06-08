@@ -7,8 +7,8 @@ import { toast } from 'sonner'
 import { ConfirmModal } from './confirm-modal'
 import { NavMenu } from './nav-menu'
 import {
-  GAMES,
   GAME_URLS_STORAGE_KEY,
+  type Game,
   type PickBanAction,
   getGameStates,
   calculatePickBanState,
@@ -33,11 +33,12 @@ import { ControllerButton } from './controller-button'
  * high opponent yields the larger payout when you win the upset.
  */
 function buildPotentialWinnings(
+  games: Game[],
   myBets: Record<string, number>,
   opponentBets: Record<string, number>,
 ): Record<string, number> {
   const result: Record<string, number> = {}
-  for (const game of GAMES) {
+  for (const game of games) {
     const myBet = myBets[game.id] ?? DEFAULT_BET
     const opponentBet = opponentBets[game.id] ?? DEFAULT_BET
     result[game.id] = calculateMatchPoints(myBet, opponentBet)
@@ -46,6 +47,7 @@ function buildPotentialWinnings(
 }
 
 interface PickBanProps {
+  games: Game[]
   player1Name: string
   player2Name: string
   player1Avatar?: string | null
@@ -168,6 +170,7 @@ function PlayerPortrait({
 }
 
 export function PickBan({
+  games,
   player1Name,
   player2Name,
   player1Avatar,
@@ -240,7 +243,7 @@ export function PickBan({
   // Resolve launch URL from localStorage when game is selected
   useEffect(() => {
     if (!selectedGame) { setGameLaunchUrl(null); return }
-    const game = GAMES.find(g => g.id === selectedGame)
+    const game = games.find(g => g.id === selectedGame)
     if (!game?.launchable) { setGameLaunchUrl(null); return }
 
     let url: string | null = null
@@ -491,11 +494,11 @@ export function PickBan({
   }, [])
 
   const state = calculatePickBanState(actions, selectedGame)
-  const gameStates = getGameStates(actions)
+  const gameStates = getGameStates(actions, games)
   const animationDurations = getAnimationDurations(theme)
 
   // --- Gamepad support ---
-  const { getFocus, navigate: navigateWheel, reset: resetWheelFocus } = useWheelNavigation(GAMES.length)
+  const { getFocus, navigate: navigateWheel, reset: resetWheelFocus } = useWheelNavigation(games.length)
 
   // Gamepad is always active (navigation buttons work anytime), except during auto-selection animation
   const gamepadEnabled = state.currentPhase !== 'selecting'
@@ -536,7 +539,7 @@ export function PickBan({
           return
         }
         const idx = getFocus(gamepadIndex)
-        if (idx !== null) handleGameClick(GAMES[idx].id)
+        if (idx !== null) handleGameClick(games[idx].id)
         else console.log('[pick-ban] cross: no game focused (move the stick first)')
       }
     } else if (button === 'triangle') {
@@ -548,7 +551,7 @@ export function PickBan({
       const player = myPlayerNumber ?? (gamepadIndex <= 1 ? ((gamepadIndex + 1) as 1 | 2) : null)
       if (player === null) return
       const idx = getFocus(gamepadIndex)
-      if (idx !== null) setPreference(player, GAMES[idx].id)
+      if (idx !== null) setPreference(player, games[idx].id)
     } else if (button === 'circle') {
       setNavigating(true)
       router.push(`/tournaments/${tournamentId}`)
@@ -571,7 +574,7 @@ export function PickBan({
 
   const handleGamepadDirection = (dir: GamepadDirection, gamepadIndex: number) => {
     if (state.currentPhase === 'complete') {
-      const hasOpenGame = gameLaunchUrl && selectedGame && GAMES.find(g => g.id === selectedGame)?.launchable
+      const hasOpenGame = gameLaunchUrl && selectedGame && games.find(g => g.id === selectedGame)?.launchable
       if (dir === 'up' && hasOpenGame) {
         setFocusedOpenGame(true)
         setFocusedWinner(null)
@@ -691,7 +694,7 @@ export function PickBan({
   const currentPlayerName = state.currentPlayer === 1 ? player1Name : player2Name
 
   // Games that can be selected at the end (not banned)
-  const selectableGames = GAMES.filter((g) => gameStates.get(g.id)?.status !== 'banned')
+  const selectableGames = games.filter((g) => gameStates.get(g.id)?.status !== 'banned')
 
   const isMyTurn = sessionPlayerId !== null && sessionPlayerId === (state.currentPlayer === 1 ? player1Id : player2Id)
   const isInteractive = (isHost || isMyTurn) && localMatchResult === 'pending' && state.currentPhase !== 'complete' && state.currentPhase !== 'selecting'
@@ -786,7 +789,7 @@ export function PickBan({
 
   function getPhaseInstruction(): { phase: string; detail: string } {
     if (localMatchResult !== 'pending') {
-      return { phase: t('complete'), detail: GAMES.find((g) => g.id === selectedGame)?.name || 'Unknown' }
+      return { phase: t('complete'), detail: games.find((g) => g.id === selectedGame)?.name || 'Unknown' }
     }
 
     switch (state.currentPhase) {
@@ -799,7 +802,7 @@ export function PickBan({
       case 'selecting':
         return { phase: t('selectingEllipsis'), detail: t('randomGame') }
       case 'complete':
-        return { phase: t('selected'), detail: GAMES.find((g) => g.id === state.selectedGame)?.name || '' }
+        return { phase: t('selected'), detail: games.find((g) => g.id === state.selectedGame)?.name || '' }
     }
   }
 
@@ -841,7 +844,7 @@ export function PickBan({
     setTimeout(() => setFlashingGame(null), 900)
     triggerBackgroundFlash('select')
     playSoundbite('onGameSelected')
-    toast.success(t('agreedToast', { game: GAMES.find((g) => g.id === gameId)?.name ?? '' }))
+    toast.success(t('agreedToast', { game: games.find((g) => g.id === gameId)?.name ?? '' }))
   }, [playSoundbite, t])
 
   // Mark one player's preferred game (toggles off if re-selected). When it matches the
@@ -942,11 +945,11 @@ export function PickBan({
 
     animationStartedRef.current = true
     // Calculate selectable games fresh to avoid closure issues
-    const currentGameStates = getGameStates(actions)
-    const gamesToSelect = GAMES.filter((g) => currentGameStates.get(g.id)?.status !== 'banned')
+    const currentGameStates = getGameStates(actions, games)
+    const gamesToSelect = games.filter((g) => currentGameStates.get(g.id)?.status !== 'banned')
 
     if (gamesToSelect.length === 0) {
-      const randomGame = GAMES[Math.floor(Math.random() * GAMES.length)]
+      const randomGame = games[Math.floor(Math.random() * games.length)]
       selectFinalGame(randomGame.id)
       return
     }
@@ -1142,7 +1145,7 @@ export function PickBan({
   }
 
   // Calculate positions for games in a polygon
-  const numGames = GAMES.length
+  const numGames = games.length
   const radius = 240
   const centerX = 300
   const centerY = 260
@@ -1446,7 +1449,7 @@ export function PickBan({
           </div>
         )}
         {/* Open Game button - shown when game is selected and launchable */}
-        {state.currentPhase === 'complete' && selectedGame && GAMES.find(g => g.id === selectedGame)?.launchable && (
+        {state.currentPhase === 'complete' && selectedGame && games.find(g => g.id === selectedGame)?.launchable && (
           <div className="mt-3">
             {gameLaunchUrl ? (
               <button
@@ -1495,15 +1498,16 @@ export function PickBan({
         {/* Spider web SVG */}
         <div className="absolute inset-0 pointer-events-none">
           <BetRadarChart
+            games={games}
             datasets={[
-              { values: buildPotentialWinnings(player1Bets, player2Bets), fill: 'rgba(104, 151, 187, 0.25)', stroke: 'rgba(104, 151, 187, 0.6)' },
-              { values: buildPotentialWinnings(player2Bets, player1Bets), fill: 'rgba(106, 135, 89, 0.25)', stroke: 'rgba(106, 135, 89, 0.6)' },
+              { values: buildPotentialWinnings(games, player1Bets, player2Bets), fill: 'rgba(104, 151, 187, 0.25)', stroke: 'rgba(104, 151, 187, 0.6)' },
+              { values: buildPotentialWinnings(games, player2Bets, player1Bets), fill: 'rgba(106, 135, 89, 0.25)', stroke: 'rgba(106, 135, 89, 0.6)' },
             ]}
           />
         </div>
 
         {/* Game cards */}
-        {GAMES.map((game, idx) => {
+        {games.map((game, idx) => {
           const angle = (idx * 2 * Math.PI) / numGames - Math.PI / 2
           const x = centerX + radius * Math.cos(angle)
           const y = centerY + radius * Math.sin(angle)

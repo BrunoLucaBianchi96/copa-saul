@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import type { Game } from '@/lib/games'
 
 export default function NewTournament() {
   const router = useRouter()
@@ -10,6 +11,9 @@ export default function NewTournament() {
   const [rounds, setRounds] = useState(4)
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
+  const [games, setGames] = useState<Game[]>([])
+  // Game ids included in this tournament; defaults to all active games.
+  const [selectedGameIds, setSelectedGameIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     async function checkAuth() {
@@ -28,14 +32,41 @@ export default function NewTournament() {
     checkAuth()
   }, [router])
 
+  // Load the active game roster and pre-select all of them.
+  useEffect(() => {
+    async function loadGames() {
+      const res = await fetch('/api/games')
+      if (res.ok) {
+        const data = await res.json()
+        const list: Game[] = data.games ?? []
+        setGames(list)
+        setSelectedGameIds(new Set(list.map((g) => g.id)))
+      }
+    }
+    loadGames()
+  }, [])
+
+  function toggleGame(id: string) {
+    setSelectedGameIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (selectedGameIds.size === 0) {
+      toast.error('Select at least one game')
+      return
+    }
     setLoading(true)
 
     const res = await fetch('/api/tournaments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, rounds }),
+      body: JSON.stringify({ name, rounds, gameIds: Array.from(selectedGameIds) }),
     })
 
     if (res.ok) {
@@ -92,6 +123,38 @@ export default function NewTournament() {
           <p className="text-sm text-darcula-text-muted mt-1">
             Recommended: 4 rounds for 12 players
           </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-darcula-text mb-1">
+            Games ({selectedGameIds.size}/{games.length})
+          </label>
+          <p className="text-sm text-darcula-text-muted mb-2">
+            Which games are in play for this tournament.
+          </p>
+          <div className="space-y-1 max-h-60 overflow-y-auto">
+            {games.map((g) => (
+              <label
+                key={g.id}
+                className="flex items-center gap-3 p-2 rounded bg-darcula-elevated cursor-pointer hover:bg-darcula-border transition"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedGameIds.has(g.id)}
+                  onChange={() => toggleGame(g.id)}
+                  className="w-4 h-4 accent-darcula-blue"
+                />
+                {g.imageUrl && (
+                  <img
+                    src={g.imageUrl}
+                    alt={g.name}
+                    className={`w-8 h-8 rounded ${g.imageFit === 'contain' ? 'object-contain' : 'object-cover'} flex-shrink-0`}
+                  />
+                )}
+                <span className="text-darcula-text text-sm">{g.name}</span>
+              </label>
+            ))}
+          </div>
         </div>
 
         <button

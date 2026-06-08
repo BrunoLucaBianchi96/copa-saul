@@ -1,7 +1,8 @@
 import { db } from '@/db'
 import { tournaments, tournamentPlayers, players, matches } from '@/db/schema'
 import { eq, and, desc, isNotNull, ne } from 'drizzle-orm'
-import { GAMES } from '@/lib/games'
+import { getGamesForTournament } from '@/lib/games-db'
+import type { Game } from '@/lib/games'
 
 // Combined live state for the tournament dashboard. Shared by the dashboard
 // page (initial render) and the SSE stream route (polling) so the two never
@@ -40,6 +41,9 @@ export interface DashboardState {
   // gameId -> number of completed matches played on that game. Every game id is
   // always present (defaults to 0) so the radar keeps all of its axes.
   gamesPlayed: Record<string, number>
+  // The tournament's game roster (id + display fields) so the client radar and
+  // match list can resolve names without importing the DB.
+  games: Game[]
 }
 
 export async function getDashboardState(
@@ -97,9 +101,10 @@ export async function getDashboardState(
   }
 
   // Games played: completed matches that landed on a game. Seed every game id
-  // to 0 so the radar always renders all axes.
+  // in the tournament's roster to 0 so the radar always renders all axes.
+  const tournamentGameList = await getGamesForTournament(tournamentId)
   const gamesPlayed: Record<string, number> = {}
-  for (const game of GAMES) gamesPlayed[game.id] = 0
+  for (const game of tournamentGameList) gamesPlayed[game.id] = 0
 
   const completedMatches = await db
     .select({ selectedGame: matches.selectedGame })
@@ -129,5 +134,6 @@ export async function getDashboardState(
     standings,
     matches: dashboardMatches,
     gamesPlayed,
+    games: tournamentGameList,
   }
 }

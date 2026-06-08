@@ -4,6 +4,7 @@ import { eq, isNull, and } from 'drizzle-orm'
 import { getTranslations } from 'next-intl/server'
 import { EditProfileForm } from './edit-profile-form'
 import { BetsForm } from '@/app/components/bets-form'
+import { getActiveGames } from '@/lib/games-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,6 +32,7 @@ export default async function EditProfilePage({ params }: { params: { token: str
   }
 
   const tBets = await getTranslations('bets')
+  const games = await getActiveGames()
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-lg">
@@ -46,6 +48,7 @@ export default async function EditProfilePage({ params }: { params: { token: str
 
       <h2 className="text-xl font-bold text-darcula-text-bright mt-10 mb-4 text-center">{tBets('myBetsNav')}</h2>
       <BetsForm
+        games={games}
         players={[{ playerId: player.id, playerName: player.name }]}
         sessionPlayerId={player.id}
         isHost={false}
