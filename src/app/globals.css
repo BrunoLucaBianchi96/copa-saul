@@ -37,6 +37,29 @@
 /*  transform-origin: bottom center;*/
 /*}*/
 
+/* Confetti falling from the top of the screen */
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-10vh) translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) translateX(var(--drift, 0px))
+      rotate(calc(var(--spin, 360deg) * 3));
+    opacity: 1;
+  }
+}
+
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  border-radius: 1px;
+  will-change: transform;
+  animation-name: confettiFall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
 /* Portrait entrance - drop from top with bounce */
 .portrait-enter {
   animation: portraitDrop var(--drop-duration, 1s) ease-in both;

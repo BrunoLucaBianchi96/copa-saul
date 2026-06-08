@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/session'
 import { ResultDisplay } from './result-display'
 import { getGamesForTournament } from '@/lib/games-db'
+import { getDashboardState } from '@/lib/dashboard'
 
 export const dynamic = 'force-dynamic'
 
@@ -150,6 +151,7 @@ export default async function ResultPage({
 
   const winner = standings[0]
   const stats = await getMatchStats(id, winner.playerId)
+  const dashboard = await getDashboardState(id)
 
   return (
     <ResultDisplay
@@ -159,6 +161,9 @@ export default async function ResultPage({
       winnerPoints={winner.points}
       participants={standings}
       stats={stats}
+      games={dashboard?.games ?? []}
+      gamesPlayed={dashboard?.gamesPlayed ?? {}}
+      standings={dashboard?.standings ?? []}
     />
   )
 }

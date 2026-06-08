@@ -2,6 +2,11 @@
 
 import { useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
+import { Confetti } from '@/app/components/confetti'
+import { GamesRadarChart } from '@/app/components/games-radar-chart'
+import { AnimatedLeaderboard } from '../dashboard/animated-leaderboard'
+import type { Game } from '@/lib/games'
+import type { DashboardStandingRow } from '@/lib/dashboard'
 
 // Samba de Janeiro: 133 BPM, division 1
 const VICTORY_BPM = 133
@@ -36,6 +41,9 @@ interface ResultDisplayProps {
   winnerPoints: number
   participants: Participant[]
   stats: Stats
+  games: Game[]
+  gamesPlayed: Record<string, number>
+  standings: DashboardStandingRow[]
 }
 
 export function ResultDisplay({
@@ -45,9 +53,13 @@ export function ResultDisplay({
   winnerPoints,
   participants,
   stats,
+  games,
+  gamesPlayed,
+  standings,
 }: ResultDisplayProps) {
   const t = useTranslations('result')
   const tCommon = useTranslations('common')
+  const tDashboard = useTranslations('dashboard')
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   // Play victory music on mount
@@ -104,17 +116,13 @@ export function ResultDisplay({
       {/* Animated background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-darcula-green/10 via-darcula-bg to-darcula-bg" />
 
-      {/* Confetti-like particles (CSS-only decoration) */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-2 h-2 bg-darcula-yellow rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '2s' }} />
-        <div className="absolute top-10 left-1/3 w-3 h-3 bg-darcula-green rounded-full animate-bounce" style={{ animationDelay: '0.3s', animationDuration: '2.5s' }} />
-        <div className="absolute top-5 right-1/4 w-2 h-2 bg-darcula-blue rounded-full animate-bounce" style={{ animationDelay: '0.5s', animationDuration: '2.2s' }} />
-        <div className="absolute top-20 right-1/3 w-3 h-3 bg-darcula-orange rounded-full animate-bounce" style={{ animationDelay: '0.7s', animationDuration: '1.8s' }} />
-        <div className="absolute top-0 left-1/2 w-2 h-2 bg-darcula-purple rounded-full animate-bounce" style={{ animationDelay: '0.2s', animationDuration: '2.3s' }} />
-      </div>
+      {/* Confetti falling from the top of the screen */}
+      <Confetti />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4">
+      <div className="relative z-10 w-full max-w-6xl px-4 grid lg:grid-cols-2 gap-8 items-start">
+        {/* Left column: winner showcase (existing content) */}
+        <div className="flex flex-col items-center text-center">
         {/* Tournament name */}
         <p className="text-darcula-text-muted text-lg mb-2">{tournamentName}</p>
 
@@ -255,6 +263,21 @@ export function ResultDisplay({
                 )
               })}
           </div>
+        </div>
+        </div>
+
+        {/* Right column: played games radar + leaderboard (mirrors the dashboard) */}
+        <div className="flex flex-col gap-6 text-left w-full lg:self-center">
+          <section className="bg-darcula-surface/80 backdrop-blur-sm rounded-lg shadow-lg border border-darcula-border p-6">
+            <h2 className="text-xl font-semibold text-darcula-text mb-4">
+              {tDashboard('gamesPlayed')}
+            </h2>
+            <div className="max-w-md mx-auto">
+              <GamesRadarChart games={games} counts={gamesPlayed} />
+            </div>
+          </section>
+
+          <AnimatedLeaderboard standings={standings} />
         </div>
       </div>
     </div>
