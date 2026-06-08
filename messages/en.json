@@ -99,7 +99,11 @@
     "noLaunchUrl": "No launch URL configured.",
     "configureInSetup": "Configure in Setup",
     "agreedToast": "Both players chose {game}!",
-    "preferredBy": "Preferred by {name}"
+    "preferredBy": "Preferred by {name}",
+    "controlNextPrevRound": "Next / Previous round",
+    "controlPickBan": "Pick / Ban",
+    "controlSelect": "Select",
+    "controlAgreeGame": "Agree on a game"
   },
   "result": {
     "theWinnerIs": "The winner is",

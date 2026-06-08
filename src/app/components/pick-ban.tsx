@@ -24,6 +24,7 @@ import { MatrixBackground } from './matrix-background'
 import { BalatroBackground } from './balatro-background'
 import { BalatroCardRain } from './balatro-card-rain'
 import { PlayerCard, BountyBadge, formatPlayerName, getInitials } from './player-card'
+import { ControllerButton } from './controller-button'
 
 /**
  * Points a player would win per game if they played and won it against this
@@ -500,9 +501,26 @@ export function PickBan({
   const gamepadEnabled = state.currentPhase !== 'selecting'
   const lastBumperPress = useRef(0)
 
+  // The side this client controls. A logged-in participant always controls their
+  // own side, whichever controller slot they're on. The host is not a participant
+  // and may drive either side, mapping gamepad slot 0 → P1, slot 1 → P2.
+  const myPlayerNumber: 1 | 2 | null =
+    sessionPlayerId === player1Id ? 1 : sessionPlayerId === player2Id ? 2 : null
+
   // useGamepad stores callbacks in refs internally, so these don't need to be stable
   const handleGamepadButton = (button: string, gamepadIndex: number) => {
     if (button === 'cross') {
+      console.log('[pick-ban] cross pressed', {
+        gamepadIndex,
+        phase: state.currentPhase,
+        currentPlayer: state.currentPlayer,
+        myPlayerNumber,
+        connectedCount,
+        focus: getFocus(gamepadIndex),
+        isInteractive,
+        isMyTurn,
+        isHost,
+      })
       if (state.currentPhase === 'complete') {
         if (focusedOpenGame && gameLaunchUrl) {
           handleOpenGame()
@@ -510,19 +528,27 @@ export function PickBan({
           handleRecordResult(focusedWinner)
         }
       } else {
-        // During ban/pick with 2 controllers: only the active player's controller acts
-        if (connectedCount >= 2 && gamepadIndex !== state.currentPlayer - 1) return
+        // Host driving two local controllers: only the active player's controller
+        // acts. Logged-in participants act as their own side (handleGameClick's
+        // isInteractive/turn check is the real gate), so the slot guard is host-only.
+        if (myPlayerNumber === null && connectedCount >= 2 && gamepadIndex !== state.currentPlayer - 1) {
+          console.log('[pick-ban] cross blocked by controller-slot guard')
+          return
+        }
         const idx = getFocus(gamepadIndex)
         if (idx !== null) handleGameClick(GAMES[idx].id)
+        else console.log('[pick-ban] cross: no game focused (move the stick first)')
       }
     } else if (button === 'triangle') {
       handleFullscreenToggle()
     } else if (button === 'square') {
-      // Mark the pressing player's preferred game (gamepad 0 → player 1, gamepad 1 → player 2)
+      // Mark the pressing player's preferred game. A logged-in participant marks
+      // their own side; the host marks per controller slot (0 → P1, 1 → P2).
       if (state.currentPhase === 'complete' || state.currentPhase === 'selecting') return
-      if (gamepadIndex > 1) return
+      const player = myPlayerNumber ?? (gamepadIndex <= 1 ? ((gamepadIndex + 1) as 1 | 2) : null)
+      if (player === null) return
       const idx = getFocus(gamepadIndex)
-      if (idx !== null) setPreference((gamepadIndex + 1) as 1 | 2, GAMES[idx].id)
+      if (idx !== null) setPreference(player, GAMES[idx].id)
     } else if (button === 'circle') {
       setNavigating(true)
       router.push(`/tournaments/${tournamentId}`)
@@ -865,10 +891,15 @@ export function PickBan({
   }, [tournamentId, matchId, celebrateAgreement, tErrors])
 
   function handleGameClick(gameId: string) {
+    console.log('[pick-ban] handleGameClick', { gameId, isInteractive, isMyTurn, isHost, saving, phase: state.currentPhase })
     if (!isInteractive || saving) return
 
     const gameState = gameStates.get(gameId)
-    if (!gameState) return
+    if (!gameState) {
+      console.log('[pick-ban] handleGameClick: no gameState for', gameId)
+      return
+    }
+    console.log('[pick-ban] handleGameClick: status', gameState.status)
 
     if (state.currentPhase === 'ban1' || state.currentPhase === 'ban2') {
       if (gameState.status === 'banned' || gameState.status === 'protected') return
@@ -1322,6 +1353,29 @@ export function PickBan({
           )}
         </div>
       </nav>
+
+      {/* Controls reminder - desktop only, top right under the nav buttons */}
+      <div className="hidden lg:flex absolute top-14 right-4 z-20 flex-col items-end gap-1 opacity-50 text-white text-sm drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] pointer-events-none">
+        <div className="flex items-center gap-2">
+          <span>{t('controlNextPrevRound')}</span>
+          <span className="flex items-center gap-0.5">
+            <ControllerButton platform="playstation" button="l1" size="sm" />
+            <ControllerButton platform="playstation" button="r1" size="sm" />
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span>{t('controlPickBan')}</span>
+          <ControllerButton platform="playstation" button="cross" size="sm" />
+        </div>
+        <div className="flex items-center gap-2">
+          <span>{t('controlSelect')}</span>
+          <ControllerButton platform="playstation" button="stick-l" size="sm" />
+        </div>
+        <div className="flex items-center gap-2">
+          <span>{t('controlAgreeGame')}</span>
+          <ControllerButton platform="playstation" button="square" size="sm" />
+        </div>
+      </div>
 
       {/* Reset match confirm modal */}
       {showResetConfirm && (
