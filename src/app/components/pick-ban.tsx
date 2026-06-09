@@ -233,6 +233,9 @@ export function PickBan({
   const entranceAnimationShownRef = useRef(initialActions.length === 0 && matchResult === 'pending')
   const currentAnimatingGameRef = useRef<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  // Hidden, preloaded soundbite elements keyed by url, so a ban/pick click plays
+  // instantly even when audio is served from Vercel Blob (no first-hit download).
+  const preloadedSoundbitesRef = useRef<Map<string, HTMLAudioElement>>(new Map())
   const optimisticCountRef = useRef(initialActions.length)
   const [wheelScale, setWheelScale] = useState(1)
   const [floatingPoints, setFloatingPoints] = useState<{ player: 1 | 2; points: number; bounty: number } | null>(null)
@@ -648,16 +651,51 @@ export function PickBan({
     }, stepDuration)
   }, [theme.normalizeVolume])
 
+  // Resolve which soundbite plays for a given stage (theme override → default).
+  const resolveSoundbite = useCallback(
+    (type: 'onBan' | 'onPick' | 'onGameSelected' | 'onWinnerChosen') => {
+      return (
+        theme.soundbites?.[type] ??
+        ((type === 'onBan' || type === 'onPick')
+          ? { path: '/soundbites/MagicClick.ogg' }
+          : type === 'onWinnerChosen'
+            ? { path: '/soundbites/ff-victory.mp3', volume: 0.1 }
+            : null)
+      )
+    },
+    [theme.soundbites]
+  )
+
+  // Warm a hidden, preloaded Audio element for every soundbite this theme could
+  // fire, so the first ban/pick/select/win doesn't pay a download latency.
+  useEffect(() => {
+    const map = preloadedSoundbitesRef.current
+    for (const type of ['onBan', 'onPick', 'onGameSelected', 'onWinnerChosen'] as const) {
+      const sb = resolveSoundbite(type)
+      if (!sb || map.has(sb.path)) continue
+      const a = new Audio(sb.path)
+      a.preload = 'auto'
+      map.set(sb.path, a)
+    }
+    return () => {
+      map.forEach((a) => {
+        a.src = ''
+      })
+      map.clear()
+    }
+  }, [resolveSoundbite])
+
   // Play a soundbite if configured for this theme, returns a Promise that resolves when audio ends
   const playSoundbite = useCallback((type: 'onBan' | 'onPick' | 'onGameSelected' | 'onWinnerChosen'): Promise<void> => {
-    const soundbite = theme.soundbites?.[type]
-      ?? ((type === 'onBan' || type === 'onPick') ? { path: '/soundbites/MagicClick.ogg' }
-        : type === 'onWinnerChosen' ? { path: '/soundbites/ff-victory.mp3', volume: 0.1 } : null)
+    const soundbite = resolveSoundbite(type)
     if (!soundbite) return Promise.resolve()
 
     const { path, offset: offsetMs = 0, volume: volumeMultiplier = 1 } = soundbite
 
-    const audio = new Audio(path)
+    // Reuse the preloaded element (cloned so concurrent plays don't clash);
+    // fall back to a fresh Audio if it wasn't warmed.
+    const preloaded = preloadedSoundbitesRef.current.get(path)
+    const audio = preloaded ? (preloaded.cloneNode() as HTMLAudioElement) : new Audio(path)
     audio.currentTime = offsetMs / 1000 // convert ms to seconds
 
     if (volumeMultiplier > 1) {
@@ -679,7 +717,7 @@ export function PickBan({
         resolve()
       })
     })
-  }, [theme.soundbites])
+  }, [resolveSoundbite])
 
   // Play click sound during game selection animation
   const playClickSound = useCallback(() => {
@@ -1165,7 +1203,7 @@ export function PickBan({
       )}
 
       {/* Theme background - animated (Balatro/GTA4/Matrix) or static image */}
-      {theme.id === 'balatro' ? (
+      {theme.customRenderer === 'balatro' ? (
         <div className="fixed inset-0 z-0 pointer-events-none">
           <BalatroBackground />
           <BalatroCardRain />
@@ -1176,7 +1214,7 @@ export function PickBan({
             }}
           />
         </div>
-      ) : theme.id === 'gta-4' ? (
+      ) : theme.customRenderer === 'gta-4' ? (
         <div className="fixed inset-0 z-0 pointer-events-none">
           <GTA4LoadingBackground />
           {/* Gradient overlay for readability - lower opacity to show more of the animated background */}
@@ -1187,7 +1225,7 @@ export function PickBan({
             }}
           />
         </div>
-      ) : theme.id === 'matrix' ? (
+      ) : theme.customRenderer === 'matrix' ? (
         <div className="fixed inset-0 z-0 pointer-events-none">
           <MatrixBackground />
           <div

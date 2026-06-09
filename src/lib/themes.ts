@@ -1,3 +1,11 @@
+// Client-safe theme types and pure helpers.
+//
+// The actual theme DATA now lives in the database (see src/lib/themes-db.ts).
+// This module must stay importable from 'use client' components (pick-ban.tsx),
+// so it MUST NOT import the db client. It holds only the shared shapes, the
+// pure animation/selection helpers, and the three hardcoded "custom renderer"
+// themes that can't be data-driven (balatro/matrix/gta-4).
+
 export interface Soundbite {
   path: string
   offset?: number // offset in milliseconds
@@ -16,66 +24,24 @@ export interface Theme {
   name: string
   bpm: number
   division: number // 2 = binary, 3 = ternary, 4 = quaternary (bounces per sway)
-  audioFile?: string // path to audio file in public folder
+  audioFile?: string // URL (Vercel Blob) or path to audio file
   audioOffset?: number // offset in milliseconds to start audio from
   normalizeVolume?: number // multiplier to normalize volume across themes (default 1)
   soundbites?: Soundbites // optional soundbites that play at different stages
   backgroundImage?: string // URL or path to background image
   backgroundSize?: 'cover' | 'contain' | 'repeat' // how to size the background (default: cover)
+  active?: boolean // selectable in new tournaments (DB themes only; customs are always active)
+  sortOrder?: number // position in the merged theme order
+  // When set, the pick-ban background is rendered by a bespoke React component
+  // instead of a static backgroundImage. These themes stay hardcoded.
+  customRenderer?: 'balatro' | 'matrix' | 'gta-4'
 }
 
-export const THEMES: Theme[] = [
-  {
-    id: 'techno-syndrome',
-    name: 'Techno Syndrome',
-    bpm: 134,
-    division: 1,
-    audioFile: '/songs/techno-syndrome.mp3',
-    normalizeVolume: 0.7,
-    audioOffset: 16000,
-    backgroundImage: 'https://cdna.artstation.com/p/assets/images/images/003/714/696/large/pawel-kot-mk2-hd-armory.jpg?1476740914',
-    soundbites: {
-      onGameSelected: { path: '/soundbites/MORTAL KOMBAT! Scream.mp3', offset: 100, volume: 0.2 },
-      onWinnerChosen: { path: '/soundbites/Fatality - Mortal Kombat Sound Effect (HD).mp3', volume: 0.2 },
-    },
-  },
-    {
-    id: 'mucha-lucha',
-    name: 'Mucha Lucha Theme',
-    bpm: 124,
-    division: 1,
-    audioFile: '/songs/mucha-lucha.mp3',
-    normalizeVolume: 1,
-    backgroundImage: "https://static.wikia.nocookie.net/muchalucha/images/e/e7/S1E11ATitleCard.jpg/",
-  },
-  {
-    id: 'running-in-the-90s',
-    name: "Running in the 90's (Initial D)",
-    bpm: 159,
-    division: 2,
-    audioFile: '/songs/running-in-the-90s-initial-d.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp12381690.jpg'
-  },
-  {
-    id: 'bury-the-light',
-    name: 'Bury the Light (DMC5)',
-    bpm: 150,
-    division: 1,
-    audioOffset: 26000,
-    audioFile: '/songs/bury-the-light-dmc.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp5554957.jpg'
-  },
-  {
-    id: 'crash-bandicoot',
-    name: 'Crash Bandicoot Theme',
-    bpm: 153,
-    division: 1,
-    audioFile: '/songs/crash-bandicoot-main.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp10708932.jpg'
-  },
+// The three themes that render via custom React components (WebGL / canvas /
+// image carousel) and therefore can't live in the DB. They are merged into the
+// ordered theme list at runtime by themes-db.ts. The sortOrder values slot them
+// into their historical positions in the original THEMES array.
+export const CUSTOM_THEMES: Theme[] = [
   {
     id: 'matrix',
     name: 'Spybreak! (The Matrix)',
@@ -83,58 +49,8 @@ export const THEMES: Theme[] = [
     division: 1,
     audioFile: '/songs/matrix-spybreak.mp3',
     normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp1917057.jpg',
-  },
-  {
-    id: 'raising-fighting-spirit',
-    name: 'The Raising Fighting Spirit',
-    bpm: 140,
-    division: 1,
-    audioFile: '/songs/naruto.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp8813234.png',
-    soundbites: {
-      onGameSelected: { path: '/soundbites/yooooooooooo.mp3', offset: 6200, volume: 0.2 },
-    },
-  },
-  {
-    id: 'take-over',
-    name: 'Take Over (Persona 5 Royal)',
-    bpm: 125,
-    division: 1,
-    audioFile: '/songs/take-over-persona-5.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp15118727.webp'
-  },
-  {
-    id: 'marvel-vs-capcom',
-    name: "Captain America's Theme (MvC)",
-    bpm: 190,
-    division: 1,
-    audioFile: '/songs/marvel-vs-capcom-captain-americas-theme.mp3',
-    normalizeVolume: 1.2,
-    backgroundImage: 'https://wallpapercave.com/wp/wp8157803.jpg',
-  },
-  {
-    id: 'melee-character-select',
-    name: 'SSBM Character Select',
-    bpm: 154,
-    division: 1,
-    audioFile: '/songs/melee-character-select.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://ssb.wiki.gallery/images/thumb/8/86/SSBU-Battlefield.png/1200px-SSBU-Battlefield.png',
-  },
-  {
-    id: 'age-of-empires-2',
-    name: 'Age of Empires 2 Theme',
-    bpm: 65,
-    division: 1,
-    audioFile: '/songs/age-of-empires-2.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://pbs.twimg.com/media/EIjXBAsXkAMbUsk.jpg',
-    soundbites: {
-      onGameSelected: { path: '/soundbites/Wololo Sound Effect.mp3' },
-    },
+    customRenderer: 'matrix',
+    sortOrder: 5,
   },
   {
     id: 'gta-4',
@@ -143,108 +59,9 @@ export const THEMES: Theme[] = [
     division: 1,
     audioFile: '/songs/gta-4.mp3',
     normalizeVolume: 1,
+    customRenderer: 'gta-4',
+    sortOrder: 11,
   },
-  {
-    id: 'perfect-cell-theme',
-    name: 'Perfect Cell Theme',
-    bpm: 100,
-    division: 1,
-    audioFile: '/songs/perfect-cell-theme.mp3',
-    audioOffset: 9000,
-    normalizeVolume: 1,
-    backgroundImage: 'https://i.redd.it/i66bdvdl1h561.jpg',
-  },
-  {
-    id: 'guiles-theme',
-    name: "Guile's Theme",
-    bpm: 125,
-    division: 1,
-    audioFile: '/songs/guiles-theme.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://www.arcadequartermaster.com/ssf2/bonus1.png',
-    soundbites: {
-      // onBan: { path: '/soundbites/Shoryuken - Sound Effect.mp3', offset: 250 },
-      // onPick: { path: '/soundbites/hadouken sound effect.mp3' },
-    },
-  },
-  {
-    id: 'overtaken',
-    name: 'Overtaken (One Piece)',
-    bpm: 107,
-    division: 1,
-    audioFile: '/songs/overtaken.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp11199297.png',
-  },
-{
-    id: 'red-sun',
-    name: 'Red Sun (MGRR)',
-    bpm: 150,
-    division: 1,
-    audioFile: '/songs/mgrr-red-sun.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://images6.alphacoders.com/388/thumb-1920-388347.jpg',
-  },
-  {
-    id: 'the-beast-arcane',
-    name: 'The Beast (Arcane)',
-    bpm: 135,
-    division: 1,
-    audioFile: '/songs/the-beast-arcane.mp3',
-    audioOffset: 10000,
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp12409949.jpg',
-  },
-  {
-    id: 'elden-ring',
-    name: 'Elden Ring Main Theme',
-    bpm: 75,
-    division: 1,
-    audioFile: '/songs/elden-ring-main-menu.mp3',
-    audioOffset: 23000,
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/uwp/uwp4431208.png',
-  },
-  {
-    id: 'megalovania',
-    name: 'Megalovania (Undertale)',
-    bpm: 120,
-    division: 1,
-    audioFile: '/songs/megalovania.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp15821690.png',
-  },
-  {
-    id: 'wii-sports',
-    name: 'Wii Sports Theme',
-    bpm: 120,
-    division: 1,
-    audioFile: '/songs/wii-sports.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://s1.thcdn.com/design-assets/products/Large/10456603/pic1.jpg',
-  },
-  {
-    id: 'scarface-push-it-to-the-limit',
-    name: 'Push It to the Limit (Scarface)',
-    bpm: 156,
-    division: 1,
-    audioFile: '/songs/Scarface-push-it-to-the-limit.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp2479343.jpg',
-  },
-  {
-    id: 'dbz-theme',
-    name: 'DBZ battle theme',
-    bpm: 170,
-    division: 1,
-    audioFile: '/songs/dbz-theme.mp3',
-    normalizeVolume: 1,
-    audioOffset: 2000,
-    backgroundImage: 'https://images.wallpapersden.com/image/download/kame-house-dragon-ball-z_a2llbmaUmZqaraWkpJRoZWhnrWZsZWs.jpg',
-    backgroundSize: 'repeat',
-  },
-  // Priority themes — kept at the end so the fallback logic doesn't assign them
-  // to non-priority players before priority rules get a chance to fire.
   {
     id: 'balatro',
     name: 'Balatro Main Theme',
@@ -252,80 +69,51 @@ export const THEMES: Theme[] = [
     division: 1,
     audioFile: '/songs/balatro-main.mp3',
     normalizeVolume: 1,
-    backgroundImage: 'https://i.redd.it/arcane-wallpaper-collection-3840x2160-v0-31217mvgmxde1.jpg?width=3840&format=pjpg&auto=webp&s=812076ff050a2efe5cc80b58ce1827bae782b6db',
+    customRenderer: 'balatro',
+    sortOrder: 22,
     soundbites: {
       onBan: { path: '/soundbites/card1.ogg' },
       onPick: { path: '/soundbites/card3.ogg' },
       onGameSelected: { path: '/soundbites/win.ogg' },
     },
   },
-  {
-    id: 'stardust-crusaders',
-    name: "Jotaro's Theme (JoJo)",
-    bpm: 140,
-    division: 2,
-    audioFile: '/songs/stardust-crusaders.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapers.com/images/hd/stardust-crusaders-1920-x-1080-wallpaper-d675thhdqigslk2g.jpg',
-    soundbites: {
-      onGameSelected: { path: '/soundbites/Za Warudo - Sound Effect.mp3', volume: 0.6},
-      onWinnerChosen: { path: '/soundbites/Yare Yare Daze.mp3', volume: 5 },
-      onBan: { path: '/soundbites/bakudan.mp3' },
-      onPick: { path: '/soundbites/bakudan.mp3' },
-    },
-  },
-  {
-    id: 'live-and-learn',
-    name: 'Live and Learn (Sonic Adventure 2)',
-    bpm: 172,
-    division: 1,
-    audioFile: '/songs/live-and-learn-sonic-adventure.mp3',
-    normalizeVolume: 1,
-    backgroundImage: 'https://wallpapercave.com/wp/wp3022024.png'
-  },
 ]
 
-export function getThemeById(id: string): Theme | undefined {
-  return THEMES.find((t) => t.id === id)
+export interface ThemePriority {
+  playerName: string // case-insensitive substring match on player name
+  themeId: string // theme to assign
+  round?: number // if set, only applies in this round
 }
 
-interface ThemePriority {
-  playerName: string   // case-insensitive substring match on player name
-  themeId: string      // theme to assign
-  round?: number       // if set, only applies in this round
-}
-
-const THEME_PRIORITIES: ThemePriority[] = [
-  { playerName: 'Lucho', themeId: 'balatro', round: 1 },
-  { playerName: 'Lucho', themeId: 'stardust-crusaders', round: 4 },
-  { playerName: 'Ailen', themeId: 'live-and-learn' },
-]
-
-// Get theme for a match based on player-priority rules, falling back to sequential assignment
-export function getThemeForMatch(
+// Pure theme-selection algorithm. Given the full ordered theme list and the
+// active priority rules, pick a theme for a match. Kept pure (no DB access) so
+// it stays unit-testable; themes-db.getThemeForMatch wraps it with DB fetches.
+export function selectThemeForMatch(
+  themes: Theme[],
+  priorities: ThemePriority[],
   usedThemeIds: string[],
   playerNames: string[],
   round: number,
 ): Theme {
   // Check priority rules
-  for (const rule of THEME_PRIORITIES) {
+  for (const rule of priorities) {
     if (rule.round !== undefined && rule.round !== round) continue
     const matches = playerNames.some(
       (name) => name.toLowerCase().includes(rule.playerName.toLowerCase())
     )
     if (matches && !usedThemeIds.includes(rule.themeId)) {
-      const theme = THEMES.find((t) => t.id === rule.themeId)
+      const theme = themes.find((t) => t.id === rule.themeId)
       if (theme) return theme
     }
   }
 
-  // Fall back: first unused theme in THEMES order
-  for (const theme of THEMES) {
+  // Fall back: first unused theme in order
+  for (const theme of themes) {
     if (!usedThemeIds.includes(theme.id)) return theme
   }
 
   // All exhausted — cycle
-  return THEMES[usedThemeIds.length % THEMES.length]
+  return themes[usedThemeIds.length % themes.length]
 }
 
 // Calculate animation durations based on BPM and division

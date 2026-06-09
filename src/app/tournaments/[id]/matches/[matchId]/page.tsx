@@ -5,7 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import { getSession, isHost as checkIsHost, getSessionPlayerId } from '@/lib/session'
 import { PickBan } from '@/app/components/pick-ban'
 import { type PickBanAction } from '@/lib/games'
-import { getThemeById, THEMES } from '@/lib/themes'
+import { getThemeById, getAllThemes } from '@/lib/themes-db'
 import { getPlayerBets } from '@/lib/scoring'
 import { getGamesForTournament } from '@/lib/games-db'
 
@@ -76,8 +76,8 @@ async function getAdjacentMatches(tournamentId: number, round: number, currentMa
     nextMatch = nextRoundMatches.length > 0 ? nextRoundMatches[0] : null
   }
 
-  const prevTheme = prevMatch?.backgroundMusicId ? getThemeById(prevMatch.backgroundMusicId) : undefined
-  const nextTheme = nextMatch?.backgroundMusicId ? getThemeById(nextMatch.backgroundMusicId) : undefined
+  const prevTheme = prevMatch?.backgroundMusicId ? await getThemeById(prevMatch.backgroundMusicId) : undefined
+  const nextTheme = nextMatch?.backgroundMusicId ? await getThemeById(nextMatch.backgroundMusicId) : undefined
 
   return {
     prevMatchId: prevMatch?.id ?? null,
@@ -134,9 +134,9 @@ export default async function MatchPage({
   }
 
   // Get theme for this match (fallback to first theme if not set)
-  const theme = match.backgroundMusicId
-    ? getThemeById(match.backgroundMusicId) || THEMES[0]
-    : THEMES[0]
+  const theme =
+    (match.backgroundMusicId ? await getThemeById(match.backgroundMusicId) : undefined) ||
+    (await getAllThemes())[0]
 
   // Get adjacent matches for navigation
   const { prevMatchId, nextMatchId, prevMatchAudioFile, nextMatchAudioFile } = await getAdjacentMatches(tournamentId, match.round, matchId)

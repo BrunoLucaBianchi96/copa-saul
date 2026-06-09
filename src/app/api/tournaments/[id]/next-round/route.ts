@@ -7,7 +7,7 @@ import {
   getStandings,
 } from '@/lib/swiss'
 import { requireHost } from '@/lib/session'
-import { getThemeForMatch } from '@/lib/themes'
+import { getThemeForMatch } from '@/lib/themes-db'
 import { BYE_POINTS, BOUNTY_MIN_TOP4_ROUNDS, bountyIncrementForPlacement } from '@/lib/scoring'
 
 async function createMatches(
@@ -66,7 +66,7 @@ async function createMatches(
         playerNameMap.get(pairing.player1Id) ?? '',
         playerNameMap.get(pairing.player2Id) ?? '',
       ]
-      const theme = getThemeForMatch(usedThemeIds, names, round)
+      const theme = await getThemeForMatch(usedThemeIds, names, round)
       usedThemeIds.push(theme.id)
       await db.insert(matches).values({
         tournamentId,

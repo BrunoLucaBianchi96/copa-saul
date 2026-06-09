@@ -4,7 +4,7 @@ import { tournaments, matches, tournamentPlayers, players, playerBets, rosterBet
 import { eq, and, inArray } from 'drizzle-orm'
 import { generatePairings } from '@/lib/swiss'
 import { requireHost } from '@/lib/session'
-import { getThemeForMatch } from '@/lib/themes'
+import { getThemeForMatch } from '@/lib/themes-db'
 import { BYE_POINTS, EVEN_BET, rosterKey } from '@/lib/scoring'
 import { getGamesForTournament } from '@/lib/games-db'
 
@@ -92,7 +92,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
         playerNameMap.get(pairing.player1Id) ?? '',
         playerNameMap.get(pairing.player2Id) ?? '',
       ]
-      const theme = getThemeForMatch(usedThemeIds, names, 1)
+      const theme = await getThemeForMatch(usedThemeIds, names, 1)
       usedThemeIds.push(theme.id)
       allMatchRows.push({
         tournamentId,

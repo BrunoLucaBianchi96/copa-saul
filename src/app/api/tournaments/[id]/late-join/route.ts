@@ -3,7 +3,7 @@ import { db } from '@/db'
 import { tournaments, matches, tournamentPlayers, players, playerBets, rosterBets } from '@/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 import { requireHost } from '@/lib/session'
-import { getThemeForMatch } from '@/lib/themes'
+import { getThemeForMatch } from '@/lib/themes-db'
 import { BYE_POINTS, EVEN_BET, rosterKey } from '@/lib/scoring'
 import { getGamesForTournament } from '@/lib/games-db'
 
@@ -143,7 +143,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       playerRows[0]?.name ?? '',
       player2Row[0]?.name ?? '',
     ]
-    const theme = getThemeForMatch(usedThemeIds, names, currentRound)
+    const theme = await getThemeForMatch(usedThemeIds, names, currentRound)
 
     // Update bye match: set player2, result to pending, clear winnerId, assign theme
     await db

@@ -52,12 +52,20 @@ export function GlobalNavbar({ isHost = false }: { isHost?: boolean }) {
         {/* Games: hosts manage the global roster (/games); players view the
             current tournament's roster. A player outside a tournament has none. */}
         {isHost ? (
-          <Link
-            href="/games"
-            className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
-          >
-            {tGames('games')}
-          </Link>
+          <>
+            <Link
+              href="/games"
+              className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
+            >
+              {tGames('games')}
+            </Link>
+            <Link
+              href="/themes"
+              className="text-sm text-darcula-text-muted hover:text-darcula-text transition-colors"
+            >
+              Themes
+            </Link>
+          </>
         ) : tournamentId ? (
           <Link
             href={`/tournaments/${tournamentId}/games`}

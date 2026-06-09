@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
 
 export const players = sqliteTable('players', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -99,6 +99,29 @@ export const games = sqliteTable('games', {
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 })
 
+// Pick-ban background "themes" (music + animated/static background). Like games,
+// keyed by a human-readable slug (TEXT primary key) that matches the historical
+// ids stored in matches.backgroundMusicId, so old matches keep resolving. The
+// three custom-renderer themes (balatro/matrix/gta-4) are NOT stored here — they
+// live in CUSTOM_THEMES in src/lib/themes.ts and are merged in at runtime.
+// Removal is soft (deletedAt) so a deleted theme's row survives for old matches.
+export const themes = sqliteTable('themes', {
+  id: text('id').primaryKey(), // slug
+  name: text('name').notNull(),
+  bpm: integer('bpm').notNull(),
+  division: integer('division').notNull().default(1),
+  audioUrl: text('audio_url'), // Vercel Blob URL
+  audioOffset: integer('audio_offset'), // ms
+  normalizeVolume: real('normalize_volume'), // default 1
+  backgroundImage: text('background_image'), // Vercel Blob URL
+  backgroundSize: text('background_size', { enum: ['cover', 'contain', 'repeat'] }),
+  soundbites: text('soundbites'), // JSON: { onBan?, onPick?, onGameSelected?, onWinnerChosen? }
+  sortOrder: integer('sort_order').notNull().default(0),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  deletedAt: integer('deleted_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+})
+
 // Which games are in play for a given tournament. A new tournament defaults to
 // all active games; the set is fixed at creation so historical matches keep the
 // same roster even if a game is later soft-deleted.
@@ -116,3 +139,4 @@ export type PlayerBet = typeof playerBets.$inferSelect
 export type RosterBet = typeof rosterBets.$inferSelect
 export type GameRow = typeof games.$inferSelect
 export type TournamentGame = typeof tournamentGames.$inferSelect
+export type ThemeRow = typeof themes.$inferSelect
