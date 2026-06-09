@@ -304,9 +304,7 @@
     "changePassword": "Change Password",
     "passwordSet": "Password is set.",
     "passwordMismatch": "Passwords don't match.",
-    "passwordSaved": "Password saved!",
-    "betsForTournament": "Bets for {name}",
-    "noBetsTournaments": "No tournaments are open for betting right now."
+    "passwordSaved": "Password saved!"
   },
   "playerLinks": {
     "title": "Player Edit Links",

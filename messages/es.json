@@ -304,9 +304,7 @@
     "changePassword": "Cambiar Contraseña",
     "passwordSet": "La contraseña está configurada.",
     "passwordMismatch": "Las contraseñas no coinciden.",
-    "passwordSaved": "¡Contraseña guardada!",
-    "betsForTournament": "Apuestas para {name}",
-    "noBetsTournaments": "No hay torneos abiertos para apostar en este momento."
+    "passwordSaved": "¡Contraseña guardada!"
   },
   "playerLinks": {
     "title": "Links de Edición",
