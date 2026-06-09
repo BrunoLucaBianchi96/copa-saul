@@ -116,6 +116,11 @@ export const themes = sqliteTable('themes', {
   backgroundImage: text('background_image'), // Vercel Blob URL
   backgroundSize: text('background_size', { enum: ['cover', 'contain', 'repeat'] }),
   soundbites: text('soundbites'), // JSON: { onBan?, onPick?, onGameSelected?, onWinnerChosen? }
+  // Priority assignment rule: if a match has a player whose name contains
+  // priorityPlayer (case-insensitive substring) — and, when set, the round
+  // matches priorityRound — this theme is preferred over sequential assignment.
+  priorityPlayer: text('priority_player'),
+  priorityRound: integer('priority_round'),
   sortOrder: integer('sort_order').notNull().default(0),
   active: integer('active', { mode: 'boolean' }).notNull().default(true),
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),

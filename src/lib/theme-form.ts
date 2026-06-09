@@ -99,6 +99,8 @@ export async function parseThemeForm(
     ...(backgroundImage !== undefined ? { backgroundImage } : {}),
     backgroundSize,
     soundbites: Object.keys(soundbites).length > 0 ? soundbites : null,
+    priorityPlayer: str('priorityPlayer'),
+    priorityRound: intNum('priorityRound'),
     active: formData.get('active') === null ? true : formData.get('active') === 'true',
   }
 }

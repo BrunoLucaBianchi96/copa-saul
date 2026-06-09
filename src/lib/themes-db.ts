@@ -4,9 +4,9 @@ import { eq, isNull, asc } from 'drizzle-orm'
 import {
   type Theme,
   type Soundbites,
-  type ThemePriority,
   CUSTOM_THEMES,
   selectThemeForMatch,
+  prioritiesFromThemes,
 } from '@/lib/themes'
 
 // Map a raw DB row to the client-safe Theme shape, parsing the soundbites JSON.
@@ -32,6 +32,8 @@ function rowToTheme(row: ThemeRow): Theme {
     backgroundImage: row.backgroundImage ?? undefined,
     backgroundSize: row.backgroundSize ?? undefined,
     soundbites,
+    priorityPlayer: row.priorityPlayer ?? undefined,
+    priorityRound: row.priorityRound ?? undefined,
     active: row.active,
     sortOrder: row.sortOrder,
   }
@@ -84,17 +86,11 @@ export async function getThemeById(id: string): Promise<Theme | undefined> {
   return rows[0] ? rowToTheme(rows[0]) : undefined
 }
 
-// Player-name priority rules. Stays in code for now; moves to the DB in a later
-// step. Keep in sync with selectThemeForMatch's expectations.
-const THEME_PRIORITIES: ThemePriority[] = [
-  { playerName: 'Lucho', themeId: 'balatro', round: 1 },
-  { playerName: 'Lucho', themeId: 'stardust-crusaders', round: 4 },
-  { playerName: 'Ailen', themeId: 'live-and-learn' },
-]
-
 /**
  * Pick a theme for a match: priority rules first, then sequential assignment
  * over the merged theme list. Async wrapper around the pure selectThemeForMatch.
+ * Priority rules are derived from the themes themselves (priorityPlayer column
+ * on DB themes, set in code for the custom themes).
  */
 export async function getThemeForMatch(
   usedThemeIds: string[],
@@ -102,7 +98,8 @@ export async function getThemeForMatch(
   round: number,
 ): Promise<Theme> {
   const allThemes = await getAllThemes()
-  return selectThemeForMatch(allThemes, THEME_PRIORITIES, usedThemeIds, playerNames, round)
+  const priorities = prioritiesFromThemes(allThemes)
+  return selectThemeForMatch(allThemes, priorities, usedThemeIds, playerNames, round)
 }
 
 // --- CRUD (host-only; callers must guard with requireHost) ---
@@ -118,6 +115,8 @@ export interface ThemeInput {
   backgroundImage?: string | null
   backgroundSize?: 'cover' | 'contain' | 'repeat' | null
   soundbites?: Soundbites | null
+  priorityPlayer?: string | null
+  priorityRound?: number | null
   sortOrder?: number
   active?: boolean
 }
@@ -144,6 +143,8 @@ export async function createTheme(input: ThemeInput): Promise<Theme> {
       backgroundImage: input.backgroundImage ?? null,
       backgroundSize: input.backgroundSize ?? null,
       soundbites: input.soundbites ? JSON.stringify(input.soundbites) : null,
+      priorityPlayer: input.priorityPlayer ?? null,
+      priorityRound: input.priorityRound ?? null,
       sortOrder,
       active: input.active ?? true,
     })
@@ -167,6 +168,8 @@ export async function updateTheme(id: string, updates: ThemeUpdate): Promise<The
   if (updates.backgroundSize !== undefined) patch.backgroundSize = updates.backgroundSize
   if (updates.soundbites !== undefined)
     patch.soundbites = updates.soundbites ? JSON.stringify(updates.soundbites) : null
+  if (updates.priorityPlayer !== undefined) patch.priorityPlayer = updates.priorityPlayer
+  if (updates.priorityRound !== undefined) patch.priorityRound = updates.priorityRound
   if (updates.sortOrder !== undefined) patch.sortOrder = updates.sortOrder
   if (updates.active !== undefined) patch.active = updates.active
 

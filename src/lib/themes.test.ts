@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { selectThemeForMatch, type Theme, type ThemePriority } from './themes'
+import { selectThemeForMatch, prioritiesFromThemes, type Theme, type ThemePriority } from './themes'
 
 // The theme data now lives in the database; selectThemeForMatch is the pure
 // assignment algorithm that operates on a supplied, already-ordered theme list
@@ -30,6 +30,37 @@ const PRIORITIES: ThemePriority[] = [
 
 const select = (used: string[], names: string[], round: number) =>
   selectThemeForMatch(THEMES, PRIORITIES, used, names, round)
+
+describe('prioritiesFromThemes', () => {
+  it('derives a rule from each theme carrying a priorityPlayer, preserving order', () => {
+    const themes: Theme[] = [
+      { ...t('alpha') },
+      { ...t('balatro'), priorityPlayer: 'Lucho', priorityRound: 1 },
+      { ...t('stardust'), priorityPlayer: 'Lucho', priorityRound: 4 },
+      { ...t('live'), priorityPlayer: 'Ailen' },
+    ]
+    expect(prioritiesFromThemes(themes)).toEqual([
+      { playerName: 'Lucho', themeId: 'balatro', round: 1 },
+      { playerName: 'Lucho', themeId: 'stardust', round: 4 },
+      { playerName: 'Ailen', themeId: 'live' },
+    ])
+  })
+
+  it('omits round when priorityRound is unset, and skips themes with no priorityPlayer', () => {
+    const rules = prioritiesFromThemes([t('plain'), { ...t('x'), priorityPlayer: 'Bob' }])
+    expect(rules).toEqual([{ playerName: 'Bob', themeId: 'x' }])
+    expect(rules[0]).not.toHaveProperty('round')
+  })
+
+  it('round-trips through selectThemeForMatch (derived rules == hand-written rules)', () => {
+    const themes: Theme[] = [
+      ...THEMES.filter((x) => !['balatro', 'stardust-crusaders', 'live-and-learn'].includes(x.id)),
+      { ...t('live-and-learn'), priorityPlayer: 'Ailen' },
+    ]
+    const picked = selectThemeForMatch(themes, prioritiesFromThemes(themes), [], ['Maria Ailen'], 2)
+    expect(picked.id).toBe('live-and-learn')
+  })
+})
 
 describe('selectThemeForMatch', () => {
   // ---------------------------------------------------------------

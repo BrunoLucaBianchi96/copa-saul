@@ -31,6 +31,12 @@ export interface Theme {
   backgroundImage?: string // URL or path to background image
   backgroundSize?: 'cover' | 'contain' | 'repeat' // how to size the background (default: cover)
   active?: boolean // selectable in new tournaments (DB themes only; customs are always active)
+  // Priority assignment rule (see selectThemeForMatch): a match with a player
+  // whose name contains priorityPlayer — and, when set, the matching round —
+  // prefers this theme. For DB themes these come from columns; for the custom
+  // themes they're set here in code.
+  priorityPlayer?: string
+  priorityRound?: number
   sortOrder?: number // position in the merged theme order
   // When set, the pick-ban background is rendered by a bespoke React component
   // instead of a static backgroundImage. These themes stay hardcoded.
@@ -71,6 +77,8 @@ export const CUSTOM_THEMES: Theme[] = [
     normalizeVolume: 1,
     customRenderer: 'balatro',
     sortOrder: 22,
+    priorityPlayer: 'Lucho',
+    priorityRound: 1,
     soundbites: {
       onBan: { path: '/soundbites/card1.ogg' },
       onPick: { path: '/soundbites/card3.ogg' },
@@ -83,6 +91,20 @@ export interface ThemePriority {
   playerName: string // case-insensitive substring match on player name
   themeId: string // theme to assign
   round?: number // if set, only applies in this round
+}
+
+// Derive the active priority rules from the themes themselves: each theme that
+// carries a priorityPlayer contributes one rule targeting that theme. Themes are
+// expected in assignment order (sortOrder); the rules inherit that order, which
+// is the order selectThemeForMatch evaluates them in.
+export function prioritiesFromThemes(themes: Theme[]): ThemePriority[] {
+  return themes
+    .filter((t) => t.priorityPlayer)
+    .map((t) => ({
+      playerName: t.priorityPlayer as string,
+      themeId: t.id,
+      ...(t.priorityRound != null ? { round: t.priorityRound } : {}),
+    }))
 }
 
 // Pure theme-selection algorithm. Given the full ordered theme list and the

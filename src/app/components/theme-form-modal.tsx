@@ -43,6 +43,8 @@ export function ThemeFormModal({ theme, isOpen, onClose }: ThemeFormModalProps) 
   const [audioOffset, setAudioOffset] = useState('')
   const [normalizeVolume, setNormalizeVolume] = useState('')
   const [backgroundSize, setBackgroundSize] = useState<'cover' | 'contain' | 'repeat'>('cover')
+  const [priorityPlayer, setPriorityPlayer] = useState('')
+  const [priorityRound, setPriorityRound] = useState('')
   const [active, setActive] = useState(true)
 
   const [audioPreview, setAudioPreview] = useState<string | null>(null)
@@ -73,6 +75,8 @@ export function ThemeFormModal({ theme, isOpen, onClose }: ThemeFormModalProps) 
     setAudioOffset(theme?.audioOffset != null ? String(theme.audioOffset) : '')
     setNormalizeVolume(theme?.normalizeVolume != null ? String(theme.normalizeVolume) : '')
     setBackgroundSize(theme?.backgroundSize ?? 'cover')
+    setPriorityPlayer(theme?.priorityPlayer ?? '')
+    setPriorityRound(theme?.priorityRound != null ? String(theme.priorityRound) : '')
     setActive(theme?.active ?? true)
     setAudioPreview(theme?.audioFile ?? null)
     setBgPreview(theme?.backgroundImage ?? null)
@@ -135,6 +139,8 @@ export function ThemeFormModal({ theme, isOpen, onClose }: ThemeFormModalProps) 
     formData.append('audioOffset', audioOffset.trim())
     formData.append('normalizeVolume', normalizeVolume.trim())
     formData.append('backgroundSize', backgroundSize)
+    formData.append('priorityPlayer', priorityPlayer.trim())
+    formData.append('priorityRound', priorityRound.trim())
     formData.append('active', String(active))
 
     const audioFile = audioRef.current?.files?.[0]
@@ -315,6 +321,32 @@ export function ThemeFormModal({ theme, isOpen, onClose }: ThemeFormModalProps) 
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Priority rule */}
+          <div>
+            <label className={labelClass}>Priority</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="sm:col-span-2">
+                <input
+                  className={inputClass}
+                  value={priorityPlayer}
+                  onChange={(e) => setPriorityPlayer(e.target.value)}
+                  placeholder="Player name (substring, e.g. Lucho)"
+                />
+              </div>
+              <input
+                className={inputClass}
+                type="number"
+                value={priorityRound}
+                onChange={(e) => setPriorityRound(e.target.value)}
+                placeholder="round (optional)"
+              />
+            </div>
+            <p className="text-xs text-darcula-text-muted mt-1">
+              When a match includes a player whose name contains this text (and, if set, in this round),
+              prefer this theme over the normal rotation.
+            </p>
           </div>
 
           <label className="flex items-center gap-2 cursor-pointer">

@@ -40,6 +40,8 @@ interface SeedTheme {
   backgroundImage?: string // external URL (re-hosted on Blob)
   backgroundSize?: 'cover' | 'contain' | 'repeat'
   soundbites?: Soundbites
+  priorityPlayer?: string // player-name substring that prefers this theme
+  priorityRound?: number // restrict the priority rule to this round
   sortOrder: number // historical index in the original THEMES array
 }
 
@@ -284,6 +286,8 @@ const SEED_THEMES: SeedTheme[] = [
       onBan: { path: '/soundbites/bakudan.mp3' },
       onPick: { path: '/soundbites/bakudan.mp3' },
     },
+    priorityPlayer: 'Lucho',
+    priorityRound: 4,
     sortOrder: 23,
   },
   {
@@ -294,6 +298,7 @@ const SEED_THEMES: SeedTheme[] = [
     audioFile: '/songs/live-and-learn-sonic-adventure.mp3',
     normalizeVolume: 1,
     backgroundImage: 'https://wallpapercave.com/wp/wp3022024.png',
+    priorityPlayer: 'Ailen',
     sortOrder: 24,
   },
 ]
@@ -401,6 +406,8 @@ async function migrateThemes() {
       backgroundImage,
       backgroundSize: t.backgroundSize ?? null,
       soundbites: soundbites ? JSON.stringify(soundbites) : null,
+      priorityPlayer: t.priorityPlayer ?? null,
+      priorityRound: t.priorityRound ?? null,
       sortOrder: t.sortOrder,
       active: true,
       deletedAt: null,
